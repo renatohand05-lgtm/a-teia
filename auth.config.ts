@@ -11,10 +11,11 @@ export const authConfig = {
       const isPublic =
         pathname === "/login" ||
         pathname.startsWith("/api/auth") ||
+        pathname === "/api/health" ||
         pathname === "/favicon.ico" ||
         pathname === "/logo-teia.png";
       if (isPublic) return true;
-      return Boolean(auth);
+      return Boolean(auth?.user?.id);
     },
     jwt({ token, user }) {
       if (user?.id) token.sub = user.id;

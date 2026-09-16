@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+.vercel
+_hold
+node_modules
+.next
+storage
