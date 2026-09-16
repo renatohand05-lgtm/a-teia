@@ -1,0 +1,492 @@
+// A TEIA — Arquitetura Mestre 1.0 | Sprint 0
+// Histórico de aprendizado NÃO é sobrescrito: métricas, diagnósticos,
+// evidências, experimentos, memória, conversas e pesquisas são append-only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum KnowledgeKind {
+  INTERNAL_DATA
+  EXTERNAL_SOURCE
+  INFERENCE
+  HYPOTHESIS
+  EVIDENCE
+  RECOMMENDATION
+}
+
+enum DecisionStatus {
+  DRAFT
+  PENDING_HUMAN_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum ExperimentStatus {
+  PLANNED
+  RUNNING
+  COMPLETED
+  ABANDONED
+}
+
+enum AuditSource {
+  USER
+  SYSTEM
+  AI
+  RESEARCH
+  IMPORT
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+}
+
+enum ResearchStatus {
+  PREPARED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum FilePurpose {
+  IMPORT
+  EVIDENCE
+  ATTACHMENT
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("owner")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  companies         Company[]
+  decisions         Decision[]
+  actionPlans       ActionPlan[]
+  tasks             Task[]
+  conversations     AIConversation[]
+  researchSessions  ResearchSession[]
+  auditLogs         AuditLog[]
+  uploadedFiles     StoredFile[]
+  memories          StrategicMemory[]
+}
+
+model Company {
+  id                   String        @id @default(cuid())
+  name                 String
+  segment              String?
+  units                Int?
+  revenueMonthly       Decimal?      @db.Decimal(14, 2)
+  marginPercent        Decimal?      @db.Decimal(8, 2)
+  teamSize             Int?
+  channels             String?
+  objectives           String?
+  perceivedBottlenecks String?
+  notes                String?
+  status               CompanyStatus @default(ACTIVE)
+  isDemo               Boolean       @default(false)
+  archivedAt           DateTime?
+  ownerId              String
+  owner                User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  metrics            CompanyMetric[]
+  financialRecords   FinancialRecord[]
+  diagnoses          Diagnosis[]
+  connectionsFrom    Connection[]      @relation("ConnectionFrom")
+  connectionsTo      Connection[]      @relation("ConnectionTo")
+  opportunities      Opportunity[]
+  strategies         Strategy[]
+  decisions          Decision[]
+  actionPlans        ActionPlan[]
+  experiments        Experiment[]
+  evidence           Evidence[]
+  memories           StrategicMemory[]
+  conversations      AIConversation[]
+  researchSessions   ResearchSession[]
+  files              StoredFile[]
+
+  @@index([ownerId, status])
+  @@index([name])
+}
+
+/// Série histórica — novos períodos geram novas linhas, nunca overwrite.
+model CompanyMetric {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  value     Decimal  @db.Decimal(16, 4)
+  unit      String?
+  period    String?
+  capturedAt DateTime @default(now())
+  sourceKind KnowledgeKind @default(INTERNAL_DATA)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, name, capturedAt])
+}
+
+/// Lançamentos financeiros imutáveis após criação (correção = novo registro).
+model FinancialRecord {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  kind        String
+  amount      Decimal  @db.Decimal(14, 2)
+  currency    String   @default("BRL")
+  occurredAt  DateTime
+  description String?
+  sourceKind  KnowledgeKind @default(INTERNAL_DATA)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId, occurredAt])
+}
+
+model Diagnosis {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String?
+  overallScore Int?
+  bottleneck  String?
+  maturity    String?
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dimensions DiagnosisDimension[]
+
+  @@index([companyId, createdAt])
+}
+
+model DiagnosisDimension {
+  id          String    @id @default(cuid())
+  diagnosisId String
+  diagnosis   Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  name        String
+  score       Int
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([diagnosisId])
+}
+
+model Connection {
+  id          String   @id @default(cuid())
+  fromId      String
+  toId        String
+  from        Company  @relation("ConnectionFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to          Company  @relation("ConnectionTo", fields: [toId], references: [id], onDelete: Cascade)
+  type        String
+  strength    Int?
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([fromId])
+  @@index([toId])
+}
+
+model Opportunity {
+  id            String   @id @default(cuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  investment    Decimal? @db.Decimal(14, 2)
+  expectedReturn Decimal? @db.Decimal(14, 2)
+  score         Int?
+  status        String   @default("open")
+  isDemo        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  decisions Decision[]
+  experiments Experiment[]
+
+  @@index([companyId, status])
+}
+
+model Strategy {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  horizon     String?
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  decisions Decision[]
+
+  @@index([companyId])
+}
+
+/// Ações propostas pela IA jamais executam sozinhas — status inicia em PENDING_HUMAN_APPROVAL quando origem = AI.
+model Decision {
+  id             String         @id @default(cuid())
+  companyId      String?
+  company        Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  opportunityId  String?
+  opportunity    Opportunity?   @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  strategyId     String?
+  strategy       Strategy?      @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  title          String
+  rationale      String?
+  status         DecisionStatus @default(DRAFT)
+  origin         AuditSource    @default(USER)
+  requiresHumanApproval Boolean @default(true)
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  actionPlans      ActionPlan[]
+  researchSessions ResearchSession[]
+
+  @@index([companyId, status])
+}
+
+model ActionPlan {
+  id          String   @id @default(cuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  decisionId  String?
+  decision    Decision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  ownerId     String?
+  owner       User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  title       String
+  summary     String?
+  horizonDays Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks Task[]
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  actionPlanId String?
+  actionPlan   ActionPlan? @relation(fields: [actionPlanId], references: [id], onDelete: SetNull)
+  assigneeId   String?
+  assignee     User?      @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  title        String
+  details      String?
+  status       TaskStatus @default(TODO)
+  dueAt        DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Experiment {
+  id            String           @id @default(cuid())
+  companyId     String?
+  company       Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  opportunityId String?
+  opportunity   Opportunity?     @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  title         String
+  hypothesis    String?
+  kpi           String?
+  investment    Decimal?         @db.Decimal(14, 2)
+  status        ExperimentStatus @default(PLANNED)
+  startedAt     DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  results ExperimentResult[]
+}
+
+/// Resultados nunca substituem o registro anterior — novo resultado = nova linha.
+model ExperimentResult {
+  id           String     @id @default(cuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  outcome      String
+  measuredValue Decimal?  @db.Decimal(14, 4)
+  notes        String?
+  recordedAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([experimentId, recordedAt])
+}
+
+model Evidence {
+  id         String        @id @default(cuid())
+  companyId  String?
+  company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  kind       KnowledgeKind
+  title      String
+  body       String
+  url        String?
+  confidence Int?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([companyId, kind])
+}
+
+/// Memória estratégica é acumulativa: aprendizados novos não apagam os anteriores.
+model StrategicMemory {
+  id         String   @id @default(cuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  title      String
+  lesson     String
+  validated  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId, createdAt])
+}
+
+model AIConversation {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String?
+  company   Company?           @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  title     String?
+  status    ConversationStatus @default(ACTIVE)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  messages AIMessage[]
+
+  @@index([userId, createdAt])
+}
+
+model AIMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  knowledgeKind  KnowledgeKind?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  sources AISource[]
+
+  @@index([conversationId, createdAt])
+}
+
+model AISource {
+  id        String        @id @default(cuid())
+  messageId String
+  message   AIMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  kind      KnowledgeKind @default(EXTERNAL_SOURCE)
+  title     String
+  url       String?
+  snippet   String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ResearchSession {
+  id          String         @id @default(cuid())
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  companyId   String?
+  company     Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  decisionId  String?
+  decision    Decision?      @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  question    String
+  conclusion  String?
+  status      ResearchStatus @default(PREPARED)
+  depth       String         @default("deep")
+  ranAt       DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  findings ResearchFinding[]
+
+  @@index([companyId, createdAt])
+}
+
+model ResearchFinding {
+  id        String          @id @default(cuid())
+  sessionId String
+  session   ResearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  kind      KnowledgeKind
+  title     String
+  url       String?
+  body      String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model StoredFile {
+  id           String      @id @default(cuid())
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String
+  purpose      FilePurpose @default(OTHER)
+  companyId    String?
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  uploadedById String?
+  uploadedBy   User?       @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  actorId     String?
+  actor       User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action      String
+  entity      String
+  entityId    String?
+  previousValue Json?
+  newValue    Json?
+  origin      AuditSource @default(USER)
+  ip          String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+}

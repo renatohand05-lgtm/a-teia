@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ateia
+      POSTGRES_PASSWORD: ateia
+      POSTGRES_DB: a_teia
+    ports:
+      - "5432:5432"
+    volumes:
+      - ateia_pg:/var/lib/postgresql/data
+
+volumes:
+  ateia_pg:

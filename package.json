@@ -1,0 +1,50 @@
+{
+  "name": "a-teia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A TEIA — sistema executivo de decisão. Sprint 0: fundação.",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "prisma generate --schema database/schema.prisma && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "postinstall": "prisma generate --schema database/schema.prisma",
+    "db:generate": "prisma generate --schema database/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema database/schema.prisma",
+    "db:migrate:deploy": "prisma migrate deploy --schema database/schema.prisma",
+    "db:push": "prisma db push --schema database/schema.prisma",
+    "db:seed": "tsx database/seed.ts",
+    "db:studio": "prisma studio --schema database/schema.prisma",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "tsx scripts/verify-sprint0.ts"
+  },
+  "prisma": {
+    "schema": "database/schema.prisma",
+    "seed": "tsx database/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "bcryptjs": "^3.0.2",
+    "next": "^15.5.3",
+    "next-auth": "5.0.0-beta.29",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9.36.0",
+    "eslint-config-next": "^15.5.3",
+    "prisma": "^6.16.2",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

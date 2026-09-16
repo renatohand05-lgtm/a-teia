@@ -1,0 +1,10 @@
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    app: "a-teia",
+    sprint: 0,
+    openaiExposed: false,
+  });
+}

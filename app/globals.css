@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --bg-0: #000000;
+  --bg-1: #0a0a0d;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.065);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --text-1: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73;
+  --blue: #0a84ff;
+  --blue-soft: #409cff;
+  --green: #34c76f;
+  --amber: #ff9f0a;
+  --red: #e0564c;
+  --purple: #bf5af2;
+  --gold: #e8bf7a;
+  --gold-soft: #f4d9a6;
+  --gold-deep: #c99347;
+  --silver: #c7d2e0;
+  --shadow-lg: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-deep: var(--gold-deep);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-1);
+  background:
+    radial-gradient(1100px 620px at 18% -8%, rgba(232, 191, 122, 0.16), transparent 60%),
+    radial-gradient(950px 520px at 86% 2%, rgba(199, 210, 224, 0.09), transparent 55%),
+    radial-gradient(1200px 700px at 50% 112%, rgba(201, 147, 71, 0.08), transparent 60%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1) 40%, var(--bg-0));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeIn 0.35s ease;
+}
+
+.gold-text {
+  background: linear-gradient(180deg, #ffffff, var(--gold-soft) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.network-dot {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
