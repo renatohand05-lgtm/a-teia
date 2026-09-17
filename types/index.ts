@@ -15,7 +15,6 @@ export const PRIMARY_NAV: NavItem[] = [
 export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Prioridades & Decisão", enabled: false, group: "Em breve" },
   { href: "#", label: "Visão Geral", enabled: false, group: "Em breve" },
-  { href: "#", label: "Onboarding & 360°", enabled: false, group: "Em breve" },
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
   { href: "#", label: "Oportunidades", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },

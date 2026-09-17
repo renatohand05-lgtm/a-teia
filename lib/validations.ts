@@ -10,11 +10,12 @@ function optionalText(max: number) {
 }
 
 function optionalNumber(min: number, max: number, int = false) {
+  const numberSchema = (int ? z.number().int("Deve ser inteiro") : z.number()).min(min).max(max);
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const n = Number(value);
-    return Number.isFinite(n) ? n : undefined;
-  }, z.number().min(min).max(max).optional().refine((n) => (n === undefined || !int ? true : Number.isInteger(n)), "Deve ser inteiro"));
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, numberSchema.optional());
 }
 
 export const companyInputSchema = z.object({
@@ -37,6 +38,51 @@ export const loginSchema = z.object({
   email: z.string().trim().email("E-mail inválido"),
   password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
 });
+
+export const onboardingInputSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome da empresa").max(120),
+  segment: optionalText(80),
+  city: optionalText(80),
+  state: z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    return String(value).trim().toUpperCase();
+  }, z.string().regex(/^[A-Z]{2}$/, "UF deve ter 2 letras").optional()),
+  revenueMonthly: optionalNumber(0, 1_000_000_000),
+  averageTicket: optionalNumber(0, 10_000_000),
+  clientsPerMonth: optionalNumber(0, 10_000_000, true),
+  teamSize: optionalNumber(0, 100000, true),
+  channels: optionalText(500),
+  estimatedRecurrence: optionalText(120),
+  primaryObjective: optionalText(2000),
+  perceivedBottleneck: optionalText(2000),
+  notes: optionalText(4000),
+});
+
+export type OnboardingInput = z.infer<typeof onboardingInputSchema>;
+
+const dimensionScoreSchema = z.coerce
+  .number()
+  .int("A nota deve ser um número inteiro.")
+  .min(1, "A nota mínima é 1.")
+  .max(5, "A nota máxima é 5.");
+
+export const diagnosisInputSchema = z.object({
+  idempotencyKey: z.string().uuid("Identificador de envio inválido."),
+  scores: z.object({
+    attraction: dimensionScoreSchema,
+    conversion: dimensionScoreSchema,
+    averageTicket: dimensionScoreSchema,
+    recurrence: dimensionScoreSchema,
+    referral: dimensionScoreSchema,
+    brandImage: dimensionScoreSchema,
+    commercialImage: dimensionScoreSchema,
+    operations: dimensionScoreSchema,
+    finance: dimensionScoreSchema,
+    managementData: dimensionScoreSchema,
+  }),
+});
+
+export type DiagnosisInput = z.infer<typeof diagnosisInputSchema>;
 
 export const aiRequestSchema = z.object({
   message: z.string().trim().min(3).max(8000),

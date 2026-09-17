@@ -82,6 +82,11 @@ enum FilePurpose {
   OTHER
 }
 
+enum OnboardingStatus {
+  DRAFT
+  COMPLETE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -100,6 +105,8 @@ model User {
   auditLogs         AuditLog[]
   uploadedFiles     StoredFile[]
   memories          StrategicMemory[]
+  onboardings       CompanyOnboarding[]
+  diagnoses         Diagnosis[]
 }
 
 model Company {
@@ -137,9 +144,28 @@ model Company {
   conversations      AIConversation[]
   researchSessions   ResearchSession[]
   files              StoredFile[]
+  onboarding         CompanyOnboarding?
 
   @@index([ownerId, status])
   @@index([name])
+}
+
+/// Onboarding operacional 1:1 — editável, permite continuar depois.
+model CompanyOnboarding {
+  id                  String           @id @default(cuid())
+  companyId           String           @unique
+  company             Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  updatedById         String?
+  updatedBy           User?            @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  city                String?
+  state               String?
+  averageTicket       Decimal?         @db.Decimal(14, 2)
+  clientsPerMonth     Int?
+  estimatedRecurrence String?
+  status              OnboardingStatus @default(DRAFT)
+  completedAt         DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 }
 
 /// Série histórica — novos períodos geram novas linhas, nunca overwrite.
@@ -176,34 +202,45 @@ model FinancialRecord {
   @@index([companyId, occurredAt])
 }
 
+/// Histórico append-only. Novo diagnóstico = nova linha. Score 360 = (soma / 50) × 100.
 model Diagnosis {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  title       String
-  summary     String?
-  overallScore Int?
-  bottleneck  String?
-  maturity    String?
-  isDemo      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String        @id @default(cuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById    String?
+  createdBy      User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  title          String
+  summary        String?
+  rawTotal       Int?
+  overallScore   Int?
+  bottleneck     String?
+  bottlenecks    Json?
+  maturity       String?
+  scoresKind     KnowledgeKind @default(INTERNAL_DATA)
+  bottleneckKind KnowledgeKind @default(INFERENCE)
+  idempotencyKey String?       @unique
+  isDemo         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   dimensions DiagnosisDimension[]
 
   @@index([companyId, createdAt])
 }
 
+/// Uma linha por dimensão de cada diagnóstico. Não sobrescreve histórico.
 model DiagnosisDimension {
   id          String    @id @default(cuid())
   diagnosisId String
   diagnosis   Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  key         String    @default("legacy")
   name        String
   score       Int
   note        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@unique([diagnosisId, key])
   @@index([diagnosisId])
 }
 

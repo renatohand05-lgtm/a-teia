@@ -35,7 +35,7 @@ export async function createCompanyAction(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Não foi possível cadastrar." };
   }
-  redirect(`/empresas/${id}`);
+  redirect(`/empresas/${id}/onboarding`);
 }
 
 export async function updateCompanyAction(
