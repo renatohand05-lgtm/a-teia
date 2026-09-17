@@ -6,7 +6,7 @@ import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 
-const FUTURE = ["Oportunidades", "Experimentos", "Financeiro", "Memória estratégica", "Plano 30/60/90"];
+const FUTURE = ["Experimentos", "Financeiro", "Memória estratégica", "Plano 30/60/90"];
 
 export function CompanyCockpit({
   company,
@@ -89,6 +89,12 @@ export function CompanyCockpit({
         <GhostLink href={`/empresas/${company.id}/diagnostico/historico`}>
           Ver histórico{historyCount ? ` (${historyCount})` : ""}
         </GhostLink>
+        <GhostLink href={`/empresas/${company.id}/oportunidades`}>Ver oportunidades</GhostLink>
+        {latest ? (
+          <GhostLink href={`/empresas/${company.id}/oportunidades/gerar?diagnostico=${latest.id}`}>
+            Gerar oportunidades
+          </GhostLink>
+        ) : null}
       </section>
 
       <section>

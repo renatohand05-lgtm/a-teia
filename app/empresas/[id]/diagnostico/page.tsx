@@ -42,6 +42,26 @@ export default async function DiagnosticoPage({
 
         {saved ? <DiagnosticResult diagnosis={saved} /> : null}
 
+        {saved ? (
+          <section className="surface-card flex flex-wrap items-center justify-between gap-3 p-5">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+                Hipóteses de ação
+              </p>
+              <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+                Gerar oportunidades a partir deste diagnóstico. Nada é criado sem a sua seleção.
+              </p>
+            </div>
+            <Link
+              href={`/empresas/${company.id}/oportunidades/gerar?diagnostico=${saved.id}`}
+              className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+              style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+            >
+              Gerar oportunidades a partir deste diagnóstico
+            </Link>
+          </section>
+        ) : null}
+
         <section>
           <h2 className="mb-2 text-[18px] font-bold">{saved ? "Novo diagnóstico" : "Realizar diagnóstico"}</h2>
           <p className="mb-4 text-[13px]" style={{ color: "var(--text-2)" }}>

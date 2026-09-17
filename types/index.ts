@@ -16,7 +16,6 @@ export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Prioridades & Decisão", enabled: false, group: "Em breve" },
   { href: "#", label: "Visão Geral", enabled: false, group: "Em breve" },
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
-  { href: "#", label: "Oportunidades", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
   { href: "#", label: "Execução", enabled: false, group: "Em breve" },
   { href: "#", label: "Financeiro & Cenários", enabled: false, group: "Em breve" },

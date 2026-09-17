@@ -87,6 +87,27 @@ enum OnboardingStatus {
   COMPLETE
 }
 
+enum OpportunityStatus {
+  DRAFT
+  ACTIVE
+  IN_PROGRESS
+  VALIDATED
+  REJECTED
+  ARCHIVED
+}
+
+enum EvidenceLevel {
+  HYPOTHESIS
+  TESTING
+  PARTIAL_EVIDENCE
+  VALIDATED_EVIDENCE
+}
+
+enum OpportunityOrigin {
+  SUGGESTED
+  MANUAL
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -107,6 +128,7 @@ model User {
   memories          StrategicMemory[]
   onboardings       CompanyOnboarding[]
   diagnoses         Diagnosis[]
+  opportunities     Opportunity[]
 }
 
 model Company {
@@ -223,7 +245,8 @@ model Diagnosis {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  dimensions DiagnosisDimension[]
+  dimensions    DiagnosisDimension[]
+  opportunities Opportunity[]
 
   @@index([companyId, createdAt])
 }
@@ -260,24 +283,47 @@ model Connection {
   @@index([toId])
 }
 
+/// Motor de oportunidades. Hipótese de ação — nunca nasce como evidência validada.
+/// investment = investimento estimado; expectedReturn = retorno mensal estimado; score = prioridade 0–100.
 model Opportunity {
-  id            String   @id @default(cuid())
-  companyId     String
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?
-  investment    Decimal? @db.Decimal(14, 2)
-  expectedReturn Decimal? @db.Decimal(14, 2)
-  score         Int?
-  status        String   @default("open")
-  isDemo        Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String             @id @default(cuid())
+  companyId          String
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  diagnosisId        String?
+  diagnosis          Diagnosis?         @relation(fields: [diagnosisId], references: [id], onDelete: SetNull)
+  createdById        String?
+  createdBy          User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  sourceDimension    String?
+  templateKey        String?
+  origin             OpportunityOrigin  @default(MANUAL)
+  title              String
+  description        String?
+  problemStatement   String?
+  hypothesis         String?
+  expectedImpact     Int?
+  urgency            Int?
+  confidence         Int?
+  effort             Int?
+  investment         Decimal?           @db.Decimal(14, 2)
+  estimatedHours     Decimal?           @db.Decimal(10, 2)
+  expectedReturn     Decimal?           @db.Decimal(14, 2)
+  paybackMonths      Decimal?           @db.Decimal(8, 2)
+  score              Int?
+  scorePartial       Boolean            @default(false)
+  scoreReasons       Json?
+  status             OpportunityStatus  @default(DRAFT)
+  evidenceLevel      EvidenceLevel      @default(HYPOTHESIS)
+  queuedForPlan      Boolean            @default(false)
+  isDemo             Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
-  decisions Decision[]
+  decisions   Decision[]
   experiments Experiment[]
 
   @@index([companyId, status])
+  @@index([companyId, score])
+  @@index([diagnosisId])
 }
 
 model Strategy {
