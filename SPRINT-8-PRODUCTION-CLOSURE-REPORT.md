@@ -1,7 +1,7 @@
 # Sprint 8 — Relatório de encerramento de produção
 
 **Data:** 2026-09-18  
-**Commit:** `fix: finalize research relevance and executive assistant UX`  
+**SHA:** `15bab06e61a4693700a65362a0c36d353ae59672`  
 **Branch:** `main`  
 **Sprint 9:** não iniciada.
 
@@ -105,7 +105,9 @@ Nenhuma neste hotfix. Colunas `claimType` / `rejectedReason` já existiam na mig
 
 ## 16. Commit SHA
 
-Preenchido após o commit em `main`.
+`15bab06e61a4693700a65362a0c36d353ae59672` (`fix: finalize research relevance and executive assistant UX`)
+
+Nenhum `.env`, `sk-`, `tvly-` ou Bearer real no Git.
 
 ## 17. Vercel
 
