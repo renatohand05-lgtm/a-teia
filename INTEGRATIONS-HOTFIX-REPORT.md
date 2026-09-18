@@ -80,16 +80,24 @@ Nunca retorna chaves, `Authorization` ou trechos de secret.
 
 ## Produção
 
-Preenchido após o deploy:
+- Commit SHA: `76b4015c65ba53a50e09b06db369c8f2d84a3038`
+- Vercel Production: **Ready** (`https://a-teia.vercel.app`)
+- `GET /api/integrations/status`:
 
-- Commit SHA: (ver git)
-- Vercel Production: (ver health/status)
-- `/api/integrations/status`: (após Ready)
-- Probe OpenAI: `configured: false` até a chave existir na Vercel (`OPENAI_MISSING`)
-- Probe Tavily: após o hotfix deve autenticar com Bearer se `TAVILY_API_KEY` estiver em Production
+```json
+{
+  "openai": { "configured": false, "provider": "openai", "model": "gpt-4.1-mini" },
+  "webSearch": { "configured": true, "provider": "tavily" },
+  "environment": "production"
+}
+```
+
+- Probe OpenAI: `configured: false`, código `OPENAI_MISSING`, status `null`. Ponto: variável ausente na Vercel. Arquivo: `lib/integrations.ts` / `services/aiService.ts`.
+- Probe Tavily (configuração no runtime): `configured: true`, `provider: tavily`. A chave `TAVILY_API_KEY` passou a ser lida. Chamada ao vivo com secrets de produção não foi executada desta máquina (`vercel env run` não puxa os 18 secrets). Assistente autenticado é o teste de busca real.
+- Health: `openaiExposed: false`
 
 ## Pendências reais
 
-- Cadastrar `OPENAI_API_KEY` na Vercel Production. Sem isso a narrativa OpenAI não liga; o briefing determinístico segue.
-- Walkthrough autenticado no Assistente (CMV interno vs benchmark com fontes) depende de login no browser.
+- Cadastrar `OPENAI_API_KEY` na Vercel **Production** e fazer redeploy. Sem isso a narrativa OpenAI permanece desligada; o briefing determinístico segue.
+- Teste autenticado no Assistente: CMV interno sem web; benchmark com Tavily e fontes.
 - Sprint 9 não iniciada.
