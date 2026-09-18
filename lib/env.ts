@@ -11,6 +11,7 @@ const schema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4.1-mini"),
   WEB_SEARCH_PROVIDER: z.string().default("none"),
   WEB_SEARCH_API_KEY: z.string().optional(),
+  TAVILY_API_KEY: z.string().optional(),
   STORAGE_DRIVER: z.enum(["local", "vercel-blob"]).default("local"),
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
   APP_ENV: z.string().default("development"),
@@ -31,6 +32,7 @@ export function getEnv(): AppEnv {
     OPENAI_MODEL: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
     WEB_SEARCH_PROVIDER: process.env.WEB_SEARCH_PROVIDER ?? "none",
     WEB_SEARCH_API_KEY: process.env.WEB_SEARCH_API_KEY,
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     STORAGE_DRIVER: process.env.STORAGE_DRIVER ?? "local",
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     APP_ENV: process.env.APP_ENV ?? process.env.NODE_ENV ?? "development",
@@ -45,11 +47,4 @@ export function getEnv(): AppEnv {
   return parsed.data;
 }
 
-export function isOpenAIConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY);
-}
-
-export function isWebSearchConfigured(): boolean {
-  const provider = (process.env.WEB_SEARCH_PROVIDER ?? "none").trim().toLowerCase();
-  return provider === "tavily" && Boolean(process.env.WEB_SEARCH_API_KEY);
-}
+export { isOpenAIConfigured, isWebSearchConfigured } from "@/lib/integrations";

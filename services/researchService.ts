@@ -19,6 +19,7 @@ import {
   type ResearchKind,
 } from "@/lib/research-engine";
 import { resolveWebSearchProvider } from "@/lib/research-providers";
+import { IntegrationError, friendlyIntegrationMessage } from "@/lib/integrations";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/services/auditService";
 
@@ -139,7 +140,7 @@ export async function runExternalResearch(input: {
         usedWeb: false,
         sourceCount: 0,
         skippedReason: "provider_unavailable",
-        conclusion: "Pesquisa externa indisponível neste momento.",
+        conclusion: friendlyIntegrationMessage("TAVILY_MISSING"),
         ranAt: new Date(),
       },
     });
@@ -148,12 +149,12 @@ export async function runExternalResearch(input: {
       action: "research.failed",
       entity: "ResearchSession",
       entityId: session.id,
-      newValue: { reason: "provider_unavailable" },
+      newValue: { reason: "TAVILY_MISSING" },
       origin: AuditSource.RESEARCH,
     });
     return toRunResult({
       used: false,
-      unavailable: "Pesquisa externa indisponível neste momento.",
+      unavailable: friendlyIntegrationMessage("TAVILY_MISSING"),
       skipped: false,
       sources: [],
       query,
@@ -251,7 +252,9 @@ export async function runExternalResearch(input: {
       company: input.company,
       sessionId: session.id,
     });
-  } catch {
+  } catch (error) {
+    const code = error instanceof IntegrationError ? error.code : "TAVILY_PROVIDER_ERROR";
+    const unavailable = friendlyIntegrationMessage(code);
     const session = await prisma.researchSession.create({
       data: {
         userId: input.userId,
@@ -263,8 +266,8 @@ export async function runExternalResearch(input: {
         status: ResearchStatus.FAILED,
         usedWeb: false,
         sourceCount: 0,
-        skippedReason: "provider_error",
-        conclusion: "Pesquisa externa indisponível neste momento.",
+        skippedReason: code,
+        conclusion: unavailable,
         ranAt: new Date(),
       },
     });
@@ -273,12 +276,12 @@ export async function runExternalResearch(input: {
       action: "research.failed",
       entity: "ResearchSession",
       entityId: session.id,
-      newValue: { reason: "provider_error" },
+      newValue: { reason: code, status: error instanceof IntegrationError ? error.status : null },
       origin: AuditSource.RESEARCH,
     });
     return toRunResult({
       used: false,
-      unavailable: "Pesquisa externa indisponível neste momento.",
+      unavailable,
       skipped: false,
       sources: [],
       query,

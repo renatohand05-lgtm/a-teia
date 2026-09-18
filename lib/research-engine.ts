@@ -375,7 +375,7 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
       researchSessionId: input.sessionId ?? null,
       nextActions: uniqueTexts([
         ...answer.nextActions,
-        "Pesquisa externa indisponível neste momento. O briefing interno permanece válido.",
+        input.unavailable ?? "Pesquisa externa indisponível neste momento. O briefing interno permanece válido.",
       ]),
     };
   }

@@ -1,4 +1,10 @@
-import { KNOWN_WEB_SEARCH_PROVIDERS, RESEARCH_LIMITS } from "@/lib/research-config";
+import { RESEARCH_LIMITS } from "@/lib/research-config";
+import {
+  IntegrationError,
+  classifyHttpStatus,
+  getTavilyApiKey,
+  getWebSearchProviderName,
+} from "@/lib/integrations";
 
 export type RawSearchHit = {
   title: string;
@@ -20,17 +26,17 @@ export function setWebSearchProviderOverride(provider: WebSearchProvider | null)
 }
 
 export function configuredWebSearchProviderName(): string {
-  return (process.env.WEB_SEARCH_PROVIDER ?? "none").trim().toLowerCase();
+  return getWebSearchProviderName();
 }
 
-export function isKnownWebSearchProvider(name = configuredWebSearchProviderName()): boolean {
-  return (KNOWN_WEB_SEARCH_PROVIDERS as readonly string[]).includes(name);
+function isKnownWebSearchProvider(name = configuredWebSearchProviderName()): boolean {
+  return name === "tavily";
 }
 
 export function resolveWebSearchProvider(): WebSearchProvider | null {
   if (testOverride) return testOverride;
   const name = configuredWebSearchProviderName();
-  const key = process.env.WEB_SEARCH_API_KEY;
+  const key = getTavilyApiKey();
   if (!isKnownWebSearchProvider(name) || !key) return null;
   if (name === "tavily") return createTavilyProvider(key);
   return null;
@@ -40,20 +46,28 @@ export function createTavilyProvider(apiKey: string): WebSearchProvider {
   return {
     id: "tavily",
     async search(query: string): Promise<RawSearchHit[]> {
-      const response = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: apiKey,
-          query,
-          max_results: RESEARCH_LIMITS.maxSources,
-          include_answer: false,
-          search_depth: "basic",
-        }),
-      });
+      let response: Response;
+      try {
+        response = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query,
+            max_results: RESEARCH_LIMITS.maxSources,
+            include_answer: false,
+            search_depth: "basic",
+          }),
+          signal: AbortSignal.timeout(15_000),
+        });
+      } catch {
+        throw new IntegrationError("TAVILY_PROVIDER_ERROR");
+      }
       if (!response.ok) {
         await response.text();
-        throw new Error(`Provedor de pesquisa recusou a chamada (${response.status}).`);
+        throw new IntegrationError(classifyHttpStatus("tavily", response.status), response.status);
       }
       const json = (await response.json()) as {
         results?: Array<{ title?: string; url?: string; content?: string; published_date?: string }>;

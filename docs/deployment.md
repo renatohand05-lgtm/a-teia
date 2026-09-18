@@ -22,8 +22,8 @@ Opcionais nesta sprint:
 
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
-- `WEB_SEARCH_PROVIDER`
-- `WEB_SEARCH_API_KEY`
+- `WEB_SEARCH_PROVIDER` (`tavily` ou `none`)
+- `TAVILY_API_KEY` (preferencial) ou `WEB_SEARCH_API_KEY` (legado)
 - `STORAGE_DRIVER`
 - `BLOB_READ_WRITE_TOKEN`
 

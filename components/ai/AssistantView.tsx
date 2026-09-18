@@ -123,12 +123,12 @@ export function AssistantView({
           <p className="mt-3 text-[11px]" style={{ color: "var(--text-3)" }}>
             {providerReady
               ? "Provedor configurado no servidor. Fatos continuam determinísticos."
-              : "IA indisponível — configure o provedor. O briefing determinístico segue ativo."}
+              : "IA indisponível — credencial não configurada. O briefing determinístico segue ativo."}
           </p>
           <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
             {webSearchReady
               ? "Pesquisa web disponível quando a pergunta exigir fonte externa."
-              : "Pesquisa externa indisponível neste momento. Dados internos seguem ativos."}
+              : "Pesquisa externa indisponível — credencial Tavily não configurada. Dados internos seguem ativos."}
           </p>
         </section>
         <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>

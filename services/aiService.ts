@@ -17,6 +17,7 @@ import {
 } from "@/lib/ai-executive-engine";
 import { assertNotSecretLeak } from "@/lib/knowledge";
 import { applyExternalResearch, extractResearchNumbers, wrapExternalAsData } from "@/lib/research-engine";
+import { IntegrationError, classifyHttpStatus, friendlyIntegrationMessage, getOpenAIApiKey } from "@/lib/integrations";
 import { prisma } from "@/lib/prisma";
 import { getExecutiveContext } from "@/services/aiContextService";
 import { persistProposedActions } from "@/services/aiActionService";
@@ -201,7 +202,7 @@ export async function askExecutiveAssistant(input: {
     });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getOpenAIApiKey();
   const configured = Boolean(apiKey);
   const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
 
@@ -244,16 +245,17 @@ export async function askExecutiveAssistant(input: {
           unavailableReason: "A resposta externa foi descartada porque introduziu informação ausente do contexto. O briefing determinístico foi mantido.",
         };
       }
-    } catch {
+    } catch (error) {
+      const code = error instanceof IntegrationError ? error.code : "OPENAI_PROVIDER_ERROR";
       answer = {
         ...answer,
-        unavailableReason: "IA indisponível — o briefing determinístico foi usado. Configure o provedor se quiser narrativa assistida.",
+        unavailableReason: `${friendlyIntegrationMessage(code)} O briefing determinístico foi mantido.`,
       };
     }
   } else if (!configured) {
     answer = {
       ...answer,
-      unavailableReason: "IA indisponível — configure o provedor. O briefing determinístico abaixo usa só dados persistidos.",
+      unavailableReason: `${friendlyIntegrationMessage("OPENAI_MISSING")} O briefing determinístico abaixo usa só dados persistidos.`,
     };
   }
 
@@ -334,28 +336,35 @@ export async function askExecutiveAssistant(input: {
 }
 
 export async function callOpenAIChat(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getOpenAIApiKey();
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY não configurada.");
+    throw new IntegrationError("OPENAI_MISSING");
   }
 
   const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.2,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.2,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (error) {
+    if (error instanceof IntegrationError) throw error;
+    throw new IntegrationError("OPENAI_PROVIDER_ERROR");
+  }
 
   if (!response.ok) {
     await response.text();
-    throw new Error(`OpenAI recusou a chamada (${response.status}).`);
+    throw new IntegrationError(classifyHttpStatus("openai", response.status), response.status);
   }
 
   const json = (await response.json()) as {

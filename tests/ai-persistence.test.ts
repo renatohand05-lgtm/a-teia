@@ -40,7 +40,7 @@ describe("IA executiva persistida e isolamento", () => {
       });
       if (previousKey) process.env.OPENAI_API_KEY = previousKey;
       expect(reply.configured).toBe(false);
-      expect(reply.answer.unavailableReason).toMatch(/configure o provedor/i);
+      expect(reply.answer.unavailableReason).toMatch(/credencial não configurada/i);
       expect(reply.answer.summary).not.toMatch(/80% de chance/);
       expect(reply.destructiveActionsEnabled).toBe(false);
 
