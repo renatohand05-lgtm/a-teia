@@ -111,15 +111,24 @@ Nenhum `.env`, `sk-`, `tvly-` ou Bearer real no Git.
 
 ## 17. Vercel
 
-Aguardando Production Ready após o push em `main`.
+**Ready** — `https://a-teia.vercel.app`  
+Deploy: `https://a-teia-8dmxncgtw-renato16.vercel.app` (47s)
 
 ## 18. OpenAI
 
-Server-side `OPENAI_API_KEY`. Status de produção na última verificação: `configured: true`, modelo `gpt-4.1-mini`. Revalidar `/api/integrations/status` após o deploy.
+Server-side `OPENAI_API_KEY`. Produção após o deploy:
+
+```json
+{ "configured": true, "provider": "openai", "model": "gpt-4.1-mini" }
+```
 
 ## 19. Tavily
 
-Server-side `TAVILY_API_KEY`. Status de produção na última verificação: `configured: true`, `provider: tavily`. Revalidar após o deploy.
+Server-side `TAVILY_API_KEY`. Produção após o deploy:
+
+```json
+{ "configured": true, "provider": "tavily" }
+```
 
 ## 20. Teste J BURGUERS
 
@@ -143,11 +152,10 @@ Kart e notícia off-topic (`semantic_mismatch`), overlap lexical insuficiente (`
 
 ## 23. Pendências reais
 
-1. Walkthrough autenticado em produção após o deploy Ready (J BURGUERS no Assistente).
-2. Confirmar `/api/integrations/status` no alias de produção depois do Vercel Ready.
+1. Walkthrough autenticado em produção (J BURGUERS no Assistente: clicar, pesquisar, abrir fonte). Não bloqueia o motor.
 
-Nenhuma pendência bloqueante do motor: filtro, cards, resumo executivo, testes, tsc, lint e build passaram localmente.
+Nenhuma pendência bloqueante: filtro, cards, resumo executivo, testes, tsc, lint, build, Vercel Ready, OpenAI e Tavily configurados.
 
 ## Encerramento
 
-Do ponto de vista técnico local, o Sprint 8 pode ser considerado **ENCERRADO** após Production Ready + checagem de status. Sprint 9 não foi iniciada.
+Do ponto de vista técnico, o Sprint 8 está **ENCERRADO**. Sprint 9 não foi iniciada.
