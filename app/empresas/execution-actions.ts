@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { executionPlanInputSchema, taskStatusSchema } from "@/lib/validations";
-import { createExecutionPlanFromOpportunity, updateExecutionTaskStatus } from "@/services/executionService";
+import { executionFinanceSchema, executionPlanInputSchema, taskStatusSchema } from "@/lib/validations";
+import {
+  createExecutionPlanFromOpportunity,
+  updateExecutionRealizedFinance,
+  updateExecutionTaskStatus,
+} from "@/services/executionService";
 
 export type FormActionState = { ok: false; error: string } | { ok: true; id?: string };
 
@@ -63,4 +67,27 @@ export async function changeExecutionTaskStatusAction(formData: FormData): Promi
   }
   await updateExecutionTaskStatus(userId, companyId, taskId, parsedStatus.data);
   refresh(companyId, planId);
+}
+
+export async function saveExecutionFinanceAction(
+  _: FormActionState | undefined,
+  formData: FormData,
+): Promise<FormActionState> {
+  const userId = await requireUserId();
+  const parsed = executionFinanceSchema.safeParse({
+    companyId: formData.get("companyId"),
+    planId: formData.get("planId"),
+    realizedCost: formData.get("realizedCost") || undefined,
+    realizedReturn: formData.get("realizedReturn") || undefined,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Informe apenas valores realizados válidos." };
+  }
+  try {
+    await updateExecutionRealizedFinance(userId, parsed.data);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível salvar o realizado." };
+  }
+  refresh(parsed.data.companyId, parsed.data.planId);
+  return { ok: true };
 }

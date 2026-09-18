@@ -11,7 +11,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { addDays, countOverdueTasks, executionProgress, isClosedTaskStatus } from "@/lib/execution";
 import { writeAudit } from "@/services/auditService";
-import type { ExecutionPlanInput } from "@/lib/validations";
+import { toNumber } from "@/lib/format";
+import type { ExecutionFinanceInput, ExecutionPlanInput } from "@/lib/validations";
 
 const planInclude = {
   decision: { include: { opportunity: true } },
@@ -42,6 +43,10 @@ export type ExecutionPlanDTO = {
   decisionStatus: DecisionStatus | null;
   progress: number;
   overdueCount: number;
+  estimatedInvestment: number | null;
+  expectedMonthlyReturn: number | null;
+  realizedCost: number | null;
+  realizedReturn: number | null;
   tasks: ExecutionTaskDTO[];
   createdAt: string;
   updatedAt: string;
@@ -277,8 +282,53 @@ function toExecutionPlanDTO(row: ExecutionPlanRow): ExecutionPlanDTO {
     decisionStatus: row.decision?.status ?? null,
     progress: executionProgress(tasks.map((task) => task.status)),
     overdueCount: countOverdueTasks(tasks, now),
+    estimatedInvestment: toNumber(row.decision?.opportunity?.investment),
+    expectedMonthlyReturn: toNumber(row.decision?.opportunity?.expectedReturn),
+    realizedCost: toNumber(row.realizedCost),
+    realizedReturn: toNumber(row.realizedReturn),
     tasks,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+export async function updateExecutionRealizedFinance(
+  ownerId: string,
+  input: ExecutionFinanceInput,
+): Promise<ExecutionPlanDTO> {
+  await requireCompany(ownerId, input.companyId);
+  const plan = await prisma.actionPlan.findFirst({
+    where: { id: input.planId, companyId: input.companyId, company: { ownerId } },
+  });
+  if (!plan) throw new Error("Plano não encontrado.");
+
+  await prisma.actionPlan.update({
+    where: { id: plan.id },
+    data: {
+      realizedCost: input.realizedCost == null ? null : input.realizedCost,
+      realizedReturn: input.realizedReturn == null ? null : input.realizedReturn,
+    },
+  });
+
+  await writeAudit({
+    actorId: ownerId,
+    action: "execution.finance.realized",
+    entity: "ActionPlan",
+    entityId: plan.id,
+    previousValue: {
+      realizedCost: toNumber(plan.realizedCost),
+      realizedReturn: toNumber(plan.realizedReturn),
+    },
+    newValue: {
+      realizedCost: input.realizedCost ?? null,
+      realizedReturn: input.realizedReturn ?? null,
+    },
+    origin: "USER",
+  });
+
+  const refreshed = await prisma.actionPlan.findFirstOrThrow({
+    where: { id: plan.id, companyId: input.companyId, company: { ownerId } },
+    include: planInclude,
+  });
+  return toExecutionPlanDTO(refreshed);
 }

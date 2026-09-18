@@ -150,6 +150,109 @@ export type ExecutionPlanInput = z.infer<typeof executionPlanInputSchema>;
 
 export const taskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED"]);
 
+function optionalMoney() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().min(0, "Valor não pode ser negativo.").finite().optional());
+}
+
+function optionalPercent() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().min(0, "Percentual mínimo é 0.").max(100, "Percentual máximo é 100.").finite().optional());
+}
+
+function requiredMoney() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return Number.NaN;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().min(0, "Valor não pode ser negativo.").finite());
+}
+
+function requiredPercent() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return Number.NaN;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().min(0).max(100).finite());
+}
+
+export const periodSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  periodMonth: z.coerce.number().int().min(1, "Mês deve ser 1 a 12.").max(12, "Mês deve ser 1 a 12."),
+  periodYear: z.coerce.number().int().min(2000, "Ano inválido.").max(2100, "Ano inválido."),
+});
+
+export const dreInputSchema = periodSchema.extend({
+  grossRevenue: optionalMoney(),
+  deductions: optionalMoney(),
+  cogs: optionalMoney(),
+  payroll: optionalMoney(),
+  rent: optionalMoney(),
+  water: optionalMoney(),
+  energy: optionalMoney(),
+  internet: optionalMoney(),
+  marketing: optionalMoney(),
+  delivery: optionalMoney(),
+  accounting: optionalMoney(),
+  maintenance: optionalMoney(),
+  otherOpex: optionalMoney(),
+  salesCount: optionalNumber(0, 100_000_000, true),
+  notes: optionalText(4000),
+});
+
+export type DreFormInput = z.infer<typeof dreInputSchema>;
+
+export const financialGoalSchema = periodSchema.extend({
+  revenueTarget: optionalMoney(),
+  ebitdaTarget: optionalMoney(),
+  ebitdaPercentTarget: optionalPercent(),
+  cogsPercentTarget: optionalPercent(),
+  payrollPercentTarget: optionalPercent(),
+});
+
+export type FinancialGoalInput = z.infer<typeof financialGoalSchema>;
+
+export const cashFlowInputSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  direction: z.enum(["INFLOW", "OUTFLOW"]),
+  category: z.string().trim().min(2, "Informe a categoria.").max(80),
+  amount: requiredMoney(),
+  occurredAt: z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }, z.date()),
+  description: optionalText(4000),
+});
+
+export type CashFlowInput = z.infer<typeof cashFlowInputSchema>;
+
+export const requiredRevenueSchema = z.object({
+  desiredProfit: requiredMoney(),
+  cogsPercent: requiredPercent(),
+  taxPercent: requiredPercent(),
+  deliveryPercent: requiredPercent(),
+  otherVariablePercent: requiredPercent(),
+  fixedCosts: requiredMoney(),
+});
+
+export type RequiredRevenueFormInput = z.infer<typeof requiredRevenueSchema>;
+
+export const executionFinanceSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  planId: z.string().cuid("Plano inválido."),
+  realizedCost: optionalMoney(),
+  realizedReturn: optionalMoney(),
+});
+
+export type ExecutionFinanceInput = z.infer<typeof executionFinanceSchema>;
+
 export const aiRequestSchema = z.object({
   message: z.string().trim().min(3).max(8000),
   conversationId: z.string().cuid().optional(),

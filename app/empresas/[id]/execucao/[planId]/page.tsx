@@ -6,8 +6,10 @@ import { RiskBadge } from "@/components/ui/RiskBadge";
 import { requireOwnedCompany } from "@/lib/access";
 import { decisionStatusLabel, executionStatusLabel } from "@/lib/execution";
 import { EVIDENCE_LABELS } from "@/lib/opportunity-score";
+import { formatBRL } from "@/lib/format";
 import { getExecutionPlan } from "@/services/executionService";
 import { changeExecutionTaskStatusAction } from "@/app/empresas/execution-actions";
+import { ExecutionFinanceForm } from "@/components/companies/ExecutionFinanceForm";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,23 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
               Resultado da execução: tarefas concluídas. Isso registra o plano como executado — ainda não é evidência validada de causa ou ROI.
             </p>
           ) : null}
+          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Mini label="Investimento previsto" value={formatBRL(plan.estimatedInvestment)} />
+            <Mini label="Retorno esperado" value={formatBRL(plan.expectedMonthlyReturn)} />
+            <Mini label="Custo realizado" value={formatBRL(plan.realizedCost)} />
+            <Mini label="Retorno realizado" value={formatBRL(plan.realizedReturn)} />
+          </div>
+          <p className="mt-3 text-[11px]" style={{ color: "var(--text-3)" }}>
+            Previsto é HIPÓTESE FINANCEIRA. Realizado só aparece se você informar — nunca é copiado do esperado.
+          </p>
+          <div className="mt-4">
+            <ExecutionFinanceForm
+              companyId={id}
+              planId={plan.id}
+              realizedCost={plan.realizedCost}
+              realizedReturn={plan.realizedReturn}
+            />
+          </div>
         </section>
 
         <section className="space-y-3">
@@ -120,5 +139,14 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function Mini({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border p-3" style={{ borderColor: "var(--border)" }}>
+      <div className="text-[10px] uppercase" style={{ color: "var(--text-3)" }}>{label}</div>
+      <div className="mt-1 text-[13px] font-bold">{value}</div>
+    </div>
   );
 }

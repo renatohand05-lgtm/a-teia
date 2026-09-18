@@ -151,9 +151,11 @@ model Company {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
-  metrics            CompanyMetric[]
-  financialRecords   FinancialRecord[]
-  diagnoses          Diagnosis[]
+  metrics              CompanyMetric[]
+  financialRecords     FinancialRecord[]
+  financialStatements  FinancialStatement[]
+  financialGoals       FinancialGoal[]
+  diagnoses            Diagnosis[]
   connectionsFrom    Connection[]      @relation("ConnectionFrom")
   connectionsTo      Connection[]      @relation("ConnectionTo")
   opportunities      Opportunity[]
@@ -207,21 +209,73 @@ model CompanyMetric {
   @@index([companyId, name, capturedAt])
 }
 
-/// Lançamentos financeiros imutáveis após criação (correção = novo registro).
+/// Lançamentos de caixa. Correção = novo registro. Sempre com competência mensal.
 model FinancialRecord {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   kind        String
-  amount      Decimal  @db.Decimal(14, 2)
-  currency    String   @default("BRL")
+  category    String?
+  amount      Decimal       @db.Decimal(14, 2)
+  currency    String        @default("BRL")
   occurredAt  DateTime
+  periodMonth Int
+  periodYear  Int
   description String?
   sourceKind  KnowledgeKind @default(INTERNAL_DATA)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([companyId, occurredAt])
+  @@index([companyId, periodYear, periodMonth])
+}
+
+/// DRE gerencial mensal. Campo nulo = sem dado informado. Zero = usuário registrou zero.
+model FinancialStatement {
+  id            String   @id @default(cuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodMonth   Int
+  periodYear    Int
+  grossRevenue  Decimal? @db.Decimal(14, 2)
+  deductions    Decimal? @db.Decimal(14, 2)
+  cogs          Decimal? @db.Decimal(14, 2)
+  payroll       Decimal? @db.Decimal(14, 2)
+  rent          Decimal? @db.Decimal(14, 2)
+  water         Decimal? @db.Decimal(14, 2)
+  energy        Decimal? @db.Decimal(14, 2)
+  internet      Decimal? @db.Decimal(14, 2)
+  marketing     Decimal? @db.Decimal(14, 2)
+  delivery      Decimal? @db.Decimal(14, 2)
+  accounting    Decimal? @db.Decimal(14, 2)
+  maintenance   Decimal? @db.Decimal(14, 2)
+  otherOpex     Decimal? @db.Decimal(14, 2)
+  salesCount    Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([companyId, periodYear, periodMonth])
+  @@index([companyId, periodYear, periodMonth])
+}
+
+/// Metas financeiras da competência. Nulo = meta não definida.
+model FinancialGoal {
+  id                   String   @id @default(cuid())
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodMonth          Int
+  periodYear           Int
+  revenueTarget        Decimal? @db.Decimal(14, 2)
+  ebitdaTarget         Decimal? @db.Decimal(14, 2)
+  ebitdaPercentTarget  Decimal? @db.Decimal(8, 2)
+  cogsPercentTarget    Decimal? @db.Decimal(8, 2)
+  payrollPercentTarget Decimal? @db.Decimal(8, 2)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([companyId, periodYear, periodMonth])
+  @@index([companyId, periodYear, periodMonth])
 }
 
 /// Histórico append-only. Novo diagnóstico = nova linha. Score 360 = (soma / 50) × 100.
@@ -377,11 +431,13 @@ model ActionPlan {
   decision    Decision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
   ownerId     String?
   owner       User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  title       String
-  summary     String?
-  horizonDays Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  title          String
+  summary        String?
+  horizonDays    Int?
+  realizedCost   Decimal? @db.Decimal(14, 2)
+  realizedReturn Decimal? @db.Decimal(14, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   tasks Task[]
 }

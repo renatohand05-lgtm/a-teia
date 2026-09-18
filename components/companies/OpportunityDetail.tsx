@@ -10,7 +10,8 @@ import {
   OPPORTUNITY_STATUS_LABELS,
   ORIGIN_LABELS,
 } from "@/lib/opportunity-score";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatPercent } from "@/lib/format";
+import { calculatePayback, calculateROI } from "@/lib/financial-engine";
 import type { OpportunityDTO } from "@/services/opportunityService";
 
 export function OpportunityDetail({
@@ -74,7 +75,26 @@ export function OpportunityDetail({
             opportunity.paybackMonths != null ? `${opportunity.paybackMonths} mês(es)` : "Sem dado financeiro"
           }
         />
+        <Mini
+          label="ROI simples 12 meses"
+          value={
+            calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) != null
+              ? formatPercent(calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn))
+              : "Sem investimento informado"
+          }
+        />
       </section>
+      {opportunity.estimatedInvestment != null || opportunity.expectedMonthlyReturn != null ? (
+        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <RiskBadge label="HIPÓTESE FINANCEIRA" tone="warn" />
+          <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+            Investimento {formatBRL(opportunity.estimatedInvestment)} e retorno mensal esperado{" "}
+            {formatBRL(opportunity.expectedMonthlyReturn)} não são realizados. Payback{" "}
+            {calculatePayback(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) ?? "n/d"} mês(es)
+            até existir evidência medida.
+          </p>
+        </section>
+      ) : null}
 
       {opportunity.description ? <Block title="Observações" body={opportunity.description} /> : null}
 

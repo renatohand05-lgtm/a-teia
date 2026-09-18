@@ -9,6 +9,7 @@ import { getOnboarding } from "@/services/onboardingService";
 import { getLatestDiagnosis, listDiagnoses } from "@/services/diagnosisService";
 import { getOpportunitySummary, getTopOpportunities } from "@/services/opportunityService";
 import { getExecutionSummary } from "@/services/executionService";
+import { getFinancialMiniSummary } from "@/services/financialService";
 
 export const dynamic = "force-dynamic";
 
@@ -16,21 +17,38 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { userId, name, company } = await requireOwnedCompany(id);
 
-  const [onboarding, latest, history, summary, top, execution] = await Promise.all([
+  const [onboarding, latest, history, summary, top, execution, finance] = await Promise.all([
     getOnboarding(userId, id),
     getLatestDiagnosis(userId, id),
     listDiagnoses(userId, id),
     getOpportunitySummary(userId, id),
     getTopOpportunities(userId, id, 3),
     getExecutionSummary(userId, id),
+    getFinancialMiniSummary(userId, id),
   ]);
+  const financeSummary = finance
+    ? {
+        revenue: finance.dre.grossRevenue,
+        ebitda: finance.dre.ebitda,
+        ebitdaPercent: finance.ratios.ebitdaPercent,
+        cogsPercent: finance.ratios.cogsPercent,
+        breakEven: finance.breakEven.value,
+        revenueGap: finance.comparisons.revenue.difference,
+      }
+    : null;
 
   const boundUpdate = updateCompanyAction.bind(null, company.id);
 
   return (
     <AppShell title={company.name} subtitle="Central da empresa" userName={name}>
       <div className="mx-auto max-w-[1480px] space-y-8">
-        <CompanyCockpit company={company} onboarding={onboarding} latest={latest} historyCount={history.length} />
+        <CompanyCockpit
+          company={company}
+          onboarding={onboarding}
+          latest={latest}
+          historyCount={history.length}
+          finance={financeSummary}
+        />
         <OpportunityOverview companyId={company.id} summary={summary} top={top} />
 
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>

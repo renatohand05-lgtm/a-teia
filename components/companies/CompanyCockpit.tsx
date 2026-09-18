@@ -6,18 +6,27 @@ import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 
-const FUTURE = ["Experimentos", "Financeiro", "Memória estratégica"];
+const FUTURE = ["Experimentos", "Memória estratégica"];
 
 export function CompanyCockpit({
   company,
   onboarding,
   latest,
   historyCount,
+  finance,
 }: {
   company: CompanyDTO;
   onboarding: OnboardingDTO | null;
   latest: DiagnosisDTO | null;
   historyCount: number;
+  finance?: {
+    revenue: number | null;
+    ebitda: number | null;
+    ebitdaPercent: number | null;
+    cogsPercent: number | null;
+    breakEven: number | null;
+    revenueGap: number | null;
+  } | null;
 }) {
   const onboardingLabel = !onboarding ? "Não iniciado" : onboarding.status === "COMPLETE" ? "Completo" : "Em andamento";
 
@@ -96,7 +105,24 @@ export function CompanyCockpit({
           </GhostLink>
         ) : null}
         <GhostLink href={`/empresas/${company.id}/execucao`}>Execução 30/60/90</GhostLink>
+        <GoldLink href={`/empresas/${company.id}/financeiro`}>Ver financeiro</GoldLink>
       </section>
+
+      {finance ? (
+        <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
+            Resumo financeiro
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
+            <Mini label="Receita" value={finance.revenue != null ? String(finance.revenue.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+            <Mini label="EBITDA" value={finance.ebitda != null ? String(finance.ebitda.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+            <Mini label="EBITDA %" value={finance.ebitdaPercent != null ? `${finance.ebitdaPercent}%` : "—"} />
+            <Mini label="CMV %" value={finance.cogsPercent != null ? `${finance.cogsPercent}%` : "—"} />
+            <Mini label="Ponto de equilíbrio" value={finance.breakEven != null ? String(finance.breakEven.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+            <Mini label="Gap para meta" value={finance.revenueGap != null ? String(finance.revenueGap.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+          </div>
+        </section>
+      ) : null}
 
       <section>
         <h3 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
