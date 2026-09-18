@@ -44,9 +44,24 @@ enum TaskStatus {
 
 enum ExperimentStatus {
   PLANNED
+  DRAFT
+  READY
   RUNNING
   COMPLETED
   ABANDONED
+  CANCELLED
+}
+
+enum ExperimentDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+enum ExperimentClassification {
+  VALIDATED
+  PARTIALLY_VALIDATED
+  INCONCLUSIVE
+  REFUTED
 }
 
 enum AuditSource {
@@ -108,6 +123,30 @@ enum OpportunityOrigin {
   MANUAL
 }
 
+enum MemoryOrigin {
+  OBSERVATION
+  EXPERIMENT_EVIDENCE
+  MANUAL_LESSON
+}
+
+enum MemoryConfidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MemoryStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
+enum MemoryPolarity {
+  POSITIVE
+  NEGATIVE
+  INCONCLUSIVE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -126,9 +165,12 @@ model User {
   auditLogs         AuditLog[]
   uploadedFiles     StoredFile[]
   memories          StrategicMemory[]
+  approvedMemories  StrategicMemory[] @relation("MemoryApprover")
   onboardings       CompanyOnboarding[]
   diagnoses         Diagnosis[]
   opportunities     Opportunity[]
+  experiments       Experiment[]
+  experimentResults ExperimentResult[]
 }
 
 model Company {
@@ -151,9 +193,11 @@ model Company {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
-  metrics            CompanyMetric[]
-  financialRecords   FinancialRecord[]
-  diagnoses          Diagnosis[]
+  metrics              CompanyMetric[]
+  financialRecords     FinancialRecord[]
+  financialStatements  FinancialStatement[]
+  financialGoals       FinancialGoal[]
+  diagnoses            Diagnosis[]
   connectionsFrom    Connection[]      @relation("ConnectionFrom")
   connectionsTo      Connection[]      @relation("ConnectionTo")
   opportunities      Opportunity[]
@@ -207,21 +251,73 @@ model CompanyMetric {
   @@index([companyId, name, capturedAt])
 }
 
-/// Lançamentos financeiros imutáveis após criação (correção = novo registro).
+/// Lançamentos de caixa. Correção = novo registro. Sempre com competência mensal.
 model FinancialRecord {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   kind        String
-  amount      Decimal  @db.Decimal(14, 2)
-  currency    String   @default("BRL")
+  category    String?
+  amount      Decimal       @db.Decimal(14, 2)
+  currency    String        @default("BRL")
   occurredAt  DateTime
+  periodMonth Int
+  periodYear  Int
   description String?
   sourceKind  KnowledgeKind @default(INTERNAL_DATA)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([companyId, occurredAt])
+  @@index([companyId, periodYear, periodMonth])
+}
+
+/// DRE gerencial mensal. Campo nulo = sem dado informado. Zero = usuário registrou zero.
+model FinancialStatement {
+  id            String   @id @default(cuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodMonth   Int
+  periodYear    Int
+  grossRevenue  Decimal? @db.Decimal(14, 2)
+  deductions    Decimal? @db.Decimal(14, 2)
+  cogs          Decimal? @db.Decimal(14, 2)
+  payroll       Decimal? @db.Decimal(14, 2)
+  rent          Decimal? @db.Decimal(14, 2)
+  water         Decimal? @db.Decimal(14, 2)
+  energy        Decimal? @db.Decimal(14, 2)
+  internet      Decimal? @db.Decimal(14, 2)
+  marketing     Decimal? @db.Decimal(14, 2)
+  delivery      Decimal? @db.Decimal(14, 2)
+  accounting    Decimal? @db.Decimal(14, 2)
+  maintenance   Decimal? @db.Decimal(14, 2)
+  otherOpex     Decimal? @db.Decimal(14, 2)
+  salesCount    Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([companyId, periodYear, periodMonth])
+  @@index([companyId, periodYear, periodMonth])
+}
+
+/// Metas financeiras da competência. Nulo = meta não definida.
+model FinancialGoal {
+  id                   String   @id @default(cuid())
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodMonth          Int
+  periodYear           Int
+  revenueTarget        Decimal? @db.Decimal(14, 2)
+  ebitdaTarget         Decimal? @db.Decimal(14, 2)
+  ebitdaPercentTarget  Decimal? @db.Decimal(8, 2)
+  cogsPercentTarget    Decimal? @db.Decimal(8, 2)
+  payrollPercentTarget Decimal? @db.Decimal(8, 2)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([companyId, periodYear, periodMonth])
+  @@index([companyId, periodYear, periodMonth])
 }
 
 /// Histórico append-only. Novo diagnóstico = nova linha. Score 360 = (soma / 50) × 100.
@@ -320,6 +416,8 @@ model Opportunity {
 
   decisions   Decision[]
   experiments Experiment[]
+  evidence    Evidence[]
+  memories    StrategicMemory[]
 
   @@index([companyId, status])
   @@index([companyId, score])
@@ -337,7 +435,9 @@ model Strategy {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  decisions Decision[]
+  decisions   Decision[]
+  experiments Experiment[]
+  memories    StrategicMemory[]
 
   @@index([companyId])
 }
@@ -377,13 +477,16 @@ model ActionPlan {
   decision    Decision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
   ownerId     String?
   owner       User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  title       String
-  summary     String?
-  horizonDays Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  title          String
+  summary        String?
+  horizonDays    Int?
+  realizedCost   Decimal? @db.Decimal(14, 2)
+  realizedReturn Decimal? @db.Decimal(14, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  tasks Task[]
+  tasks       Task[]
+  experiments Experiment[]
 }
 
 model Task {
@@ -401,68 +504,136 @@ model Task {
 }
 
 model Experiment {
-  id            String           @id @default(cuid())
-  companyId     String?
-  company       Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  opportunityId String?
-  opportunity   Opportunity?     @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  title         String
-  hypothesis    String?
-  kpi           String?
-  investment    Decimal?         @db.Decimal(14, 2)
-  status        ExperimentStatus @default(PLANNED)
-  startedAt     DateTime?
-  endedAt       DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                   String                     @id @default(cuid())
+  companyId            String?
+  company              Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  opportunityId        String?
+  opportunity          Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  actionPlanId         String?
+  actionPlan           ActionPlan?                @relation(fields: [actionPlanId], references: [id], onDelete: SetNull)
+  strategyId           String?
+  strategy             Strategy?                  @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  createdById          String?
+  createdBy            User?                      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  title                String
+  hypothesis           String?
+  kpi                  String?
+  kpiUnit              String?
+  direction            ExperimentDirection        @default(HIGHER_IS_BETTER)
+  baseline             Decimal?                   @db.Decimal(14, 4)
+  target               Decimal?                   @db.Decimal(14, 4)
+  testDescription      String?
+  successCriteria      String?
+  notes                String?
+  investment           Decimal?                   @db.Decimal(14, 2)
+  realizedInvestment   Decimal?                   @db.Decimal(14, 2)
+  realizedReturn       Decimal?                   @db.Decimal(14, 2)
+  status               ExperimentStatus           @default(PLANNED)
+  classification       ExperimentClassification?
+  classificationReason String?
+  finalValue           Decimal?                   @db.Decimal(14, 4)
+  startedAt            DateTime?
+  plannedEndAt         DateTime?
+  endedAt              DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
 
-  results ExperimentResult[]
+  results  ExperimentResult[]
+  evidence Evidence[]
+  memories StrategicMemory[]
+
+  @@index([companyId, status])
+  @@index([opportunityId])
+  @@index([actionPlanId])
 }
 
 /// Resultados nunca substituem o registro anterior — novo resultado = nova linha.
 model ExperimentResult {
-  id           String     @id @default(cuid())
-  experimentId String
-  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  outcome      String
-  measuredValue Decimal?  @db.Decimal(14, 4)
-  notes        String?
-  recordedAt   DateTime   @default(now())
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id            String      @id @default(cuid())
+  experimentId  String
+  experiment    Experiment  @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  recordedById  String?
+  recordedBy    User?       @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  outcome       String
+  measuredValue Decimal?    @db.Decimal(14, 4)
+  notes         String?
+  recordedAt    DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([experimentId, recordedAt])
 }
 
 model Evidence {
-  id         String        @id @default(cuid())
-  companyId  String?
-  company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  kind       KnowledgeKind
-  title      String
-  body       String
-  url        String?
-  confidence Int?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id             String                     @id @default(cuid())
+  companyId      String?
+  company        Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  experimentId   String?
+  experiment     Experiment?                @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  opportunityId  String?
+  opportunity    Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  kind           KnowledgeKind
+  title          String
+  body           String
+  url            String?
+  confidence     Int?
+  classification ExperimentClassification?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  memories StrategicMemory[]
 
   @@index([companyId, kind])
+  @@index([experimentId])
 }
 
 /// Memória estratégica é acumulativa: aprendizados novos não apagam os anteriores.
 model StrategicMemory {
-  id         String   @id @default(cuid())
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  authorId   String?
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  title      String
-  lesson     String
-  validated  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String                     @id @default(cuid())
+  companyId       String?
+  company         Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  authorId        String?
+  author          User?                      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  title           String
+  lesson          String
+  validated       Boolean                    @default(false)
+  origin          MemoryOrigin               @default(OBSERVATION)
+  status          MemoryStatus               @default(PROPOSED)
+  confidence      MemoryConfidence           @default(LOW)
+  polarity        MemoryPolarity?
+  evidenceId      String?
+  evidence        Evidence?                  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  experimentId    String?
+  experiment      Experiment?                @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  opportunityId   String?
+  opportunity     Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  strategyId      String?
+  strategy        Strategy?                  @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  context         String?
+  segment         String?
+  kpi             String?
+  family          String?
+  baseline        Decimal?                   @db.Decimal(14, 4)
+  target          Decimal?                   @db.Decimal(14, 4)
+  measuredResult  Decimal?                   @db.Decimal(14, 4)
+  classification  ExperimentClassification?
+  limitations     String?
+  conditions      String?
+  investment      Decimal?                   @db.Decimal(14, 2)
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  approvedById    String?
+  approvedBy      User?                      @relation("MemoryApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt      DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
 
   @@index([companyId, createdAt])
+  @@index([companyId, status])
+  @@index([origin, status])
+  @@index([family, kpi])
+  @@index([evidenceId])
+  @@index([experimentId])
 }
 
 model AIConversation {

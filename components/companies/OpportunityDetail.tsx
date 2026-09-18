@@ -10,15 +10,34 @@ import {
   OPPORTUNITY_STATUS_LABELS,
   ORIGIN_LABELS,
 } from "@/lib/opportunity-score";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatPercent } from "@/lib/format";
+import { calculatePayback, calculateROI } from "@/lib/financial-engine";
 import type { OpportunityDTO } from "@/services/opportunityService";
+import type { ExperimentDTO } from "@/services/experimentService";
+import type { RelatedMemoryDTO } from "@/services/memoryService";
+import type { ScorePreview, RepetitionSummary } from "@/lib/memory-engine";
+import { ExperimentClassBadge, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
+import {
+  MemoryConfidenceBadge,
+  MemoryPolarityBadge,
+} from "@/components/companies/MemoryBadges";
 
 export function OpportunityDetail({
   companyId,
   opportunity,
+  experiments = [],
+  relatedMemories = [],
+  scorePreview,
+  memoryConflicts = 0,
+  repetition,
 }: {
   companyId: string;
   opportunity: OpportunityDTO;
+  experiments?: ExperimentDTO[];
+  relatedMemories?: RelatedMemoryDTO[];
+  scorePreview?: ScorePreview;
+  memoryConflicts?: number;
+  repetition?: RepetitionSummary;
 }) {
   return (
     <div className="space-y-5">
@@ -74,7 +93,26 @@ export function OpportunityDetail({
             opportunity.paybackMonths != null ? `${opportunity.paybackMonths} mês(es)` : "Sem dado financeiro"
           }
         />
+        <Mini
+          label="ROI simples 12 meses"
+          value={
+            calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) != null
+              ? formatPercent(calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn))
+              : "Sem investimento informado"
+          }
+        />
       </section>
+      {opportunity.estimatedInvestment != null || opportunity.expectedMonthlyReturn != null ? (
+        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <RiskBadge label="HIPÓTESE FINANCEIRA" tone="warn" />
+          <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+            Investimento {formatBRL(opportunity.estimatedInvestment)} e retorno mensal esperado{" "}
+            {formatBRL(opportunity.expectedMonthlyReturn)} não são realizados. Payback{" "}
+            {calculatePayback(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) ?? "n/d"} mês(es)
+            até existir evidência medida.
+          </p>
+        </section>
+      ) : null}
 
       {opportunity.description ? <Block title="Observações" body={opportunity.description} /> : null}
 
@@ -100,9 +138,107 @@ export function OpportunityDetail({
             {opportunity.queuedForPlan ? "Na fila do plano 30/60/90" : "Preparar para plano de ação"}
           </button>
         </form>
+        <Link
+          href={`/empresas/${companyId}/execucao/novo?opportunityId=${opportunity.id}`}
+          className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+          style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+        >
+          Criar plano 30/60/90
+        </Link>
+        <Link
+          href={`/empresas/${companyId}/experimentos/novo?opportunityId=${opportunity.id}`}
+          className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+        >
+          Testar oportunidade
+        </Link>
+      </section>
+      <section className="space-y-3">
+        <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+          Aprendizados relacionados
+        </h3>
+        {relatedMemories.length === 0 ? (
+          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            Nenhum aprendizado relacionado ainda. O score original permanece.
+          </p>
+        ) : (
+          <>
+            <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+              {relatedMemories.length} evidência(s) anterior(es) relacionada(s)
+              {repetition ? ` · ${repetition.label} (${repetition.positive} positivas, ${repetition.partial} parciais, ${repetition.inconclusive} inconclusivas, ${repetition.refuted} refutadas)` : ""}.
+              {memoryConflicts > 0 ? " Evidências divergentes." : ""}
+            </p>
+            {relatedMemories.map((item) => (
+              <Link
+                key={item.id}
+                href={item.companyId ? `/empresas/${item.companyId}/memoria/${item.id}` : `/empresas/${companyId}/memoria`}
+                className="block rounded-2xl border p-4"
+                style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-bold">{item.title}</div>
+                  <div className="flex flex-wrap gap-2">
+                    <MemoryPolarityBadge polarity={item.polarity} />
+                    <MemoryConfidenceBadge confidence={item.confidence} />
+                  </div>
+                </div>
+                <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                  {item.companyName} · {item.segment ?? "segmento não informado"} · {item.matchKind === "EXACT" ? "memória exata" : "aprendizado potencialmente transferível"}
+                </p>
+                <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>
+                  {item.transferability.label} · {item.explanation}
+                </p>
+              </Link>
+            ))}
+          </>
+        )}
+        {scorePreview ? (
+          <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+              Preview de impacto — ranking não alterado
+            </p>
+            <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+              scoreBase {scorePreview.scoreBase} · memoryAdjustment {scorePreview.memoryAdjustment > 0 ? "+" : ""}
+              {scorePreview.memoryAdjustment} · scoreFinal {scorePreview.scoreFinal}
+            </p>
+            <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>{scorePreview.explanation}</p>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+          Experimentos vinculados
+        </h3>
+        {experiments.length === 0 ? (
+          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            Nenhum teste ainda. Uma oportunidade pode ter vários experimentos — uma tentativa não vira verdade universal.
+          </p>
+        ) : (
+          experiments.map((item) => (
+            <Link
+              key={item.id}
+              href={`/empresas/${companyId}/experimentos/${item.id}`}
+              className="block rounded-2xl border p-4"
+              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="font-bold">{item.title}</div>
+                <div className="flex flex-wrap gap-2">
+                  <ExperimentStatusBadge status={item.status} />
+                  <ExperimentClassBadge classification={item.classification} />
+                </div>
+              </div>
+              <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                KPI {item.kpi ?? "—"} · resultado {item.finalValue ?? item.latestMeasurement ?? "em aberto"}
+                {item.evidence.length ? " · evidência rastreável" : " · sem evidência ainda"}
+              </p>
+            </Link>
+          ))
+        )}
       </section>
       <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-        Plano 30/60/90, tarefas e experimentos ficam para a próxima sprint. Esta ação só marca a hipótese como pronta para o plano.
+        Executar o plano não transforma a hipótese em evidência validada. Evidência só nasce de resultado real medido.
       </p>
     </div>
   );
