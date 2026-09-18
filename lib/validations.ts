@@ -1,12 +1,11 @@
 import { z } from "zod";
 
 function optionalText(max: number) {
-  return z
-    .string()
-    .trim()
-    .max(max)
-    .optional()
-    .transform((v) => (v && v.length ? v : undefined));
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const trimmed = String(value).trim();
+    return trimmed.length ? trimmed : undefined;
+  }, z.string().max(max).optional());
 }
 
 function optionalNumber(min: number, max: number, int = false) {
@@ -128,17 +127,7 @@ export const opportunityInputSchema = z.object({
   diagnosisId: z.string().cuid().optional(),
 });
 
-export type OpportunityInput = Omit<
-  z.infer<typeof opportunityInputSchema>,
-  "description" | "confidence" | "estimatedInvestment" | "estimatedHours" | "expectedMonthlyReturn" | "diagnosisId"
-> & {
-  confidence?: number;
-  description?: string;
-  estimatedInvestment?: number;
-  estimatedHours?: number;
-  expectedMonthlyReturn?: number;
-  diagnosisId?: string;
-};
+export type OpportunityInput = z.infer<typeof opportunityInputSchema>;
 
 export const generateOpportunitiesSchema = z.object({
   diagnosisId: z.string().cuid("Diagnóstico inválido."),
