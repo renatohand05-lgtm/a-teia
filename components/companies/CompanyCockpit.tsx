@@ -109,7 +109,10 @@ export function CompanyCockpit({
             {next.body}
           </p>
         </div>
-        <GoldLink href={next.href}>{next.cta}</GoldLink>
+        <div className="flex flex-wrap gap-2">
+          <GoldLink href={`/empresas/${company.id}/assistente`}>Analisar com IA</GoldLink>
+          <GoldLink href={next.href}>{next.cta}</GoldLink>
+        </div>
       </section>
       <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <div

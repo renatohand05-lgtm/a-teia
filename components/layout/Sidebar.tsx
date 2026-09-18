@@ -80,8 +80,13 @@ export function Sidebar() {
 
         <GroupLabel>Inteligência</GroupLabel>
         {INTELLIGENCE_NAV.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return <NavLink key={`intel-${item.href}`} href={item.href} active={active} label={item.label} />;
+          const href =
+            item.href === "/assistente" && companyId ? `/empresas/${companyId}/assistente` : item.href;
+          const active =
+            item.href === "/assistente"
+              ? pathname.includes("/assistente")
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return <NavLink key={`intel-${item.href}`} href={href} active={active} label={item.label} />;
         })}
 
         <GroupLabel>Em breve</GroupLabel>

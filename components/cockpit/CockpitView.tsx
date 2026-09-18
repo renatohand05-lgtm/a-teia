@@ -234,6 +234,21 @@ export function CockpitView({
               </Link>
             </ActionPanel>
           </div>
+          <Link
+            href={briefing.companyId ? `/empresas/${briefing.companyId}/assistente` : "/assistente"}
+            className="mt-3 flex items-center justify-between rounded-2xl border px-4 py-3"
+            style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.08)" }}
+          >
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+                Assistente IA
+              </p>
+              <p className="mt-1 text-[14px] font-bold">Perguntar à A TEIA</p>
+            </div>
+            <span className="text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
+              Abrir →
+            </span>
+          </Link>
         </div>
       </section>
 

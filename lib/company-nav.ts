@@ -62,6 +62,12 @@ export const COMPANY_NAV: CompanyNavItem[] = [
     href: (id) => `/empresas/${id}/memoria`,
     match: (pathname) => pathname.includes("/memoria"),
   },
+  {
+    key: "assistente",
+    label: "Assistente IA",
+    href: (id) => `/empresas/${id}/assistente`,
+    match: (pathname) => pathname.includes("/assistente"),
+  },
 ];
 
 const RESERVED = new Set(["nova"]);
@@ -88,6 +94,7 @@ export const COMPANY_MODULE_TABS: Array<{ key: string; label: string }> = [
   { key: "financeiro", label: "Financeiro" },
   { key: "experimentos", label: "Experimentos" },
   { key: "memoria", label: "Memória" },
+  { key: "assistente", label: "Assistente IA" },
 ];
 
 export const MODULE_PICKER_LABELS: Record<string, string> = {
@@ -103,6 +110,7 @@ export const MODULE_PICKER_LABELS: Record<string, string> = {
   experimentos: "Experimentos",
   evidencias: "Evidências",
   memoria: "Memória estratégica",
+  assistente: "Assistente IA",
 };
 
 export function findCompanyNav(key: string) {
