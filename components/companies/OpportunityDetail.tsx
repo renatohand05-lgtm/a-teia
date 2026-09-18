@@ -100,9 +100,16 @@ export function OpportunityDetail({
             {opportunity.queuedForPlan ? "Na fila do plano 30/60/90" : "Preparar para plano de ação"}
           </button>
         </form>
+        <Link
+          href={`/empresas/${companyId}/execucao/novo?opportunityId=${opportunity.id}`}
+          className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+          style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+        >
+          Criar plano 30/60/90
+        </Link>
       </section>
       <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-        Plano 30/60/90, tarefas e experimentos ficam para a próxima sprint. Esta ação só marca a hipótese como pronta para o plano.
+        Executar o plano não transforma a hipótese em evidência validada. Evidência só nasce de resultado real medido.
       </p>
     </div>
   );

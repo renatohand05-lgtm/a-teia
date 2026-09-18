@@ -128,7 +128,17 @@ export const opportunityInputSchema = z.object({
   diagnosisId: z.string().cuid().optional(),
 });
 
-export type OpportunityInput = z.infer<typeof opportunityInputSchema>;
+export type OpportunityInput = Omit<
+  z.infer<typeof opportunityInputSchema>,
+  "description" | "confidence" | "estimatedInvestment" | "estimatedHours" | "expectedMonthlyReturn" | "diagnosisId"
+> & {
+  confidence?: number;
+  description?: string;
+  estimatedInvestment?: number;
+  estimatedHours?: number;
+  expectedMonthlyReturn?: number;
+  diagnosisId?: string;
+};
 
 export const generateOpportunitiesSchema = z.object({
   diagnosisId: z.string().cuid("Diagnóstico inválido."),
@@ -136,6 +146,20 @@ export const generateOpportunitiesSchema = z.object({
 });
 
 export type GenerateOpportunitiesInput = z.infer<typeof generateOpportunitiesSchema>;
+
+export const executionPlanInputSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  opportunityId: z.string().cuid("Oportunidade inválida."),
+  title: z.string().trim().min(3, "Informe um título com pelo menos 3 caracteres.").max(160),
+  summary: optionalText(4000),
+  goal30: z.string().trim().min(8, "Descreva o horizonte de 0–30 dias.").max(4000),
+  goal60: z.string().trim().min(8, "Descreva o horizonte de 31–60 dias.").max(4000),
+  goal90: z.string().trim().min(8, "Descreva o horizonte de 61–90 dias.").max(4000),
+});
+
+export type ExecutionPlanInput = z.infer<typeof executionPlanInputSchema>;
+
+export const taskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED"]);
 
 export const aiRequestSchema = z.object({
   message: z.string().trim().min(3).max(8000),

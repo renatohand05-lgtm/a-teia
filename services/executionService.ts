@@ -1,17 +1,24 @@
 import "server-only";
 
-import { DecisionStatus, OpportunityStatus, TaskStatus } from "@prisma/client";
+import {
+  AuditSource,
+  DecisionStatus,
+  EvidenceLevel,
+  OpportunityStatus,
+  Prisma,
+  TaskStatus,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { addDays, executionProgress } from "@/lib/execution";
+import { addDays, countOverdueTasks, executionProgress, isClosedTaskStatus } from "@/lib/execution";
 import { writeAudit } from "@/services/auditService";
+import type { ExecutionPlanInput } from "@/lib/validations";
 
-export type CreateExecutionPlanInput = {
-  title: string;
-  summary?: string | null;
-  goal30: string;
-  goal60: string;
-  goal90: string;
-};
+const planInclude = {
+  decision: { include: { opportunity: true } },
+  tasks: { orderBy: { dueAt: "asc" as const } },
+} satisfies Prisma.ActionPlanInclude;
+
+type ExecutionPlanRow = Prisma.ActionPlanGetPayload<{ include: typeof planInclude }>;
 
 export type ExecutionTaskDTO = {
   id: string;
@@ -19,6 +26,7 @@ export type ExecutionTaskDTO = {
   details: string | null;
   status: TaskStatus;
   dueAt: string | null;
+  overdue: boolean;
 };
 
 export type ExecutionPlanDTO = {
@@ -30,8 +38,10 @@ export type ExecutionPlanDTO = {
   horizonDays: number | null;
   opportunityId: string | null;
   opportunityTitle: string | null;
+  opportunityEvidenceLevel: EvidenceLevel | null;
   decisionStatus: DecisionStatus | null;
   progress: number;
+  overdueCount: number;
   tasks: ExecutionTaskDTO[];
   createdAt: string;
   updatedAt: string;
@@ -46,19 +56,18 @@ async function requireCompany(ownerId: string, companyId: string) {
 export async function createExecutionPlanFromOpportunity(
   ownerId: string,
   companyId: string,
-  opportunityId: string,
-  input: CreateExecutionPlanInput,
+  input: ExecutionPlanInput,
 ): Promise<ExecutionPlanDTO> {
   await requireCompany(ownerId, companyId);
 
   const opportunity = await prisma.opportunity.findFirst({
-    where: { id: opportunityId, companyId, company: { ownerId } },
+    where: { id: input.opportunityId, companyId, company: { ownerId } },
   });
   if (!opportunity) throw new Error("Oportunidade não encontrada.");
 
   const existing = await prisma.actionPlan.findFirst({
-    where: { companyId, decision: { opportunityId } },
-    include: { decision: true, tasks: { orderBy: { dueAt: "asc" } } },
+    where: { companyId, company: { ownerId }, decision: { opportunityId: opportunity.id } },
+    include: planInclude,
   });
   if (existing) return toExecutionPlanDTO(existing);
 
@@ -67,14 +76,15 @@ export async function createExecutionPlanFromOpportunity(
     const decision = await tx.decision.create({
       data: {
         companyId,
-        opportunityId,
+        opportunityId: opportunity.id,
         createdById: ownerId,
         title: `Executar: ${opportunity.title}`,
         rationale:
           opportunity.hypothesis ||
           opportunity.problemStatement ||
-          "Oportunidade priorizada para execução.",
+          "Hipótese priorizada pelo usuário para execução. Ainda não é evidência.",
         status: DecisionStatus.APPROVED,
+        origin: AuditSource.USER,
         requiresHumanApproval: true,
         approvedAt: now,
       },
@@ -121,13 +131,17 @@ export async function createExecutionPlanFromOpportunity(
     });
 
     await tx.opportunity.update({
-      where: { id: opportunityId },
-      data: { queuedForPlan: false, status: OpportunityStatus.IN_PROGRESS },
+      where: { id: opportunity.id },
+      data: {
+        queuedForPlan: false,
+        status: OpportunityStatus.IN_PROGRESS,
+        evidenceLevel: opportunity.evidenceLevel,
+      },
     });
 
     return tx.actionPlan.findUniqueOrThrow({
       where: { id: createdPlan.id },
-      include: { decision: { include: { opportunity: true } }, tasks: { orderBy: { dueAt: "asc" } } },
+      include: planInclude,
     });
   });
 
@@ -136,7 +150,7 @@ export async function createExecutionPlanFromOpportunity(
     action: "execution.plan.create",
     entity: "ActionPlan",
     entityId: plan.id,
-    newValue: { title: plan.title, opportunityId, horizonDays: 90 },
+    newValue: { title: plan.title, opportunityId: opportunity.id, horizonDays: 90 },
     origin: "USER",
   });
 
@@ -148,8 +162,8 @@ export async function listExecutionPlans(ownerId: string, companyId: string): Pr
   if (!company) return [];
 
   const plans = await prisma.actionPlan.findMany({
-    where: { companyId },
-    include: { decision: { include: { opportunity: true } }, tasks: { orderBy: { dueAt: "asc" } } },
+    where: { companyId, company: { ownerId } },
+    include: planInclude,
     orderBy: { updatedAt: "desc" },
   });
   return plans.map(toExecutionPlanDTO);
@@ -162,7 +176,7 @@ export async function getExecutionPlan(
 ): Promise<ExecutionPlanDTO | null> {
   const plan = await prisma.actionPlan.findFirst({
     where: { id: planId, companyId, company: { ownerId } },
-    include: { decision: { include: { opportunity: true } }, tasks: { orderBy: { dueAt: "asc" } } },
+    include: planInclude,
   });
   return plan ? toExecutionPlanDTO(plan) : null;
 }
@@ -172,7 +186,7 @@ export async function updateExecutionTaskStatus(
   companyId: string,
   taskId: string,
   status: TaskStatus,
-): Promise<void> {
+): Promise<ExecutionPlanDTO> {
   await requireCompany(ownerId, companyId);
   const task = await prisma.task.findFirst({
     where: { id: taskId, actionPlan: { companyId, company: { ownerId } } },
@@ -182,14 +196,30 @@ export async function updateExecutionTaskStatus(
   await prisma.task.update({ where: { id: taskId }, data: { status } });
 
   const plan = await prisma.actionPlan.findFirst({
-    where: { id: task.actionPlanId ?? "" },
-    include: { tasks: true, decision: true },
+    where: { id: task.actionPlanId ?? undefined, companyId, company: { ownerId } },
+    include: planInclude,
   });
-  if (plan?.decisionId && plan.tasks.length && plan.tasks.every((item) => item.status === TaskStatus.DONE)) {
+  if (!plan) throw new Error("Plano não encontrado.");
+
+  const active = plan.tasks.filter((item) => item.status !== TaskStatus.CANCELLED);
+  if (
+    plan.decisionId &&
+    active.length > 0 &&
+    active.every((item) => item.status === TaskStatus.DONE)
+  ) {
     await prisma.decision.update({
       where: { id: plan.decisionId },
       data: { status: DecisionStatus.EXECUTED },
     });
+    if (plan.decision?.opportunityId) {
+      await prisma.opportunity.update({
+        where: { id: plan.decision.opportunityId },
+        data: {
+          status: OpportunityStatus.IN_PROGRESS,
+          evidenceLevel: plan.decision.opportunity?.evidenceLevel ?? EvidenceLevel.HYPOTHESIS,
+        },
+      });
+    }
   }
 
   await writeAudit({
@@ -201,34 +231,38 @@ export async function updateExecutionTaskStatus(
     newValue: { status },
     origin: "USER",
   });
+
+  const refreshed = await prisma.actionPlan.findFirstOrThrow({
+    where: { id: plan.id, companyId, company: { ownerId } },
+    include: planInclude,
+  });
+  return toExecutionPlanDTO(refreshed);
 }
 
 export async function getExecutionSummary(ownerId: string, companyId: string) {
   const plans = await listExecutionPlans(ownerId, companyId);
   const active = plans.filter((plan) => plan.progress < 100);
   const allTasks = plans.flatMap((plan) => plan.tasks);
-  const overdue = allTasks.filter((task) => {
-    if (!task.dueAt || task.status === TaskStatus.DONE || task.status === TaskStatus.CANCELLED) return false;
-    return new Date(task.dueAt).getTime() < Date.now();
-  }).length;
   return {
     totalPlans: plans.length,
     activePlans: active.length,
     completedPlans: plans.filter((plan) => plan.progress === 100).length,
-    overdueTasks: overdue,
+    overdueTasks: countOverdueTasks(allTasks),
     averageProgress: plans.length
       ? Math.round(plans.reduce((sum, plan) => sum + plan.progress, 0) / plans.length)
       : 0,
   };
 }
 
-function toExecutionPlanDTO(row: any): ExecutionPlanDTO {
-  const tasks: ExecutionTaskDTO[] = (row.tasks ?? []).map((task: any) => ({
+function toExecutionPlanDTO(row: ExecutionPlanRow): ExecutionPlanDTO {
+  const now = new Date();
+  const tasks: ExecutionTaskDTO[] = row.tasks.map((task) => ({
     id: task.id,
     title: task.title,
     details: task.details,
     status: task.status,
     dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    overdue: !isClosedTaskStatus(task.status) && Boolean(task.dueAt && task.dueAt.getTime() < now.getTime()),
   }));
   return {
     id: row.id,
@@ -239,8 +273,10 @@ function toExecutionPlanDTO(row: any): ExecutionPlanDTO {
     horizonDays: row.horizonDays,
     opportunityId: row.decision?.opportunityId ?? null,
     opportunityTitle: row.decision?.opportunity?.title ?? null,
+    opportunityEvidenceLevel: row.decision?.opportunity?.evidenceLevel ?? null,
     decisionStatus: row.decision?.status ?? null,
     progress: executionProgress(tasks.map((task) => task.status)),
+    overdueCount: countOverdueTasks(tasks, now),
     tasks,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

@@ -1,10 +1,12 @@
 "use server";
 
-import { TaskStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { executionPlanInputSchema, taskStatusSchema } from "@/lib/validations";
 import { createExecutionPlanFromOpportunity, updateExecutionTaskStatus } from "@/services/executionService";
+
+export type FormActionState = { ok: false; error: string } | { ok: true; id?: string };
 
 async function requireUserId() {
   const session = await auth();
@@ -19,29 +21,35 @@ function refresh(companyId: string, planId?: string) {
   if (planId) revalidatePath(`/empresas/${companyId}/execucao/${planId}`);
 }
 
-export async function createExecutionPlanAction(formData: FormData): Promise<void> {
+export async function createExecutionPlanAction(
+  _: FormActionState | undefined,
+  formData: FormData,
+): Promise<FormActionState> {
   const userId = await requireUserId();
-  const companyId = String(formData.get("companyId") ?? "");
-  const opportunityId = String(formData.get("opportunityId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  const summary = String(formData.get("summary") ?? "").trim();
-  const goal30 = String(formData.get("goal30") ?? "").trim();
-  const goal60 = String(formData.get("goal60") ?? "").trim();
-  const goal90 = String(formData.get("goal90") ?? "").trim();
+  const parsed = executionPlanInputSchema.safeParse({
+    companyId: formData.get("companyId"),
+    opportunityId: formData.get("opportunityId"),
+    title: formData.get("title"),
+    summary: formData.get("summary") || undefined,
+    goal30: formData.get("goal30"),
+    goal60: formData.get("goal60"),
+    goal90: formData.get("goal90"),
+  });
 
-  if (!companyId || !opportunityId || !title || !goal30 || !goal60 || !goal90) {
-    throw new Error("Preencha título e os três horizontes do plano.");
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Preencha título e os três horizontes do plano." };
   }
 
-  const plan = await createExecutionPlanFromOpportunity(userId, companyId, opportunityId, {
-    title,
-    summary: summary || null,
-    goal30,
-    goal60,
-    goal90,
-  });
-  refresh(companyId, plan.id);
-  redirect(`/empresas/${companyId}/execucao/${plan.id}`);
+  let planId: string;
+  try {
+    const plan = await createExecutionPlanFromOpportunity(userId, parsed.data.companyId, parsed.data);
+    planId = plan.id;
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível criar o plano." };
+  }
+
+  refresh(parsed.data.companyId, planId);
+  redirect(`/empresas/${parsed.data.companyId}/execucao/${planId}`);
 }
 
 export async function changeExecutionTaskStatusAction(formData: FormData): Promise<void> {
@@ -49,10 +57,10 @@ export async function changeExecutionTaskStatusAction(formData: FormData): Promi
   const companyId = String(formData.get("companyId") ?? "");
   const planId = String(formData.get("planId") ?? "");
   const taskId = String(formData.get("taskId") ?? "");
-  const status = String(formData.get("status") ?? "") as TaskStatus;
-  if (!companyId || !planId || !taskId || !Object.values(TaskStatus).includes(status)) {
+  const parsedStatus = taskStatusSchema.safeParse(formData.get("status"));
+  if (!companyId || !planId || !taskId || !parsedStatus.success) {
     throw new Error("Atualização de tarefa inválida.");
   }
-  await updateExecutionTaskStatus(userId, companyId, taskId, status);
+  await updateExecutionTaskStatus(userId, companyId, taskId, parsedStatus.data);
   refresh(companyId, planId);
 }
