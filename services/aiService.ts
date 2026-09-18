@@ -79,7 +79,7 @@ export async function askExecutiveAssistant(input: {
 
   const content = configured
     ? buildConfiguredPlaceholder(input.message)
-    : "A arquitetura de IA está pronta, mas a OPENAI_API_KEY ainda não foi configurada neste ambiente. Nenhuma chamada à OpenAI foi feita. Cadastre empresas no Cockpit e, nas próximas sprints, o assistente passará a usar dados reais com aprovação humana.";
+    : "A arquitetura de IA está pronta, mas a OPENAI_API_KEY ainda não foi configurada neste ambiente. Nenhuma chamada à OpenAI foi feita. Cadastre empresas no Cockpit. O assistente não executa ações sem aprovação humana.";
 
   await prisma.aIMessage.create({
     data: {
@@ -102,10 +102,10 @@ export async function askExecutiveAssistant(input: {
 
 function buildConfiguredPlaceholder(message: string): string {
   return [
-    "A chave OpenAI está presente no servidor, mas a Sprint 0 não ativa o motor completo de IA.",
+    "A chave OpenAI está presente no servidor, mas o motor completo de IA ainda não está ativo.",
     "Sua pergunta foi registrada na conversa para memória futura.",
     `Pergunta recebida: “${message.slice(0, 280)}”.`,
-    "Próximas sprints: cruzar Cockpit, diagnóstico, financeiro e evidências — sempre com aprovação humana.",
+    "O assistente não executa ações. Decisão e execução permanecem humanas.",
   ].join("\n");
 }
 

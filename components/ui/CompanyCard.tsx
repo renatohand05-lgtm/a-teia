@@ -3,10 +3,10 @@ import { DemoBadge } from "@/components/ui/DemoBadge";
 import { formatBRL, formatPercent } from "@/lib/format";
 import type { CompanyDTO } from "@/services/companyService";
 
-export function CompanyCard({ company }: { company: CompanyDTO }) {
+export function CompanyCard({ company, href }: { company: CompanyDTO; href?: string }) {
   return (
     <Link
-      href={`/empresas/${company.id}`}
+      href={href ?? `/empresas/${company.id}`}
       className="surface-card block p-5 transition hover:-translate-y-0.5"
       style={{ background: "var(--surface)" }}
     >

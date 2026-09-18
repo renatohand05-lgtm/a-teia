@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { CockpitView } from "@/components/cockpit/CockpitView";
 import { ErrorState } from "@/components/ui/States";
-import { listCompanies } from "@/services/companyService";
+import { getCockpitSnapshot } from "@/services/cockpitService";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +12,14 @@ export default async function CockpitPage() {
   if (!session?.user?.id) redirect("/login");
 
   try {
-    const companies = await listCompanies(session.user.id, true);
+    const snapshot = await getCockpitSnapshot(session.user.id);
     return (
       <AppShell
         title="Meu Cockpit"
-        subtitle="Centro de decisão pessoal"
+        subtitle="Centro de decisão empresarial"
         userName={session.user.name}
       >
-        <CockpitView companies={companies} userName={session.user.name?.split(" ")[0] || "Renato"} />
+        <CockpitView snapshot={snapshot} userName={session.user.name?.split(" ")[0] || "Renato"} />
       </AppShell>
     );
   } catch {

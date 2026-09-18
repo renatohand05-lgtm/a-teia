@@ -4,25 +4,45 @@ import { auth } from "@/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { CompanyCard } from "@/components/ui/CompanyCard";
 import { EmptyState, ErrorState } from "@/components/ui/States";
+import { MODULE_PICKER_LABELS, pathForModuleQuery } from "@/lib/company-nav";
 import { listCompanies } from "@/services/companyService";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmpresasPage() {
+export default async function EmpresasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ modulo?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const { modulo } = await searchParams;
 
   try {
     const companies = await listCompanies(session.user.id, true);
-    const active = companies.filter((c) => c.status === "ACTIVE");
-    const archived = companies.filter((c) => c.status === "ARCHIVED");
+    const active = companies.filter((company) => company.status === "ACTIVE");
+    const archived = companies.filter((company) => company.status === "ARCHIVED");
+    const moduleLabel = modulo ? MODULE_PICKER_LABELS[modulo] : null;
+
+    if (modulo && active.length === 1) {
+      const href = pathForModuleQuery(modulo, active[0].id);
+      if (href) redirect(href);
+    }
 
     return (
       <AppShell title="Empresas" subtitle="Cadastro, edição, visualização e arquivo" userName={session.user.name}>
         <div className="mx-auto max-w-[1480px]">
+          {moduleLabel ? (
+            <div
+              className="mb-5 rounded-2xl border px-4 py-3 text-[13px]"
+              style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.08)", color: "var(--text-2)" }}
+            >
+              Selecione uma empresa para abrir <b style={{ color: "var(--gold-soft)" }}>{moduleLabel}</b>.
+            </div>
+          ) : null}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[14px]" style={{ color: "var(--text-2)" }}>
-              {active.length} ativa{active.length === 1 ? "" : "s"} · persistidas no PostgreSQL
+              {active.length} ativa{active.length === 1 ? "" : "s"} na carteira
             </p>
             <Link
               href="/empresas/nova"
@@ -36,7 +56,11 @@ export default async function EmpresasPage() {
           {active.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {active.map((company) => (
-                <CompanyCard key={company.id} company={company} />
+                <CompanyCard
+                  key={company.id}
+                  company={company}
+                  href={modulo ? pathForModuleQuery(modulo, company.id) ?? `/empresas/${company.id}` : undefined}
+                />
               ))}
             </div>
           ) : (

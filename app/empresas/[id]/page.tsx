@@ -52,6 +52,12 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
           latest={latest}
           historyCount={history.length}
           finance={financeSummary}
+          opportunities={{ total: summary.totalCount, active: summary.activeCount }}
+          execution={{
+            totalPlans: execution.totalPlans,
+            activePlans: execution.activePlans,
+            overdueTasks: execution.overdueTasks,
+          }}
           experiments={{
             active: experimentSummary.active,
             completed: experimentSummary.completed,

@@ -23,7 +23,7 @@ export async function storeFile(file: {
 }): Promise<StoredObject> {
   const driver = process.env.STORAGE_DRIVER ?? "local";
   if (driver === "vercel-blob") {
-    throw new Error("STORAGE_DRIVER=vercel-blob está preparado, mas ainda não ativado nesta sprint.");
+    throw new Error("STORAGE_DRIVER=vercel-blob está preparado, mas ainda não está ativo.");
   }
 
   const key = `${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${sanitize(file.filename)}`;

@@ -5,14 +5,14 @@ import { useState } from "react";
 type Msg = { role: "system" | "user" | "ai"; text: string };
 
 export function AIChat({
-  disabledReason = "IA completa fora da Sprint 0. A arquitetura /api/ai já está preparada.",
+  disabledReason = "Assistente completo ainda não está disponível.",
 }: {
   disabledReason?: string;
 }) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "system",
-      text: "Sou o Assistente Executivo do A TEIA. Nesta fundação, registro a pergunta e devolvo o estado da arquitetura — sem executar ações.",
+      text: "Sou o Assistente Executivo do A TEIA. Registro a pergunta e devolvo o estado da arquitetura — sem executar ações.",
     },
   ]);
   const [input, setInput] = useState("");

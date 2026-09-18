@@ -71,3 +71,57 @@ export function companyIdFromPath(pathname: string): string | null {
   if (!match?.[1] || RESERVED.has(match[1])) return null;
   return match[1];
 }
+
+export const GESTAO_NAV: Array<{ key: string; label: string }> = [
+  { key: "diagnostico", label: "Diagnóstico 360°" },
+  { key: "oportunidades", label: "Oportunidades" },
+  { key: "execucao", label: "Execução" },
+  { key: "financeiro", label: "Financeiro" },
+  { key: "experimentos", label: "Experimentos" },
+];
+
+export const COMPANY_MODULE_TABS: Array<{ key: string; label: string }> = [
+  { key: "central", label: "Visão Geral" },
+  { key: "diagnostico", label: "Diagnóstico 360°" },
+  { key: "oportunidades", label: "Oportunidades" },
+  { key: "execucao", label: "Execução" },
+  { key: "financeiro", label: "Financeiro" },
+  { key: "experimentos", label: "Experimentos" },
+  { key: "memoria", label: "Memória" },
+];
+
+export const MODULE_PICKER_LABELS: Record<string, string> = {
+  central: "visão geral da empresa",
+  diagnostico: "Diagnóstico 360°",
+  oportunidades: "Oportunidades",
+  execucao: "Execução",
+  financeiro: "Financeiro",
+  dre: "DRE",
+  caixa: "Fluxo de caixa",
+  metas: "Metas",
+  cenarios: "Cenários",
+  experimentos: "Experimentos",
+  evidencias: "Evidências",
+  memoria: "Memória estratégica",
+};
+
+export function findCompanyNav(key: string) {
+  const parent = COMPANY_NAV.find((item) => item.key === key);
+  if (parent) return parent;
+  for (const item of COMPANY_NAV) {
+    const child = item.children?.find((entry) => entry.key === key);
+    if (child) return child;
+  }
+  return null;
+}
+
+export function pathForModuleQuery(modulo: string | undefined, companyId: string): string | null {
+  if (!modulo) return null;
+  const item = findCompanyNav(modulo);
+  return item ? item.href(companyId) : null;
+}
+
+export function gestaoHref(companyId: string | null, key: string): string {
+  if (companyId) return pathForModuleQuery(key, companyId) ?? `/empresas/${companyId}`;
+  return `/empresas?modulo=${key}`;
+}

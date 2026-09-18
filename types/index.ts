@@ -13,9 +13,11 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/memoria", label: "Memória", enabled: true, group: "Núcleo" },
 ];
 
+export const INTELLIGENCE_NAV: NavItem[] = [
+  { href: "/memoria", label: "Memória Estratégica", enabled: true, group: "Inteligência" },
+];
+
 export const FUTURE_NAV: NavItem[] = [
-  { href: "#", label: "Prioridades & Decisão", enabled: false, group: "Em breve" },
-  { href: "#", label: "Visão Geral", enabled: false, group: "Em breve" },
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
   { href: "#", label: "Assistente IA", enabled: false, group: "Em breve" },

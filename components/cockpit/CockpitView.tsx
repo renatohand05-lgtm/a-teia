@@ -4,32 +4,26 @@ import { DecisionCard } from "@/components/ui/DecisionCard";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { NetworkMap } from "@/components/ui/NetworkMap";
-import { OpportunityCard } from "@/components/ui/OpportunityCard";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { EmptyState } from "@/components/ui/States";
-import { cockpitPriorityFromCompany } from "@/lib/priority";
-import { formatBRL } from "@/lib/format";
-import type { CompanyDTO } from "@/services/companyService";
-import { AIChat } from "@/components/ui/AIChat";
-import { ChartCard } from "@/components/ui/ChartCard";
+import { StatusChip } from "@/components/ui/StatusChip";
 import { SourceCard } from "@/components/ui/SourceCard";
-
-const FLOW = ["EMPRESA", "360°", "FINANCEIRO", "OPORTUNIDADE", "DECISÃO", "AÇÃO", "RESULTADO", "MEMÓRIA"];
+import { MODULE_STATUS_LABEL } from "@/lib/cockpit";
+import { formatBRL } from "@/lib/format";
+import type { CockpitSnapshot } from "@/services/cockpitService";
 
 export function CockpitView({
-  companies,
+  snapshot,
   userName,
 }: {
-  companies: CompanyDTO[];
+  snapshot: CockpitSnapshot;
   userName: string;
 }) {
-  const active = companies.filter((c) => c.status === "ACTIVE");
-  const ranked = [...active]
-    .map((company) => ({ company, ...cockpitPriorityFromCompany(company) }))
-    .sort((a, b) => b.score - a.score);
+  const { companies, ranked, counts, action, journey, briefing } = snapshot;
+  const active = companies.filter((company) => company.status === "ACTIVE");
+  const demoCount = active.filter((company) => company.isDemo).length;
   const top3 = ranked.slice(0, 3);
-  const demoCount = active.filter((c) => c.isDemo).length;
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-8">
@@ -45,25 +39,41 @@ export function CockpitView({
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-extrabold text-[#73df96]"
             style={{ background: "rgba(52,199,111,.1)", borderColor: "rgba(52,199,111,.25)" }}
           >
-            ● USO PESSOAL · CENTRO DE DECISÃO
+            ● USO PESSOAL · CENTRO DE DECISÃO EMPRESARIAL
           </span>
           <h2 className="mt-3 mb-2 text-[26px] font-bold">Meu Cockpit Executivo</h2>
           <p className="m-0 leading-relaxed" style={{ color: "var(--text-2)" }}>
-            Uma única tela para decidir onde agir, onde investir e qual negócio precisa da sua atenção primeiro. O
-            sistema organiza sinais — sem estrutura desnecessária de multiusuário.
+            Dados → Diagnóstico → Oportunidades → Decisão → Execução → Resultado → Evidência → Memória → nova
+            decisão.
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
-            {FLOW.map((step, index) => (
-              <div
-                key={step}
-                className="rounded-[14px] border px-2 py-3 text-center text-[10px] font-extrabold"
-                style={{
-                  borderColor: index === 0 ? "rgba(232,191,122,.45)" : "var(--border)",
-                  color: index === 0 ? "var(--gold-soft)" : "var(--text-2)",
-                  background: index === 0 ? "rgba(232,191,122,.08)" : "rgba(255,255,255,.035)",
-                }}
-              >
-                {step}
+          <div className="-mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-1">
+            {journey.map((stage, index) => (
+              <div key={stage.key} className="flex shrink-0 items-center gap-2">
+                {index > 0 ? (
+                  <span className="text-[11px] font-black" style={{ color: "var(--gold-soft)" }}>
+                    →
+                  </span>
+                ) : null}
+                <Link
+                  href={stage.href}
+                  className="min-w-[108px] rounded-[14px] border px-2 py-3 text-center transition hover:-translate-y-0.5"
+                  style={{
+                    borderColor:
+                      stage.status === "SEM_DADOS" ? "var(--border)" : "rgba(232,191,122,.45)",
+                    background:
+                      stage.status === "SEM_DADOS" ? "rgba(255,255,255,.035)" : "rgba(232,191,122,.08)",
+                  }}
+                >
+                  <span
+                    className="block text-[10px] font-extrabold uppercase tracking-[0.08em]"
+                    style={{ color: stage.status === "SEM_DADOS" ? "var(--text-2)" : "var(--gold-soft)" }}
+                  >
+                    {stage.label}
+                  </span>
+                  <span className="mt-1.5 inline-flex">
+                    <StatusChip status={stage.status} />
+                  </span>
+                </Link>
               </div>
             ))}
           </div>
@@ -78,14 +88,19 @@ export function CockpitView({
           <small className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold)" }}>
             Prioridade do sistema
           </small>
-          <h3 className="mt-2 text-[21px]">{active.length ? top3[0]?.company.name : "Cadastrar dados reais"}</h3>
+          <h3 className="mt-2 text-[21px]">{action.title}</h3>
           <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-            {active.length
-              ? top3[0]?.reason
-              : "Comece cadastrando uma empresa. A fila de decisão ficará mais precisa conforme os dados reais substituírem exemplos."}
+            {action.body}
           </p>
+          <Link
+            href={action.href}
+            className="mt-4 inline-flex rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+            style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+          >
+            {action.cta}
+          </Link>
           <div className="mt-4 space-y-0">
-            <MetricLine label="Empresas ativas" value={String(active.length)} />
+            <MetricLine label="Empresas ativas" value={String(counts.companiesActive)} />
             <MetricLine label="Marcadas DEMO" value={String(demoCount)} />
             <MetricLine label="Arquivadas" value={String(companies.length - active.length)} />
           </div>
@@ -114,8 +129,7 @@ export function CockpitView({
               </span>
               <h3 className="mt-2 mb-1 text-[20px]">{userName}, onde agir primeiro</h3>
               <p className="m-0 text-[12px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-                O Cockpit lê a carteira persistida no PostgreSQL. Números abaixo vêm do cadastro real — não de
-                simulação.
+                Somente o que já existe na carteira. Nada inventado.
               </p>
             </div>
             <Link
@@ -126,13 +140,46 @@ export function CockpitView({
               Abrir empresas
             </Link>
           </div>
+          {briefing.companyName ? (
+            <div className="grid gap-2.5 md:grid-cols-2">
+              <BriefItem label="Empresa" value={briefing.companyName} href={`/empresas/${briefing.companyId}`} />
+              {briefing.bottleneck ? <BriefItem label="Gargalo" value={briefing.bottleneck} /> : null}
+              {briefing.opportunityTitle ? (
+                <BriefItem
+                  label="Oportunidade prioritária"
+                  value={briefing.opportunityTitle}
+                  href={briefing.opportunityHref}
+                />
+              ) : null}
+              {briefing.planTitle ? <BriefItem label="Plano em andamento" value={briefing.planTitle} /> : null}
+              {briefing.experimentTitle ? (
+                <BriefItem label="Experimento relevante" value={briefing.experimentTitle} />
+              ) : null}
+              {briefing.evidenceTitle ? <BriefItem label="Evidência recente" value={briefing.evidenceTitle} /> : null}
+              {briefing.memoryTitle ? <BriefItem label="Memória relevante" value={briefing.memoryTitle} /> : null}
+            </div>
+          ) : (
+            <EmptyState
+              title="Carteira vazia"
+              body="Cadastre a primeira empresa para gerar o briefing. Nada aqui é inventado."
+              action={
+                <Link
+                  href="/empresas/nova"
+                  className="inline-flex rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]"
+                  style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+                >
+                  Cadastrar empresa
+                </Link>
+              }
+            />
+          )}
           {top3.length ? (
-            <div className="grid gap-2.5 md:grid-cols-3">
+            <div className="mt-4 grid gap-2.5 md:grid-cols-3">
               {top3.map((item, index) => (
                 <Link
                   key={item.company.id}
                   href={`/empresas/${item.company.id}`}
-                  className="flex min-h-[160px] flex-col rounded-2xl border p-3.5"
+                  className="flex min-h-[140px] flex-col rounded-2xl border p-3.5"
                   style={{ background: "rgba(255,255,255,.025)", borderColor: "var(--border)" }}
                 >
                   <span
@@ -154,21 +201,7 @@ export function CockpitView({
                 </Link>
               ))}
             </div>
-          ) : (
-            <EmptyState
-              title="Carteira vazia"
-              body="Cadastre a primeira empresa para gerar o briefing automático. Nada aqui é inventado."
-              action={
-                <Link
-                  href="/empresas/nova"
-                  className="inline-flex rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]"
-                  style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-                >
-                  Cadastrar empresa
-                </Link>
-              }
-            />
-          )}
+          ) : null}
         </div>
         <div
           className="rounded-[22px] border p-[22px]"
@@ -179,40 +212,75 @@ export function CockpitView({
         >
           <h3 className="mt-0 mb-3 text-[20px]">Resumo de hoje</h3>
           <div className="grid grid-cols-2 gap-2.5">
-            <MiniStat label="Empresas monitoradas" value={String(active.length)} />
-            <MiniStat
-              label="Risco crítico"
-              value={String(ranked.filter((r) => r.zone === "critical").length)}
-            />
+            <MiniStat label="Empresas monitoradas" value={String(counts.companiesActive)} />
+            <MiniStat label="Risco crítico" value={String(ranked.filter((item) => item.zone === "critical").length)} />
             <MiniStat
               label="Faturamento informado"
-              value={formatBRL(active.reduce((sum, c) => sum + (c.revenueMonthly ?? 0), 0))}
+              value={formatBRL(active.reduce((sum, company) => sum + (company.revenueMonthly ?? 0), 0))}
             />
-            <MiniStat label="Com gargalo registrado" value={String(active.filter((c) => c.perceivedBottlenecks).length)} />
+            <MiniStat
+              label="Com gargalo registrado"
+              value={String(active.filter((company) => company.perceivedBottlenecks).length)}
+            />
           </div>
           <div className="mt-3">
-            <ActionPanel
-              kicker="Ação recomendada agora"
-              title={active.length ? `Abrir ${top3[0].company.name}` : "Cadastre sua carteira"}
-              body={
-                active.length
-                  ? "Complete dados faltantes e, nas próximas sprints, o 360° e o financeiro entram neste mesmo fluxo."
-                  : "Assim que houver empresas no banco, o A Teia indica o primeiro movimento do dia."
-              }
-            />
+            <ActionPanel kicker="Ação recomendada agora" title={action.title} body={action.body}>
+              <Link
+                href={action.href}
+                className="mt-3 inline-flex text-[11px] font-extrabold"
+                style={{ color: "var(--gold-soft)" }}
+              >
+                {action.cta} →
+              </Link>
+            </ActionPanel>
           </div>
         </div>
       </section>
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Empresas ativas" value={active.length} hint="Persistidas no PostgreSQL" />
-        <MetricCard label="Dados DEMO" value={demoCount} hint="Identificados explicitamente" />
-        <MetricCard
-          label="Módulos desta sprint"
-          value="Fundação"
-          hint="360°, financeiro e oportunidades ainda não ativos"
+        <MetricLink href="/empresas" label="Empresas" value={counts.companiesActive} hint={counts.companiesActive ? "Ativas na carteira" : "Cadastrar primeira empresa"} />
+        <MetricLink
+          href={stageLink(snapshot, "diagnostico")}
+          label="Diagnósticos"
+          value={counts.diagnoses}
+          hint={counts.diagnoses ? "360° persistidos" : "Realizar Diagnóstico 360°"}
         />
-        <MetricCard label="IA automática" value="Off" hint="Arquitetura pronta, sem ação destrutiva" />
+        <MetricLink
+          href={stageLink(snapshot, "oportunidade")}
+          label="Oportunidades"
+          value={`${counts.opportunitiesPrioritized}/${counts.opportunitiesActive}`}
+          hint={counts.opportunitiesActive ? "priorizadas / abertas" : "Analisar oportunidades"}
+        />
+        <MetricLink
+          href={stageLink(snapshot, "execucao")}
+          label="Planos em execução"
+          value={counts.plans}
+          hint={counts.plans ? "Planos 30/60/90" : "Criar plano 30/60/90"}
+        />
+        <MetricLink
+          href={stageLink(snapshot, "financeiro")}
+          label="Financeiro"
+          value={counts.financialStatements}
+          hint={counts.financialStatements ? "DRE e competências" : "Informar dados financeiros"}
+        />
+        <MetricLink
+          href={stageLink(snapshot, "experimento")}
+          label="Experimentos"
+          value={`${counts.experimentsActive}/${counts.experimentsCompleted}`}
+          hint={counts.experimentsActive || counts.experimentsCompleted ? "ativos / concluídos" : "Criar experimento"}
+        />
+        <MetricLink
+          href={stageLink(snapshot, "evidencia")}
+          label="Evidências"
+          value={counts.evidenceValidated}
+          hint={counts.evidenceValidated ? "validadas" : counts.evidenceTotal ? `${counts.evidenceTotal} registradas` : "Ainda sem evidências"}
+        />
+        <MetricLink
+          href="/memoria"
+          label="Memórias"
+          value={counts.memoriesValidated}
+          hint={counts.memoriesValidated ? "validadas" : "Transformar evidência em aprendizado"}
+        />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
@@ -225,19 +293,20 @@ export function CockpitView({
             Fila de decisão
           </h2>
           <p className="mb-4 max-w-[900px] text-[14.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-            Ranking inicial a partir do cadastro. O motor completo de prioridade fica para a próxima sprint.
+            Ranking da carteira a partir dos dados cadastrados. O próximo movimento está na prioridade do sistema.
           </p>
           <div className="space-y-2">
             {ranked.length ? (
               ranked.slice(0, 5).map((item, index) => (
-                <DecisionCard
-                  key={item.company.id}
-                  rank={index + 1}
-                  title={item.company.name}
-                  detail={`${item.company.segment || "Sem segmento"} · ${item.reason}`}
-                  score={item.score}
-                  demo={item.company.isDemo}
-                />
+                <Link key={item.company.id} href={`/empresas/${item.company.id}`} className="block">
+                  <DecisionCard
+                    rank={index + 1}
+                    title={item.company.name}
+                    detail={`${item.company.segment || "Sem segmento"} · ${item.reason}`}
+                    score={item.score}
+                    demo={item.company.isDemo}
+                  />
+                </Link>
               ))
             ) : (
               <EmptyState title="Nenhuma decisão aberta" body="Cadastre empresas para montar a fila." />
@@ -251,73 +320,86 @@ export function CockpitView({
                 Saúde da carteira
               </p>
               <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
-                Score preliminar — não substitui o Diagnóstico 360°.
+                {ranked[0]
+                  ? `Prioridade atual: ${ranked[0].company.name}.`
+                  : "Sem empresa ativa. Cadastre a primeira para medir a carteira."}
               </p>
               <div className="mt-3">
                 <RiskBadge
-                  label={ranked[0]?.zone === "critical" ? "Atenção imediata" : "Base em formação"}
-                  tone={ranked[0]?.zone === "critical" ? "bad" : "warn"}
+                  label={ranked[0]?.zone === "critical" ? "Atenção imediata" : active.length ? "Carteira em operação" : "Base em formação"}
+                  tone={ranked[0]?.zone === "critical" ? "bad" : active.length ? "good" : "warn"}
                 />
               </div>
             </div>
             <ScoreGauge score={ranked[0]?.score ?? 0} caption={active.length ? "Prioridade" : "Vazio"} />
           </div>
-          <OpportunityCard
-            title="Motor de oportunidades"
-            description="Preparado no banco (Opportunity, Strategy, Experiment). Não calculado automaticamente nesta sprint."
-            demo
-          />
+          <div className="surface-card p-[18px]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+              Jornada da empresa em foco
+            </p>
+            <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+              {briefing.companyName ?? "Nenhuma empresa selecionada."}
+            </p>
+            <ul className="mt-3 space-y-1.5 text-[12px]" style={{ color: "var(--text-2)" }}>
+              {journey.map((stage) => (
+                <li key={stage.key}>
+                  <Link href={stage.href} className="flex items-center justify-between gap-2">
+                    <span>{stage.label}</span>
+                    <span style={{ color: "var(--text-3)" }}>{MODULE_STATUS_LABEL[stage.status]}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 
       <NetworkMap />
 
-      <section className="grid gap-4 xl:grid-cols-[1.45fr_.55fr]">
-        <AIChat />
-        <div className="space-y-2.5">
-          <SourceCard
-            kind="INTERNAL_DATA"
-            title="Dado interno"
-            body="Cadastro de empresas, métricas e evidências persistidas no PostgreSQL."
-          />
-          <SourceCard
-            kind="EXTERNAL_SOURCE"
-            title="Fonte externa"
-            body="Pesquisa web futura. URLs e conclusões ficarão em ResearchSession."
-          />
-          <SourceCard
-            kind="INFERENCE"
-            title="Inferência"
-            body="Leitura produzida a partir dos dados — sempre rotulada."
-          />
-          <SourceCard
-            kind="HYPOTHESIS"
-            title="Hipótese"
-            body="Ideia ainda não validada. Exige experimento."
-          />
-          <SourceCard kind="EVIDENCE" title="Evidência" body="Resultado medido. Nunca sobrescreve o histórico." />
-          <SourceCard
-            kind="RECOMMENDATION"
-            title="Recomendação"
-            body="Sugestão prática. Execução só após aprovação humana."
-          />
-        </div>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <SourceCard kind="INTERNAL_DATA" title="Dado interno" body="Cadastro, 360°, financeiro e evidências persistidos." />
+        <SourceCard kind="INFERENCE" title="Inferência" body="Leitura produzida a partir dos dados — sempre rotulada." />
+        <SourceCard kind="HYPOTHESIS" title="Hipótese" body="Oportunidade ainda não validada. Exige experimento." />
+        <SourceCard kind="EVIDENCE" title="Evidência" body="Resultado medido. Nunca sobrescreve o histórico." />
+        <SourceCard kind="RECOMMENDATION" title="Recomendação" body="Sugestão prática. Execução só após aprovação humana." />
+        <SourceCard kind="EXTERNAL_SOURCE" title="Fonte externa" body="Pesquisa web ainda não está disponível neste produto." />
       </section>
-
-      <ChartCard title="Fluxo operacional da Teia" demo>
-        <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-          Empresa → 360° → Financeiro → Oportunidade → Decisão → Ação → Resultado → Memória. Somente Empresa está ativo
-          na Sprint 0.
-        </p>
-        <div className="mt-4 h-2 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,.07)" }}>
-          <span
-            className="block h-full w-[14%] rounded-full"
-            style={{ background: "linear-gradient(90deg,var(--gold-deep),var(--gold-soft))" }}
-          />
-        </div>
-      </ChartCard>
     </div>
   );
+}
+
+function stageLink(snapshot: CockpitSnapshot, key: string) {
+  return snapshot.journey.find((stage) => stage.key === key)?.href ?? snapshot.action.href;
+}
+
+function MetricLink({
+  href,
+  label,
+  value,
+  hint,
+}: {
+  href: string;
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
+  return (
+    <Link href={href} className="block">
+      <MetricCard label={label} value={value} hint={hint} />
+    </Link>
+  );
+}
+
+function BriefItem({ label, value, href }: { label: string; value: string; href?: string | null }) {
+  const content = (
+    <div className="rounded-2xl border p-3.5" style={{ background: "rgba(255,255,255,.025)", borderColor: "var(--border)" }}>
+      <small className="mb-1.5 block text-[9px] uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+        {label}
+      </small>
+      <b className="text-[13px] leading-snug">{value}</b>
+    </div>
+  );
+  return href ? <Link href={href}>{content}</Link> : content;
 }
 
 function MetricLine({ label, value }: { label: string; value: string }) {

@@ -100,5 +100,5 @@ export async function prepareResearch(input: {
 
 export async function runLiveSearchIfEnabled(query: string): Promise<never> {
   void query;
-  throw new Error("Pesquisa em tempo real ainda não está ativada nesta sprint.");
+  throw new Error("Pesquisa em tempo real ainda não está disponível.");
 }

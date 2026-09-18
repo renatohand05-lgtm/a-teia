@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
+import { StatusChip } from "@/components/ui/StatusChip";
+import { nextCockpitAction, type ModuleStatus } from "@/lib/cockpit";
 import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
@@ -13,6 +15,8 @@ export function CompanyCockpit({
   latest,
   historyCount,
   finance,
+  opportunities,
+  execution,
   experiments,
   memory,
 }: {
@@ -27,6 +31,15 @@ export function CompanyCockpit({
     cogsPercent: number | null;
     breakEven: number | null;
     revenueGap: number | null;
+  } | null;
+  opportunities?: {
+    total: number;
+    active: number;
+  } | null;
+  execution?: {
+    totalPlans: number;
+    activePlans: number;
+    overdueTasks: number;
   } | null;
   experiments?: {
     active: number;
@@ -47,8 +60,57 @@ export function CompanyCockpit({
       ? value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
       : "—";
 
+  const diagnosisStatus: ModuleStatus = latest ? "CONCLUIDO" : "SEM_DADOS";
+  const opportunityStatus: ModuleStatus =
+    (opportunities?.active ?? 0) > 0 ? "EM_ANDAMENTO" : (opportunities?.total ?? 0) > 0 ? "INICIADO" : "SEM_DADOS";
+  const executionStatus: ModuleStatus =
+    (execution?.overdueTasks ?? 0) > 0
+      ? "ATENCAO"
+      : (execution?.activePlans ?? 0) > 0
+        ? "EM_ANDAMENTO"
+        : (execution?.totalPlans ?? 0) > 0
+          ? "CONCLUIDO"
+          : "SEM_DADOS";
+  const financeStatus: ModuleStatus = finance ? "INICIADO" : "SEM_DADOS";
+  const experimentStatus: ModuleStatus =
+    (experiments?.active ?? 0) > 0 ? "EM_ANDAMENTO" : (experiments?.completed ?? 0) > 0 ? "CONCLUIDO" : "SEM_DADOS";
+  const memoryStatus: ModuleStatus =
+    (memory?.validated ?? 0) > 0 ? "CONCLUIDO" : (memory?.recent.length ?? 0) > 0 ? "INICIADO" : "SEM_DADOS";
+
+  const next = nextCockpitAction({
+    companyId: company.id,
+    companyName: company.name,
+    hasCompany: true,
+    hasDiagnosis: Boolean(latest),
+    opportunityCount: opportunities?.total ?? 0,
+    prioritizedOpportunityCount: opportunities?.active ?? 0,
+    planCount: execution?.totalPlans ?? 0,
+    financialCount: finance ? 1 : 0,
+    experimentActiveCount: experiments?.active ?? 0,
+    experimentCompletedCount: experiments?.completed ?? 0,
+    evidenceCount: experiments?.completed ?? 0,
+    evidenceValidatedCount: experiments?.validated ?? 0,
+    memoryValidatedCount: memory?.validated ?? 0,
+    attention: (execution?.overdueTasks ?? 0) > 0,
+  });
+
   return (
     <div className="space-y-5">
+      <section
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+        style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.08)" }}
+      >
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+            Próximo passo
+          </p>
+          <p className="mt-1 text-[14px] font-bold">{next.title}</p>
+          <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+            {next.body}
+          </p>
+        </div>
+        <GoldLink href={next.href}>{next.cta}</GoldLink>
+      </section>
       <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <div
           className="rounded-[24px] border p-6"
@@ -111,6 +173,7 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Diagnóstico"
             title="Diagnóstico 360°"
+            status={diagnosisStatus}
             body={latest ? `Último score ${latest.overallScore}/100 · ${historyCount} no histórico.` : "Ainda sem diagnóstico persistido."}
             href={`/empresas/${company.id}/diagnostico`}
             cta={latest ? "Abrir diagnóstico" : "Realizar diagnóstico"}
@@ -123,7 +186,12 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Oportunidades"
             title="Ranking de hipóteses"
-            body="Priorize o que atacar. Hipótese não é evidência."
+            status={opportunityStatus}
+            body={
+              opportunities
+                ? `${opportunities.active} priorizadas · ${opportunities.total} abertas.`
+                : "Priorize o que atacar. Hipótese não é evidência."
+            }
             href={`/empresas/${company.id}/oportunidades`}
             cta="Ver oportunidades"
             extra={
@@ -137,6 +205,7 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Execução"
             title="Plano 30/60/90"
+            status={executionStatus}
             body="Tarefa concluída não valida oportunidade. Evidência nasce de experimento."
             href={`/empresas/${company.id}/execucao`}
             cta="Abrir execução"
@@ -144,6 +213,7 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Financeiro"
             title="DRE, caixa, metas e cenários"
+            status={financeStatus}
             body={finance ? "Resumo da competência atual." : "Informe a DRE para ver resultado, equilíbrio e cenários."}
             href={`/empresas/${company.id}/financeiro`}
             cta="Abrir financeiro"
@@ -159,6 +229,7 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Validação real"
             title="Experimentos e evidências"
+            status={experimentStatus}
             body={
               experiments
                 ? `${experiments.completed} concluídos · ${experiments.validated} validados.`
@@ -173,6 +244,7 @@ export function CompanyCockpit({
           <ModuleCard
             eyebrow="Aprendizado"
             title="Memória estratégica"
+            status={memoryStatus}
             body={
               memory
                 ? `${memory.validated} validados · ${memory.transferableCount} transferíveis.`
@@ -275,6 +347,7 @@ function ModuleCard({
   href,
   cta,
   extra,
+  status,
 }: {
   eyebrow: string;
   title: string;
@@ -282,12 +355,16 @@ function ModuleCard({
   href: string;
   cta: string;
   extra?: ReactNode;
+  status: ModuleStatus;
 }) {
   return (
     <div className="flex flex-col rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-        {eyebrow}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          {eyebrow}
+        </p>
+        <StatusChip status={status} />
+      </div>
       <h4 className="mt-1 text-[16px] font-bold">{title}</h4>
       <p className="mt-2 flex-1 text-[12px] leading-relaxed" style={{ color: "var(--text-2)" }}>
         {body}
