@@ -3,10 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { COMPANY_NAV, companyIdFromPath } from "@/lib/company-nav";
 import { FUTURE_NAV, PRIMARY_NAV } from "@/types";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const companyId = companyIdFromPath(pathname);
 
   return (
     <aside
@@ -41,40 +43,92 @@ export function Sidebar() {
         {PRIMARY_NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`mb-1 block rounded-xl px-3 py-2.5 text-[13px] font-semibold transition ${
-                active ? "text-[#241a08]" : "hover:text-[var(--text-1)]"
-              }`}
-              style={
-                active
-                  ? {
-                      background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))",
-                      boxShadow: "0 8px 20px -6px rgba(232,191,122,0.45)",
-                    }
-                  : { color: "var(--text-2)" }
-              }
-            >
-              {item.label}
-            </Link>
+            <NavLink key={item.href} href={item.href} active={active} label={item.label} />
           );
         })}
 
+        {companyId ? (
+          <>
+            <p className="px-2 pb-2 pt-5 text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: "var(--text-3)" }}>
+              Empresa
+            </p>
+            {COMPANY_NAV.map((item) => {
+              const href = item.href(companyId);
+              const active = item.match(pathname);
+              return (
+                <div key={item.key} className="mb-1">
+                  <NavLink href={href} active={active} label={item.label} />
+                  {item.children ? (
+                    <div className="ml-2 mt-1 flex flex-col">
+                      {item.children.map((child) => {
+                        const childHref = child.href(companyId);
+                        const childPath = childHref.split("?")[0] ?? childHref;
+                        const childActive =
+                          child.key === "evidencias"
+                            ? pathname.includes("/experimentos")
+                            : pathname === childPath || pathname.startsWith(`${childPath}/`);
+                        return (
+                          <Link
+                            key={child.key}
+                            href={childHref}
+                            className="rounded-lg px-3 py-1.5 text-[12px] font-semibold"
+                            style={{ color: childActive ? "var(--gold-soft)" : "var(--text-3)" }}
+                          >
+                            {child.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </>
+        ) : null}
+
         <p className="px-2 pb-2 pt-5 text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: "var(--text-3)" }}>
-          Módulos futuros
+          Em breve
         </p>
         {FUTURE_NAV.map((item) => (
           <span
             key={item.label}
             className="mb-0.5 block cursor-not-allowed rounded-xl px-3 py-2 text-[12px] font-medium opacity-45"
             style={{ color: "var(--text-3)" }}
-            title="Fora do escopo da Sprint 0"
+            title="Ainda não disponível"
           >
             {item.label}
           </span>
         ))}
       </nav>
     </aside>
+  );
+}
+
+function NavLink({
+  href,
+  active,
+  label,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`mb-0.5 block rounded-xl px-3 py-2.5 text-[13px] font-semibold transition ${
+        active ? "text-[#241a08]" : "hover:text-[var(--text-1)]"
+      }`}
+      style={
+        active
+          ? {
+              background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))",
+              boxShadow: "0 8px 20px -6px rgba(232,191,122,0.45)",
+            }
+          : { color: "var(--text-2)" }
+      }
+    >
+      {label}
+    </Link>
   );
 }

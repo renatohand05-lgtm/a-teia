@@ -35,9 +35,14 @@ export default async function ExperimentosPage({
           <Link href={`/empresas/${id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             ← Central da empresa
           </Link>
-          <Link href={`/empresas/${id}/experimentos/novo`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
-            Novo experimento
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/empresas/${id}/experimentos?status=COMPLETED`} className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
+              Evidências
+            </Link>
+            <Link href={`/empresas/${id}/experimentos/novo`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+              Novo experimento
+            </Link>
+          </div>
         </div>
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
@@ -94,6 +99,11 @@ export default async function ExperimentosPage({
                     <div className="mt-3 flex flex-wrap gap-2">
                       <ExperimentStatusBadge status={item.status} />
                       <ExperimentClassBadge classification={item.classification} />
+                      {item.evidence.length > 0 ? (
+                        <span className="rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase" style={{ borderColor: "var(--border)", color: "var(--gold-soft)" }}>
+                          Evidência rastreável
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
                       KPI {item.kpi ?? "—"} · Baseline {item.baseline ?? "não informado"} · Meta {item.target ?? "não informada"} · Atual {item.latestMeasurement ?? item.finalValue ?? "—"}

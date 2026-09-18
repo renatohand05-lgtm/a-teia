@@ -18,8 +18,6 @@ export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Visão Geral", enabled: false, group: "Em breve" },
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
-  { href: "#", label: "Execução", enabled: false, group: "Em breve" },
-  { href: "#", label: "Financeiro & Cenários", enabled: false, group: "Em breve" },
   { href: "#", label: "Assistente IA", enabled: false, group: "Em breve" },
   { href: "#", label: "Auditoria", enabled: false, group: "Em breve" },
 ];

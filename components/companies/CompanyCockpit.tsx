@@ -1,12 +1,11 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
-
-const FUTURE: string[] = [];
 
 export function CompanyCockpit({
   company,
@@ -43,6 +42,10 @@ export function CompanyCockpit({
   } | null;
 }) {
   const onboardingLabel = !onboarding ? "Não iniciado" : onboarding.status === "COMPLETE" ? "Completo" : "Em andamento";
+  const money = (value: number | null) =>
+    value != null
+      ? value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+      : "—";
 
   return (
     <div className="space-y-5">
@@ -67,10 +70,7 @@ export function CompanyCockpit({
           <p style={{ color: "var(--text-2)" }}>{company.segment || "Segmento ainda não informado"}</p>
           <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
             <Mini label="Onboarding" value={onboardingLabel} />
-            <Mini
-              label="Cidade/UF"
-              value={[onboarding?.city, onboarding?.state].filter(Boolean).join("/") || "—"}
-            />
+            <Mini label="Cidade/UF" value={[onboarding?.city, onboarding?.state].filter(Boolean).join("/") || "—"} />
             <Mini label="Último Score 360" value={latest ? `${latest.overallScore}/100` : "—"} />
             <Mini label="Maturidade" value={latest?.maturity ?? "—"} />
           </div>
@@ -103,39 +103,110 @@ export function CompanyCockpit({
         </div>
       </section>
 
-      <section className="flex flex-wrap gap-2">
-        <GoldLink href={`/empresas/${company.id}/onboarding`}>
-          {onboarding ? "Continuar onboarding" : "Iniciar onboarding"}
-        </GoldLink>
-        <GhostLink href={`/empresas/${company.id}/diagnostico`}>Realizar diagnóstico</GhostLink>
-        {latest ? <GhostLink href={`/empresas/${company.id}/diagnostico`}>Ver último diagnóstico</GhostLink> : null}
-        <GhostLink href={`/empresas/${company.id}/diagnostico/historico`}>
-          Ver histórico{historyCount ? ` (${historyCount})` : ""}
-        </GhostLink>
-        <GhostLink href={`/empresas/${company.id}/oportunidades`}>Ver oportunidades</GhostLink>
-        {latest ? (
-          <GhostLink href={`/empresas/${company.id}/oportunidades/gerar?diagnostico=${latest.id}`}>
-            Gerar oportunidades
+      <section>
+        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+          Módulos da empresa
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <ModuleCard
+            eyebrow="Diagnóstico"
+            title="Diagnóstico 360°"
+            body={latest ? `Último score ${latest.overallScore}/100 · ${historyCount} no histórico.` : "Ainda sem diagnóstico persistido."}
+            href={`/empresas/${company.id}/diagnostico`}
+            cta={latest ? "Abrir diagnóstico" : "Realizar diagnóstico"}
+            extra={
+              <GhostLink href={`/empresas/${company.id}/diagnostico/historico`}>
+                Histórico{historyCount ? ` (${historyCount})` : ""}
+              </GhostLink>
+            }
+          />
+          <ModuleCard
+            eyebrow="Oportunidades"
+            title="Ranking de hipóteses"
+            body="Priorize o que atacar. Hipótese não é evidência."
+            href={`/empresas/${company.id}/oportunidades`}
+            cta="Ver oportunidades"
+            extra={
+              latest ? (
+                <GhostLink href={`/empresas/${company.id}/oportunidades/gerar?diagnostico=${latest.id}`}>
+                  Gerar a partir do 360°
+                </GhostLink>
+              ) : null
+            }
+          />
+          <ModuleCard
+            eyebrow="Execução"
+            title="Plano 30/60/90"
+            body="Tarefa concluída não valida oportunidade. Evidência nasce de experimento."
+            href={`/empresas/${company.id}/execucao`}
+            cta="Abrir execução"
+          />
+          <ModuleCard
+            eyebrow="Financeiro"
+            title="DRE, caixa, metas e cenários"
+            body={finance ? "Resumo da competência atual." : "Informe a DRE para ver resultado, equilíbrio e cenários."}
+            href={`/empresas/${company.id}/financeiro`}
+            cta="Abrir financeiro"
+            extra={
+              <div className="flex flex-wrap gap-2">
+                <GhostLink href={`/empresas/${company.id}/financeiro/dre`}>DRE</GhostLink>
+                <GhostLink href={`/empresas/${company.id}/financeiro/fluxo-caixa`}>Fluxo de caixa</GhostLink>
+                <GhostLink href={`/empresas/${company.id}/financeiro/metas`}>Metas</GhostLink>
+                <GhostLink href={`/empresas/${company.id}/financeiro/cenarios`}>Cenários</GhostLink>
+              </div>
+            }
+          />
+          <ModuleCard
+            eyebrow="Validação real"
+            title="Experimentos e evidências"
+            body={
+              experiments
+                ? `${experiments.completed} concluídos · ${experiments.validated} validados.`
+                : "Teste hipóteses com baseline, meta e resultado medido."
+            }
+            href={`/empresas/${company.id}/experimentos`}
+            cta="Ver experimentos"
+            extra={
+              <GhostLink href={`/empresas/${company.id}/experimentos?status=COMPLETED`}>Ver evidências</GhostLink>
+            }
+          />
+          <ModuleCard
+            eyebrow="Aprendizado"
+            title="Memória estratégica"
+            body={
+              memory
+                ? `${memory.validated} validados · ${memory.transferableCount} transferíveis.`
+                : "O que funcionou, o que não funcionou e em quais condições."
+            }
+            href={`/empresas/${company.id}/memoria`}
+            cta="Ver memória"
+          />
+        </div>
+        <div className="mt-3">
+          <GhostLink href={`/empresas/${company.id}/onboarding`}>
+            {onboarding ? "Continuar onboarding" : "Iniciar onboarding"}
           </GhostLink>
-        ) : null}
-        <GhostLink href={`/empresas/${company.id}/execucao`}>Execução 30/60/90</GhostLink>
-        <GoldLink href={`/empresas/${company.id}/financeiro`}>Ver financeiro</GoldLink>
-        <GhostLink href={`/empresas/${company.id}/experimentos`}>Ver experimentos</GhostLink>
-        <GoldLink href={`/empresas/${company.id}/memoria`}>Ver memória</GoldLink>
+        </div>
       </section>
 
       {finance ? (
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-          <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
-            Resumo financeiro
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
+                Resumo financeiro
+              </div>
+              <h3 className="mt-1 text-[18px] font-black">Competência atual</h3>
+            </div>
+            <GoldLink href={`/empresas/${company.id}/financeiro`}>Abrir financeiro</GoldLink>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
-            <Mini label="Receita" value={finance.revenue != null ? String(finance.revenue.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
-            <Mini label="EBITDA" value={finance.ebitda != null ? String(finance.ebitda.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+            <Mini label="Receita" value={money(finance.revenue)} />
+            <Mini label="EBITDA" value={money(finance.ebitda)} />
             <Mini label="EBITDA %" value={finance.ebitdaPercent != null ? `${finance.ebitdaPercent}%` : "—"} />
             <Mini label="CMV %" value={finance.cogsPercent != null ? `${finance.cogsPercent}%` : "—"} />
-            <Mini label="Ponto de equilíbrio" value={finance.breakEven != null ? String(finance.breakEven.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
-            <Mini label="Gap para meta" value={finance.revenueGap != null ? String(finance.revenueGap.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+            <Mini label="Ponto de equilíbrio" value={money(finance.breakEven)} />
+            <Mini label="Gap para meta" value={money(finance.revenueGap)} />
           </div>
         </section>
       ) : null}
@@ -144,12 +215,15 @@ export function CompanyCockpit({
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Validação real</div>
+              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
+                Validação real
+              </div>
               <h3 className="mt-1 text-[18px] font-black">Experimentos e evidências</h3>
             </div>
-            <Link href={`/empresas/${company.id}/experimentos`} className="rounded-xl px-4 py-2.5 text-[13px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
-              Ver experimentos
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <GhostLink href={`/empresas/${company.id}/experimentos?status=COMPLETED`}>Evidências</GhostLink>
+              <GoldLink href={`/empresas/${company.id}/experimentos`}>Ver experimentos</GoldLink>
+            </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             <Mini label="Experimentos ativos" value={String(experiments.active)} />
@@ -164,12 +238,12 @@ export function CompanyCockpit({
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Memória estratégica</div>
+              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
+                Memória estratégica
+              </div>
               <h3 className="mt-1 text-[18px] font-black">O que já aprendemos</h3>
             </div>
-            <Link href={`/empresas/${company.id}/memoria`} className="rounded-xl px-4 py-2.5 text-[13px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
-              Ver memória
-            </Link>
+            <GoldLink href={`/empresas/${company.id}/memoria`}>Ver memória</GoldLink>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             <Mini label="Aprendizados validados" value={String(memory.validated)} />
@@ -184,28 +258,44 @@ export function CompanyCockpit({
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-[13px]" style={{ color: "var(--text-3)" }}>Nenhum aprendizado registrado ainda.</p>
+            <p className="mt-3 text-[13px]" style={{ color: "var(--text-3)" }}>
+              Nenhum aprendizado registrado ainda.
+            </p>
           )}
         </section>
       ) : null}
+    </div>
+  );
+}
 
-      {FUTURE.length > 0 ? (
-      <section>
-        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
-          Próximos módulos
-        </h3>
-        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
-          {FUTURE.map((item) => (
-            <div key={item} className="surface-card p-4 opacity-60">
-              <p className="text-[13px] font-semibold">{item}</p>
-              <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                Em breve
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-      ) : null}
+function ModuleCard({
+  eyebrow,
+  title,
+  body,
+  href,
+  cta,
+  extra,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+  extra?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+        {eyebrow}
+      </p>
+      <h4 className="mt-1 text-[16px] font-bold">{title}</h4>
+      <p className="mt-2 flex-1 text-[12px] leading-relaxed" style={{ color: "var(--text-2)" }}>
+        {body}
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <GoldLink href={href}>{cta}</GoldLink>
+        {extra}
+      </div>
     </div>
   );
 }
@@ -221,11 +311,11 @@ function Mini({ label, value }: { label: string; value: string }) {
   );
 }
 
-function GoldLink({ href, children }: { href: string; children: React.ReactNode }) {
+function GoldLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+      className="inline-flex rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
       style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
     >
       {children}
@@ -233,11 +323,11 @@ function GoldLink({ href, children }: { href: string; children: React.ReactNode 
   );
 }
 
-function GhostLink({ href, children }: { href: string; children: React.ReactNode }) {
+function GhostLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+      className="inline-flex rounded-xl border px-4 py-2.5 text-[13px] font-bold"
       style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
     >
       {children}
