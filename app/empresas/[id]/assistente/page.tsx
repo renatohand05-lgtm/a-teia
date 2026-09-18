@@ -1,7 +1,7 @@
 import { AssistantView } from "@/components/ai/AssistantView";
 import { AppShell } from "@/components/layout/AppShell";
 import { requireOwnedCompany } from "@/lib/access";
-import { isOpenAIConfigured } from "@/lib/env";
+import { isOpenAIConfigured, isWebSearchConfigured } from "@/lib/env";
 import { getConversation, listConversations } from "@/services/aiService";
 import { listCompanies } from "@/services/companyService";
 
@@ -26,6 +26,7 @@ export default async function EmpresaAssistentePage({ params }: { params: Promis
         conversationId={history?.id}
         initialMessages={history?.messages}
         providerReady={isOpenAIConfigured()}
+        webSearchReady={isWebSearchConfigured()}
       />
     </AppShell>
   );

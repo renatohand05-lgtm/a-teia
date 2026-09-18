@@ -11,6 +11,7 @@ import { listExecutionPlans } from "@/services/executionService";
 import { listExperiments } from "@/services/experimentService";
 import { getFinancialMiniSummary } from "@/services/financialService";
 import { listCompanyMemories } from "@/services/memoryService";
+import { getOnboarding } from "@/services/onboardingService";
 import { listOpportunities } from "@/services/opportunityService";
 
 export async function getExecutiveContext(ownerId: string, companyId: string): Promise<ExecutiveContext> {
@@ -19,13 +20,14 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
     throw new Error("Empresa não encontrada.");
   }
 
-  const [diagnosis, opportunities, plans, finance, experiments, memories] = await Promise.all([
+  const [diagnosis, opportunities, plans, finance, experiments, memories, onboarding] = await Promise.all([
     getLatestDiagnosis(ownerId, companyId),
     listOpportunities(ownerId, companyId, { status: "ALL" }),
     listExecutionPlans(ownerId, companyId),
     getFinancialMiniSummary(ownerId, companyId),
     listExperiments(ownerId, companyId),
     listCompanyMemories(ownerId, companyId, { status: "APPROVED" }),
+    getOnboarding(ownerId, companyId),
   ]);
 
   const evidence: ExecutiveEvidence[] = experiments.flatMap((item) =>
@@ -46,6 +48,8 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
       revenueMonthly: company.revenueMonthly,
       marginPercent: company.marginPercent,
       teamSize: company.teamSize,
+      city: onboarding?.city ?? null,
+      state: onboarding?.state ?? null,
       perceivedBottlenecks: company.perceivedBottlenecks,
       objectives: company.objectives,
       notes: company.notes ? company.notes.slice(0, 400) : null,

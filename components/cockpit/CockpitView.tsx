@@ -249,6 +249,16 @@ export function CockpitView({
               Abrir →
             </span>
           </Link>
+          {snapshot.marketIntel.recentResearchCount > 0 ? (
+            <div className="mt-3 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+                Inteligência de mercado
+              </p>
+              <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+                {snapshot.marketIntel.recentResearchCount} pesquisas recentes · {snapshot.marketIntel.recentSourceCount} fontes analisadas
+              </p>
+            </div>
+          ) : null}
         </div>
       </section>
 

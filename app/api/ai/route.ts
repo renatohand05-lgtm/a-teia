@@ -30,10 +30,15 @@ export async function POST(request: Request) {
       message: parsed.data.message,
       conversationId: parsed.data.conversationId,
       companyId: parsed.data.companyId,
+      useWebSearch: parsed.data.useWebSearch,
     });
     return NextResponse.json({
       ...reply,
-      research: null,
+      research: reply.answer.researchUsed
+        ? { used: true, sessionId: reply.answer.researchSessionId, sources: reply.answer.externalSources.length }
+        : reply.answer.researchUnavailable
+          ? { used: false, unavailable: reply.answer.researchUnavailable }
+          : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Falha ao consultar a IA.";

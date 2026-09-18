@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { confirmAiProposalAction, rejectAiProposalAction } from "@/app/empresas/ai-actions";
-import { EXECUTIVE_SHORTCUTS, type ExecutiveAnswer, type ProposedAction } from "@/lib/ai-executive-engine";
+import { EXECUTIVE_SHORTCUTS, EXTERNAL_SHORTCUTS, type ExecutiveAnswer, type ProposedAction } from "@/lib/ai-executive-engine";
 
 type CompanyOption = { id: string; name: string };
 
@@ -21,6 +21,7 @@ export function AssistantView({
   initialMessages = [],
   conversationId,
   providerReady,
+  webSearchReady,
 }: {
   companies: CompanyOption[];
   companyId?: string;
@@ -28,6 +29,7 @@ export function AssistantView({
   initialMessages?: ChatItem[];
   conversationId?: string;
   providerReady: boolean;
+  webSearchReady: boolean;
 }) {
   const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
   const [activeConversation, setActiveConversation] = useState(conversationId ?? "");
@@ -35,7 +37,9 @@ export function AssistantView({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
+  const [useWebSearch, setUseWebSearch] = useState(false);
   const [pending, startTransition] = useTransition();
+  const hasCompany = Boolean(companyId || companies.length === 1);
 
   const selected = useMemo(
     () => companies.find((item) => item.id === companyId) ?? null,
@@ -62,7 +66,7 @@ export function AssistantView({
           message,
           companyId: companyId ?? companies[0]?.id,
           conversationId: activeConversation || undefined,
-          useWebSearch: false,
+          useWebSearch,
         }),
       });
       const json = (await res.json()) as { error?: string; conversationId?: string; answer?: ExecutiveAnswer; content?: string };
@@ -121,6 +125,11 @@ export function AssistantView({
               ? "Provedor configurado no servidor. Fatos continuam determinísticos."
               : "IA indisponível — configure o provedor. O briefing determinístico segue ativo."}
           </p>
+          <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
+            {webSearchReady
+              ? "Pesquisa web disponível quando a pergunta exigir fonte externa."
+              : "Pesquisa externa indisponível neste momento. Dados internos seguem ativos."}
+          </p>
         </section>
         <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--text-3)" }}>
@@ -131,7 +140,26 @@ export function AssistantView({
               <button
                 key={item.label}
                 type="button"
-                disabled={!companyId && companies.length !== 1}
+                disabled={!hasCompany}
+                onClick={() => void send(item.prompt)}
+                className="rounded-xl border px-3 py-2 text-left text-[12px] font-bold disabled:opacity-40"
+                style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--text-3)" }}>
+            Inteligência externa
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {EXTERNAL_SHORTCUTS.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                disabled={!hasCompany}
                 onClick={() => void send(item.prompt)}
                 className="rounded-xl border px-3 py-2 text-left text-[12px] font-bold disabled:opacity-40"
                 style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
@@ -194,6 +222,13 @@ export function AssistantView({
             {busy ? "..." : "Perguntar"}
           </button>
         </div>
+        <label className="mt-2 flex items-center gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+          <input type="checkbox" checked={useWebSearch} onChange={(event) => setUseWebSearch(event.target.checked)} />
+          Pesquisar também na web
+        </label>
+        <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+          Perguntas internas (faturamento, CMV, ranking) continuam só no banco. Fonte externa nunca vira evidência.
+        </p>
       </section>
     </div>
   );
@@ -214,6 +249,7 @@ function MessageBubble({
   onConfirm: (id: string) => void;
   onReject: (id: string) => void;
 }) {
+  const [showSources, setShowSources] = useState(false);
   if (item.role === "USER") {
     return (
       <div className="max-w-[80%] self-end rounded-2xl px-3.5 py-3 text-[13px] font-semibold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
@@ -224,13 +260,62 @@ function MessageBubble({
   const answer = item.answer;
   return (
     <div className="max-w-[92%] self-start space-y-3 rounded-2xl border p-3.5" style={{ background: "rgba(255,255,255,.05)", borderColor: "var(--border)" }}>
+      {answer?.researchUsed ? (
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Pesquisa externa utilizada
+        </p>
+      ) : null}
       <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{answer?.summary ?? item.content}</p>
       {answer?.unavailableReason ? (
         <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
           {answer.unavailableReason}
         </p>
       ) : null}
+      {answer?.researchUnavailable ? (
+        <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+          {answer.researchUnavailable}
+        </p>
+      ) : null}
+      {answer?.temporalWarning ? (
+        <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+          {answer.temporalWarning}
+        </p>
+      ) : null}
       {answer ? <AnswerBlocks answer={answer} /> : null}
+      {answer?.externalSources.length ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowSources((value) => !value)}
+            className="text-[11px] font-extrabold"
+            style={{ color: "var(--gold-soft)" }}
+          >
+            {showSources ? "Ocultar fontes" : "Ver fontes"}
+          </button>
+          {showSources ? (
+            <div className="mt-2 grid gap-2">
+              {answer.externalSources.map((source) => (
+                <article key={`${source.url ?? source.title}-${source.rank}`} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+                    Fonte · {source.confidenceLabel}
+                  </p>
+                  <p className="mt-1 text-[13px] font-bold">{source.title}</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {source.domain ?? "domínio indisponível"}
+                    {source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}
+                    {` · consultado ${source.accessedAt.slice(0, 10)}`}
+                  </p>
+                  {source.url ? (
+                    <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                      Abrir fonte
+                    </a>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {answer?.proposedActions.map((action) => (
         <ProposalCard
           key={action.id ?? action.title}
@@ -248,13 +333,19 @@ function MessageBubble({
 
 function AnswerBlocks({ answer }: { answer: ExecutiveAnswer }) {
   const blocks = [
-    { title: "Dados observados", items: answer.data },
-    { title: "Inferências", items: answer.inferences },
-    { title: "Hipóteses", items: answer.hypotheses },
-    { title: "Evidências", items: answer.evidence },
+    { title: "Dados da empresa", items: answer.data.map((item) => `${item.kind} · ${item.text}`) },
+    { title: "Evidências internas", items: answer.evidence.map((item) => `${item.kind} · ${item.text}`) },
+    { title: "Inteligência externa", items: answer.external.map((item) => `${item.sourceLabel} · ${item.text}`) },
+    { title: "Análise", items: answer.inferences.map((item) => `${item.kind} · ${item.text}`) },
+    { title: "Hipóteses", items: answer.hypotheses.map((item) => `${item.kind} · ${item.text}`) },
   ].filter((block) => block.items.length);
   return (
     <div className="space-y-2">
+      {answer.divergent && answer.divergenceNote ? (
+        <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+          {answer.divergenceNote}
+        </p>
+      ) : null}
       {blocks.map((block) => (
         <div key={block.title}>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
@@ -262,19 +353,14 @@ function AnswerBlocks({ answer }: { answer: ExecutiveAnswer }) {
           </p>
           <ul className="mt-1 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
             {block.items.map((item, index) => (
-              <li key={`${block.title}-${index}`}>
-                <b style={{ color: "var(--text-1)" }}>{item.kind}</b> · {item.text}
-                <span className="ml-1 text-[10px]" style={{ color: "var(--text-3)" }}>
-                  {item.source}
-                </span>
-              </li>
+              <li key={`${block.title}-${index}`}>{item}</li>
             ))}
           </ul>
         </div>
       ))}
       {answer.sources.length ? (
         <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-          Fontes: {answer.sources.map((source) => `${source.kind} (${source.label})`).join(" · ")}
+          Fontes internas: {answer.sources.map((source) => `${source.kind} (${source.label})`).join(" · ")}
         </p>
       ) : null}
       {answer.nextActions.length ? (

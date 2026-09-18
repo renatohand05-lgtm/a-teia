@@ -50,6 +50,6 @@ export function isOpenAIConfigured(): boolean {
 }
 
 export function isWebSearchConfigured(): boolean {
-  const provider = process.env.WEB_SEARCH_PROVIDER ?? "none";
-  return provider !== "none" && Boolean(process.env.WEB_SEARCH_API_KEY);
+  const provider = (process.env.WEB_SEARCH_PROVIDER ?? "none").trim().toLowerCase();
+  return provider === "tavily" && Boolean(process.env.WEB_SEARCH_API_KEY);
 }

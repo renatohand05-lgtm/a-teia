@@ -28,6 +28,8 @@ const company = {
   id: "emp-1",
   name: "Oficina Centro",
   segment: "Oficina",
+  city: "Belo Horizonte",
+  state: "MG",
   revenueMonthly: 80000,
   marginPercent: 12,
   teamSize: 8,
@@ -281,6 +283,9 @@ describe("segurança do prompt e recorte de contexto", () => {
   it("intents e modelo configurável", () => {
     expect(detectQuestionIntent("Como está o financeiro?")).toBe("FINANCIAL");
     expect(detectQuestionIntent("Onde devo agir primeiro?")).toBe("PRIORITY");
+    expect(detectQuestionIntent("Meu CMV está bom comparado ao mercado?")).toBe("BENCHMARK");
+    expect(detectQuestionIntent("Analise concorrentes públicos do meu segmento")).toBe("COMPETITION");
+    expect(detectQuestionIntent("Quais oportunidades externas existem?")).toBe("EXTERNAL_OPPORTUNITY");
     expect(resolveOpenAIModel("")).toBe("gpt-4.1-mini");
     expect(resolveOpenAIModel("gpt-4.1")).toBe("gpt-4.1");
     expect(blockedMutationTypes()).toContain("concluir experimento");

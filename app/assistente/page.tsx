@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AssistantView } from "@/components/ai/AssistantView";
 import { AppShell } from "@/components/layout/AppShell";
-import { isOpenAIConfigured } from "@/lib/env";
+import { isOpenAIConfigured, isWebSearchConfigured } from "@/lib/env";
 import { listCompanies } from "@/services/companyService";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ export default async function AssistentePage() {
       <AssistantView
         companies={companies.map((item) => ({ id: item.id, name: item.name }))}
         providerReady={isOpenAIConfigured()}
+        webSearchReady={isWebSearchConfigured()}
       />
     </AppShell>
   );

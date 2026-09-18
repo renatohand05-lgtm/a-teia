@@ -663,6 +663,7 @@ model AIConversation {
 
   messages AIMessage[]
   proposals AIActionProposal[]
+  researchSessions ResearchSession[]
 
   @@index([userId, createdAt])
   @@index([companyId, createdAt])
@@ -688,15 +689,23 @@ model AIMessage {
 }
 
 model AISource {
-  id        String        @id @default(cuid())
-  messageId String
-  message   AIMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  kind      KnowledgeKind @default(EXTERNAL_SOURCE)
-  title     String
-  url       String?
-  snippet   String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  messageId   String
+  message     AIMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  kind        KnowledgeKind @default(EXTERNAL_SOURCE)
+  title       String
+  url         String?
+  snippet     String?
+  publisher   String?
+  domain      String?
+  publishedAt DateTime?
+  accessedAt  DateTime?
+  query       String?
+  sourceType  String?
+  freshness   String?
+  rank        Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model AIActionProposal {
@@ -725,36 +734,56 @@ model AIActionProposal {
 }
 
 model ResearchSession {
-  id          String         @id @default(cuid())
-  userId      String?
-  user        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  companyId   String?
-  company     Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  decisionId  String?
-  decision    Decision?      @relation(fields: [decisionId], references: [id], onDelete: SetNull)
-  question    String
-  conclusion  String?
-  status      ResearchStatus @default(PREPARED)
-  depth       String         @default("deep")
-  ranAt       DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id             String          @id @default(cuid())
+  userId         String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  companyId      String?
+  company        Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  conversationId String?
+  conversation   AIConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  decisionId     String?
+  decision       Decision?       @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  question       String
+  conclusion     String?
+  status         ResearchStatus  @default(PREPARED)
+  depth          String          @default("deep")
+  query          String?
+  cacheKey       String?
+  provider       String?
+  skippedReason  String?
+  sourceCount    Int             @default(0)
+  usedWeb        Boolean         @default(false)
+  ranAt          DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   findings ResearchFinding[]
 
   @@index([companyId, createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, cacheKey, createdAt])
+  @@index([conversationId, createdAt])
 }
 
 model ResearchFinding {
-  id        String          @id @default(cuid())
-  sessionId String
-  session   ResearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  kind      KnowledgeKind
-  title     String
-  url       String?
-  body      String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     ResearchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  kind        KnowledgeKind
+  title       String
+  url         String?
+  body        String?
+  publisher   String?
+  domain      String?
+  publishedAt DateTime?
+  accessedAt  DateTime?
+  snippet     String?
+  sourceType  String?
+  freshness   String?
+  rank        Int?
+  query       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model StoredFile {

@@ -10,7 +10,7 @@ describe("release e health", () => {
     expect(payload.app).toBe(APP_NAME);
     expect(payload.release).toBe(APP_RELEASE);
     expect(payload.version).toBe(APP_VERSION);
-    expect(payload.version).toBe("0.7.0");
+    expect(payload.version).toBe("0.8.0");
     expect(payload).not.toHaveProperty("sprint");
     expect(payload.openaiExposed).toBe(false);
   });

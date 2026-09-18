@@ -17,6 +17,7 @@ import {
 import { cockpitPriorityFromCompany } from "@/lib/priority";
 import { prisma } from "@/lib/prisma";
 import { listCompanies, type CompanyDTO } from "@/services/companyService";
+import { getRecentMarketIntel, type MarketIntelSummary } from "@/services/researchService";
 
 export type CockpitCounts = {
   companiesActive: number;
@@ -57,6 +58,7 @@ export type CockpitSnapshot = {
   action: CockpitAction;
   journey: JourneyStage[];
   briefing: CockpitBriefing;
+  marketIntel: MarketIntelSummary;
 };
 
 const emptyCounts = (): CockpitCounts => ({
@@ -230,6 +232,7 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
 
   if (!focus) {
     const progress = emptyCompanyProgress();
+    const marketIntel = await getRecentMarketIntel(ownerId);
     return {
       companies,
       ranked,
@@ -238,13 +241,15 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
       action: nextCockpitAction(progress),
       journey: buildJourney(progress),
       briefing: emptyBriefing(),
+      marketIntel,
     };
   }
 
-  const [portfolio, focusCounts, briefing] = await Promise.all([
+  const [portfolio, focusCounts, briefing, marketIntel] = await Promise.all([
     countPortfolio(ownerId),
     countPortfolio(ownerId, focus.id),
     loadBriefing(ownerId, focus),
+    getRecentMarketIntel(ownerId),
   ]);
 
   const progress = progressFromCounts(focus, focusCounts, ranked[0]?.zone === "critical");
@@ -256,5 +261,6 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
     action: nextCockpitAction(progress),
     journey: buildJourney(progress),
     briefing,
+    marketIntel,
   };
 }

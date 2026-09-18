@@ -11,14 +11,17 @@ import {
   narrativeIntroducesUnknownNumbers,
   parseOpenAISummary,
   sliceExecutiveContext,
+  emptyResearchFields,
   type ExecutiveAnswer,
   type ProposedAction,
 } from "@/lib/ai-executive-engine";
 import { assertNotSecretLeak } from "@/lib/knowledge";
+import { applyExternalResearch, extractResearchNumbers, wrapExternalAsData } from "@/lib/research-engine";
 import { prisma } from "@/lib/prisma";
 import { getExecutiveContext } from "@/services/aiContextService";
 import { persistProposedActions } from "@/services/aiActionService";
 import { writeAudit } from "@/services/auditService";
+import { runExternalResearch } from "@/services/researchService";
 
 export type AIChatMessage = {
   id: string;
@@ -47,7 +50,23 @@ export type AIReply = {
 
 function asAnswer(value: Prisma.JsonValue | null): ExecutiveAnswer | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  return value as unknown as ExecutiveAnswer;
+  const raw = value as unknown as ExecutiveAnswer;
+  return {
+    ...emptyResearchFields(),
+    ...raw,
+    external: raw.external ?? [],
+    externalSources: raw.externalSources ?? [],
+    proposedActions: raw.proposedActions ?? [],
+    data: raw.data ?? [],
+    inferences: raw.inferences ?? [],
+    hypotheses: raw.hypotheses ?? [],
+    evidence: raw.evidence ?? [],
+    nextActions: raw.nextActions ?? [],
+    sources: raw.sources ?? [],
+    researchUsed: Boolean(raw.researchUsed),
+    divergent: Boolean(raw.divergent),
+    cached: Boolean(raw.cached),
+  };
 }
 
 async function ownedConversation(userId: string, conversationId: string, companyId?: string) {
@@ -105,6 +124,7 @@ export async function askExecutiveAssistant(input: {
   message: string;
   conversationId?: string;
   companyId?: string;
+  useWebSearch?: boolean;
 }): Promise<AIReply> {
   const companyId = input.companyId;
   if (companyId) {
@@ -160,15 +180,60 @@ export async function askExecutiveAssistant(input: {
     input.message,
   );
 
+  const research = await runExternalResearch({
+    userId: input.userId,
+    question: input.message,
+    companyId: conversation.companyId ?? undefined,
+    conversationId: conversation.id,
+    forceWeb: input.useWebSearch,
+    company: context?.company ?? null,
+    finance: context?.finance ?? null,
+  });
+  answer = applyExternalResearch(answer, research);
+  if (research.proposedOpportunity) {
+    await writeAudit({
+      actorId: input.userId,
+      action: "external.opportunity.proposed",
+      entity: "AIConversation",
+      entityId: conversation.id,
+      newValue: { title: research.proposedOpportunity.title },
+      origin: AuditSource.RESEARCH,
+    });
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   const configured = Boolean(apiKey);
   const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
 
   if (configured && sliced && context?.company) {
     try {
-      const narrative = await callOpenAIChat(buildOpenAIMessages({ context: sliced, question: input.message, deterministic: answer }));
+      const externalBlock =
+        research.used && research.sources.length
+          ? wrapExternalAsData({
+              query: research.query,
+              sources: research.sources.map((item) => ({
+                title: item.title,
+                url: item.url,
+                domain: item.domain,
+                publishedAt: item.publishedAt,
+                accessedAt: item.accessedAt,
+                snippet: item.snippet,
+                sourceType: item.sourceType,
+              })),
+            })
+          : research.unavailable
+            ? wrapExternalAsData({ unavailable: research.unavailable })
+            : null;
+      const narrative = await callOpenAIChat(
+        buildOpenAIMessages({
+          context: sliced,
+          question: input.message,
+          deterministic: answer,
+          externalResearch: externalBlock,
+        }),
+      );
       const parsed = parseOpenAISummary(narrative);
-      const known = extractKnownNumbers(sliced);
+      const known = new Set([...extractKnownNumbers(sliced), ...extractResearchNumbers(research.sources)]);
       if (parsed && !narrativeIntroducesUnknownNumbers(parsed, known)) {
         answer = mergeOpenAINarrative(answer, parsed, model);
       } else {
@@ -206,13 +271,30 @@ export async function askExecutiveAssistant(input: {
     },
   });
 
-  if (answer.sources.length) {
+  if (answer.sources.length || answer.externalSources.length) {
     await prisma.aISource.createMany({
-      data: answer.sources.map((source) => ({
-        messageId: assistant.id,
-        kind: KnowledgeKind.INTERNAL_DATA,
-        title: `${source.kind}: ${source.label}`,
-      })),
+      data: [
+        ...answer.sources.map((source) => ({
+          messageId: assistant.id,
+          kind: KnowledgeKind.INTERNAL_DATA,
+          title: `${source.kind}: ${source.label}`,
+        })),
+        ...answer.externalSources.map((source) => ({
+          messageId: assistant.id,
+          kind: KnowledgeKind.EXTERNAL_SOURCE,
+          title: source.title,
+          url: source.url,
+          snippet: source.snippet,
+          publisher: source.publisher,
+          domain: source.domain,
+          publishedAt: source.publishedAt ? new Date(source.publishedAt) : null,
+          accessedAt: source.accessedAt ? new Date(source.accessedAt) : null,
+          query: source.query,
+          sourceType: source.sourceType,
+          freshness: source.freshness,
+          rank: source.rank,
+        })),
+      ],
     });
   }
 
@@ -232,7 +314,12 @@ export async function askExecutiveAssistant(input: {
     action: "ai.answer",
     entity: "AIMessage",
     entityId: assistant.id,
-    newValue: { provider: answer.provider, sources: answer.sources.map((item) => item.kind), proposed: answer.proposedActions.length },
+    newValue: {
+      provider: answer.provider,
+      sources: answer.sources.map((item) => item.kind),
+      proposed: answer.proposedActions.length,
+      researchUsed: answer.researchUsed,
+    },
     origin: AuditSource.AI,
   });
 
