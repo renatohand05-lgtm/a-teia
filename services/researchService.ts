@@ -395,7 +395,7 @@ function findingsToSources(
 
 function refineHits(items: NormalizedSource[], plan: ReturnType<typeof buildResearchQuery>) {
   const filtered = filterRelevantSources(items, plan);
-  const selected = selectSourcesForIntent(filtered.accepted, plan.intent);
+  const selected = selectSourcesForIntent(filtered.accepted, plan.intent, plan.original);
   return {
     selected,
     rejected: [...filtered.rejected, ...filtered.accepted.slice(selected.length)],

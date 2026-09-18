@@ -221,7 +221,7 @@ export async function askExecutiveAssistant(input: {
                 title: item.title,
                 url: item.url,
                 domain: item.domain,
-                snippet: item.snippet?.slice(0, 220),
+                snippet: item.snippet?.slice(0, 160),
                 sourceType: item.sourceType,
                 claimType: item.claimType ?? null,
                 qualityLevel: item.qualityLevel ?? null,
@@ -245,9 +245,12 @@ export async function askExecutiveAssistant(input: {
         parsed &&
         hasForbiddenNationalLanguage(parsed) &&
         !research.trustworthyBenchmark;
-      const tooLong = Boolean(parsed && parsed.length > 720);
+      const tooLong = Boolean(parsed && parsed.length > (research.researchKind === "benchmark" ? 560 : 720));
       if (parsed && !narrativeIntroducesUnknownNumbers(parsed, known) && !blockedNational && !tooLong) {
-        answer = mergeOpenAINarrative(answer, parsed, model);
+        answer =
+          research.researchKind === "benchmark"
+            ? { ...answer, provider: "openai", model, unavailableReason: null }
+            : mergeOpenAINarrative(answer, parsed, model);
       } else {
         answer = {
           ...answer,

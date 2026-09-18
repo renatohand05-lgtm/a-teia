@@ -5,9 +5,9 @@ export const RESEARCH_LIMITS = {
   maxBenchmarkSources: 4,
   maxAcceptedSources: 4,
   tavilyFetchCount: 8,
-  maxSourceCharacters: 220,
-  maxContextCharacters: 2_500,
-  maxAIContextCharacters: 2_500,
+  maxSourceCharacters: 160,
+  maxContextCharacters: 1_800,
+  maxAIContextCharacters: 1_800,
   cacheTtlMs: 6 * 60 * 60 * 1000,
   temporalCacheTtlMs: 60 * 60 * 1000,
 } as const;

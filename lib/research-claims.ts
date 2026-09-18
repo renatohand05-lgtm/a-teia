@@ -120,7 +120,7 @@ export function classifyExternalClaim(text: string): ExternalClaimType {
   ) {
     return "BENCHMARK";
   }
-  if (/ideal|saud[aá]vel|pode variar|faixa t[ií]pica|recomendad|refer[eê]ncia|entre \d/.test(hay)) {
+  if (/ideal|saud[aá]vel|pode variar|faixa t[ií]pica|recomendad|refer[eê]ncia|entre \d|costuma (ficar|variar)|tipicamente|em torno de/.test(hay)) {
     return "REFERENCE";
   }
   if (/(\d+(?:[.,]\d+)?)\s*%/.test(text)) return "UNKNOWN";
@@ -197,7 +197,6 @@ export function validateBenchmarkClaim(
 ): BenchmarkValidation {
   const text = textBlob(source);
   const hay = text.toLowerCase();
-  const claimType = classifyExternalClaim(text);
   const values = usablePercents(text);
   const hasSegmentSupport = Boolean(
     plan.segment &&
@@ -207,6 +206,21 @@ export function validateBenchmarkClaim(
   const hasGeographySupport = /brasil|brazil|nacional/.test(hay);
   const hasSampleSupport = /amostra|pesquisa com \d|em \d[\d.]* (restaurantes|empresas|estabelecimentos)/.test(hay);
   const hasMethodologySupport = /metodolog|amostra|pesquisa realizada|estudo (com|de|encontrou)/.test(hay);
+  let claimType = classifyExternalClaim(text);
+  if (claimType === "BENCHMARK" && /ideal|saud[aá]vel|recomendad|sugerid|pode variar|faixa sugerida/.test(hay)) {
+    claimType = "REFERENCE";
+  }
+  if (
+    claimType === "BENCHMARK" &&
+    source.sourceType !== "official" &&
+    source.sourceType !== "regulator" &&
+    source.sourceType !== "study" &&
+    source.sourceType !== "primary" &&
+    !hasSampleSupport &&
+    !hasMethodologySupport
+  ) {
+    claimType = "REFERENCE";
+  }
   const suspectedOutlier = isSuspectedOutlier(values, values);
   const qualityLevel = qualityLevelFor(claimType, source.sourceType, {
     methodology: hasMethodologySupport,
@@ -227,7 +241,9 @@ export function validateBenchmarkClaim(
     : benchmarkEligible
       ? "Usada como referência de média declarada pela fonte, sem consolidar média nacional oficial."
       : claimType === "REFERENCE"
-        ? "Usada como referência prática, não média nacional."
+        ? plan.segment === "restaurantes"
+          ? "Usada como referência prática para restaurantes."
+          : "Usada como referência prática, não média nacional."
         : claimType === "EXAMPLE" || claimType === "FORMULA"
           ? "Exemplo ou fórmula. Não entra na síntese de benchmark."
           : "Contexto insuficiente para promover a benchmark.";

@@ -249,9 +249,9 @@ function MessageBubble({
   onConfirm: (id: string) => void;
   onReject: (id: string) => void;
 }) {
-  const [showSources, setShowSources] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showInternal, setShowInternal] = useState(false);
+  const [showMethod, setShowMethod] = useState(false);
   if (item.role === "USER") {
     return (
       <div className="max-w-[80%] self-end rounded-2xl px-3.5 py-3 text-[13px] font-semibold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
@@ -268,17 +268,13 @@ function MessageBubble({
         </p>
       ) : null}
       <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{answer?.summary ?? item.content}</p>
-      {answer?.nextActions.length ? (
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-            Próxima ação
-          </p>
-          <ul className="mt-1 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-            {answer.nextActions.slice(0, 4).map((itemAction) => (
-              <li key={itemAction}>{itemAction}</li>
-            ))}
-          </ul>
-        </div>
+      {answer?.nextActions.length && !answer.summary.includes(answer.nextActions[0] ?? "") ? (
+        <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+            Ação recomendada
+          </span>
+          <span className="mt-1 block">{answer.nextActions[0]}</span>
+        </p>
       ) : null}
       {answer?.unavailableReason ? (
         <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
@@ -322,56 +318,56 @@ resultsRejected: ${answer.researchDebug.resultsRejected.join(" | ") || "—"}`}
           >
             {showInternal ? "Ocultar dados utilizados" : "Ver dados utilizados"}
           </button>
+          <button
+            type="button"
+            onClick={() => setShowMethod((value) => !value)}
+            className="text-[11px] font-extrabold"
+            style={{ color: "var(--gold-soft)" }}
+          >
+            {showMethod ? "Ocultar metodologia" : "Ver metodologia"}
+          </button>
         </div>
       ) : null}
       {answer && showInternal ? (
         <ul className="space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-          {answer.data
-            .filter((itemData) => /cmv|faturamento|receita|margem|ebitda|ticket|folha/i.test(itemData.text))
-            .slice(0, 6)
-            .map((itemData, index) => (
-              <li key={`data-${index}`}>{itemData.kind} · {itemData.text}</li>
-            ))}
+          {answer.data.map((itemData, index) => (
+            <li key={`data-${index}`}>{itemData.text}</li>
+          ))}
         </ul>
+      ) : null}
+      {answer && showMethod ? (
+        <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+          Fontes classificadas como exemplo, fórmula ou calculadora não entram nos cards principais em perguntas de benchmark. Afirmação nacional exige segmento, geografia e método. Fonte externa não é evidência interna.
+        </p>
       ) : null}
       {answer && showAnalysis ? <AnswerBlocks answer={answer} hideActions /> : null}
       {answer?.externalSources.length ? (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowSources((value) => !value)}
-            className="text-[11px] font-extrabold"
-            style={{ color: "var(--gold-soft)" }}
-          >
-            {showSources ? "Ocultar fontes" : "Ver fontes"}
-          </button>
-          {showSources ? (
-            <div className="mt-2 grid gap-2">
-              {answer.externalSources.slice(0, 4).map((source) => (
-                <article key={`${source.url ?? source.title}-${source.rank}`} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                    {source.displayType ?? source.confidenceLabel}
-                    {source.qualityLevel ? ` · Nível ${source.qualityLevel}` : ""}
-                  </p>
-                  <p className="mt-1 text-[13px] font-bold">{source.title}</p>
-                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {source.domain ?? source.publisher ?? "domínio indisponível"}
-                    {source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}
-                  </p>
-                  {source.usageReason ? (
-                    <p className="mt-1 text-[11px]" style={{ color: "var(--text-2)" }}>
-                      {source.usageReason}
-                    </p>
-                  ) : null}
-                  {source.url ? (
-                    <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
-                      Abrir fonte
-                    </a>
-                  ) : null}
-                </article>
-              ))}
-            </div>
-          ) : null}
+        <div className="grid gap-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+            Fontes
+          </p>
+          {answer.externalSources.slice(0, 4).map((source) => (
+            <article key={`${source.url ?? source.title}-${source.rank}`} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+                {source.displayType ?? source.confidenceLabel}
+              </p>
+              <p className="mt-1 text-[13px] font-bold">{source.title}</p>
+              <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                {source.domain ?? source.publisher ?? "domínio indisponível"}
+                {source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · Data não identificada"}
+              </p>
+              {source.usageReason ? (
+                <p className="mt-1 text-[11px]" style={{ color: "var(--text-2)" }}>
+                  Por que usamos esta fonte: {source.usageReason}
+                </p>
+              ) : null}
+              {source.url ? (
+                <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Abrir fonte
+                </a>
+              ) : null}
+            </article>
+          ))}
         </div>
       ) : null}
       {answer?.proposedActions.map((action) => (
@@ -410,7 +406,7 @@ function AnswerBlocks({ answer, hideActions = false }: { answer: ExecutiveAnswer
           </p>
           <ul className="mt-1 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
             {block.items.map((item, index) => (
-              <li key={`${block.title}-${index}`}>{item}</li>
+              <li key={`${block.title}-${index}`}>{item.replace(/^([^·]+) · \1 · /, "$1 · ")}</li>
             ))}
           </ul>
         </div>

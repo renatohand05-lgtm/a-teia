@@ -26,7 +26,9 @@ export type SourceRejectReason =
   | "example_only"
   | "no_metric_context"
   | "outlier_context"
-  | "untrusted_source";
+  | "untrusted_source"
+  | "semantic_mismatch"
+  | "low_semantic_relevance";
 
 export type ScoredSource = NormalizedSource & {
   relevanceScore: number;
@@ -47,7 +49,12 @@ export type FilterResult = {
 };
 
 const MIN_ACCEPT = 38;
+const MIN_SEMANTIC = 4;
 const QUALITY_RANK: Record<SourceQualityLevel, number> = { A: 1, B: 2, C: 3, D: 4, E: 5 };
+const PRIMARY_CLAIMS = new Set(["OFFICIAL_DATA", "STATISTIC", "BENCHMARK", "REFERENCE"]);
+const TECHNICAL_CLAIMS = new Set(["EXAMPLE", "FORMULA"]);
+const OFF_TOPIC =
+  /\bkart\b|futebol|campeonato de|copa brasil de|stock car|esporte a motor|celebridade|assassinato|homic[ií]dio|\bpol[ií]cia\b|elei[cç][aã]o|novela|\bbbb\b|reality show|f[oó]rmula 1|\bnba\b|\bnfl\b/i;
 
 export function classifyNumericClaim(text: string): "benchmark" | "example" | "unclear" {
   const claim = classifyExternalClaim(text);
@@ -102,6 +109,83 @@ function blob(source: Pick<NormalizedSource, "title" | "snippet" | "domain" | "p
   return `${source.title} ${source.snippet} ${source.domain ?? ""} ${source.publisher ?? ""}`.toLowerCase();
 }
 
+function hasMetricSignal(text: string, plan: ResearchQueryPlan): boolean {
+  const hay = text.toLowerCase();
+  const metrics = detectMetricsInText(`${plan.query} ${plan.original} ${plan.metric ?? ""}`);
+  if (metrics.some((metric) => new RegExp(`\\b${escapeReg(metric.acronym)}\\b`, "i").test(text))) return true;
+  if (metrics.some((metric) => metric.expansions.some((exp) => hay.includes(exp.toLowerCase())))) return true;
+  if (plan.metric === "CMV" || /\bcmv\b/i.test(`${plan.query} ${plan.original}`)) {
+    return /custo da mercadoria|food\s?cost|\bcogs\b|ficha t[eé]cnica|mercadoria vendida/.test(hay);
+  }
+  if (plan.metric === "EBITDA" || /ebitda/i.test(`${plan.query} ${plan.original}`)) {
+    return /ebitda|lucro antes de juros/.test(hay);
+  }
+  if (plan.metric === "CAC" || /\bcac\b/i.test(`${plan.query} ${plan.original}`)) {
+    return /custo de aquisi[cç][aã]o|customer acquisition/.test(hay);
+  }
+  return false;
+}
+
+function hasSegmentSignal(text: string, plan: ResearchQueryPlan): boolean {
+  const hay = text.toLowerCase();
+  if (plan.segment && hay.includes(plan.segment.toLowerCase())) return true;
+  if (plan.segment === "restaurantes") return /restaur|food|alimenta|hambur|lanchonete|bares?|food.?service/.test(hay);
+  if (plan.segment === "oficinas") return /oficina|autope[cç]a|mec[aâ]nic/.test(hay);
+  if (plan.segment) {
+    const token = plan.segment.toLowerCase().replace(/s$/, "");
+    if (token.length > 3 && hay.includes(token)) return true;
+  }
+  return false;
+}
+
+function hasOperationalSignal(text: string, plan: ResearchQueryPlan): boolean {
+  const hay = text.toLowerCase();
+  const metrics = detectMetricsInText(`${plan.query} ${plan.original} ${plan.metric ?? ""}`);
+  if (metrics.some((metric) => metric.contextHints.some((hint) => hay.includes(hint.toLowerCase())))) return true;
+  if (plan.metric === "CMV" || /\bcmv\b/i.test(`${plan.query} ${plan.original}`)) {
+    return /estoque|compras|ficha t[eé]cnica|margem|custo|desperd[ií]cio|card[aá]pio/.test(hay);
+  }
+  return /indicador|kpi|percentual|benchmark|m[eé]dia|faixa|custo|margem/.test(hay);
+}
+
+export function isSemanticallyRelevantSource(
+  source: Pick<NormalizedSource, "title" | "snippet" | "domain" | "publisher">,
+  plan: ResearchQueryPlan,
+): { relevant: boolean; score: number; reason?: SourceRejectReason } {
+  const title = source.title ?? "";
+  const snippet = source.snippet ?? "";
+  const titleOff = OFF_TOPIC.test(title);
+  const snippetOff = OFF_TOPIC.test(snippet);
+  const titleLinked = hasMetricSignal(title, plan) || hasSegmentSignal(title, plan);
+  if (titleOff && !titleLinked) {
+    return { relevant: false, score: 0, reason: "semantic_mismatch" };
+  }
+  if (snippetOff && !titleLinked && !hasMetricSignal(snippet, plan) && !hasSegmentSignal(snippet, plan)) {
+    return { relevant: false, score: 0, reason: "semantic_mismatch" };
+  }
+
+  let score = 0;
+  if (hasMetricSignal(title, plan)) score += 3;
+  if (hasMetricSignal(snippet, plan)) score += 2;
+  if (hasSegmentSignal(title, plan)) score += 3;
+  if (hasSegmentSignal(snippet, plan)) score += 2;
+  if (hasOperationalSignal(`${title} ${snippet}`, plan)) score += 2;
+  if (/benchmark|m[eé]dia|faixa|estudo|pesquisa|refer[eê]ncia/.test(`${title} ${snippet}`.toLowerCase())) score += 1;
+  if (titleOff) score -= 6;
+  if (snippetOff && !hasMetricSignal(snippet, plan)) score -= 3;
+  if (!hasMetricSignal(`${title} ${snippet}`, plan) && !hasSegmentSignal(`${title} ${snippet}`, plan)) {
+    return { relevant: false, score, reason: "low_semantic_relevance" };
+  }
+  if (score < MIN_SEMANTIC) return { relevant: false, score, reason: "low_semantic_relevance" };
+  return { relevant: true, score };
+}
+
+export function isPrimarySourceClaim(claimType?: string, numericClaim?: string): boolean {
+  if (numericClaim === "example") return false;
+  if (!claimType) return true;
+  return PRIMARY_CLAIMS.has(claimType);
+}
+
 export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQueryPlan): number {
   const text = blob(source);
   const validation = validateBenchmarkClaim(source, plan);
@@ -146,6 +230,9 @@ export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQue
     score -= 20;
   }
   if (validation.suspectedOutlier) score -= 15;
+  const semantic = isSemanticallyRelevantSource(source, plan);
+  if (!semantic.relevant) score = Math.min(score, 20);
+  if (semantic.reason === "semantic_mismatch") score = Math.min(score, 10);
   return Math.max(0, Math.min(100, score));
 }
 
@@ -183,6 +270,19 @@ export function filterRelevantSources(sources: NormalizedSource[], plan: Researc
     }
     if (isAcronymHomonym(`${source.title} ${source.snippet} ${source.domain ?? ""}`, `${plan.query} ${plan.original}`)) {
       rejected.push({ ...scored, rejectReason: "homonym" });
+      continue;
+    }
+    const semantic = isSemanticallyRelevantSource(source, plan);
+    if (!semantic.relevant) {
+      rejected.push({ ...scored, rejectReason: semantic.reason ?? "low_semantic_relevance" });
+      continue;
+    }
+    if (
+      plan.intent === "BENCHMARK" &&
+      !/c[aá]lculo|f[oó]rmula|calculadora|como calcular/.test(plan.original) &&
+      (TECHNICAL_CLAIMS.has(validation.claimType) || isCalculatorPage(text))
+    ) {
+      rejected.push({ ...scored, rejectReason: "example_only" });
       continue;
     }
     if (plan.segment === "restaurantes" && /oficina|software house|tecnologia da informa/.test(text) && !/restaur|food|alimenta/.test(text)) {
@@ -223,9 +323,16 @@ export function filterRelevantSources(sources: NormalizedSource[], plan: Researc
   return { accepted, rejected };
 }
 
-export function selectSourcesForIntent(accepted: ScoredSource[], intent: ResearchTopicIntent): ScoredSource[] {
+export function selectSourcesForIntent(accepted: ScoredSource[], intent: ResearchTopicIntent, question?: string): ScoredSource[] {
+  const wantsFormula = /c[aá]lculo|f[oó]rmula|calculadora|como calcular/.test(question ?? "");
+  const primary =
+    intent === "BENCHMARK" && !wantsFormula
+      ? accepted.filter(
+          (item) => isPrimarySourceClaim(item.claimType, item.numericClaim) && !isCalculatorPage(`${item.title} ${item.snippet}`),
+        )
+      : accepted;
   const max = intent === "BENCHMARK" ? 4 : 5;
-  return accepted.slice(0, max);
+  return primary.slice(0, max);
 }
 
 export function hasTrustworthyBenchmark(sources: ScoredSource[]): boolean {

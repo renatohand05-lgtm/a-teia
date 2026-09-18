@@ -23,6 +23,7 @@ import {
   usablePercents,
   validateBenchmarkClaim,
 } from "@/lib/research-claims";
+import { CALCULATOR_HINTS } from "@/lib/research-terms";
 
 export { buildResearchQuery, buildLayeredQueries } from "@/lib/research-query";
 export type { ResearchQueryPlan } from "@/lib/research-query";
@@ -380,7 +381,7 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
     metric: "CMV",
     intent: "BENCHMARK" as const,
   };
-  const annotated = input.sources.slice(0, RESEARCH_LIMITS.maxAcceptedSources).map((item) => {
+  const annotated = input.sources.map((item) => {
     const validation = validateBenchmarkClaim(item, plan);
     return {
       ...item,
@@ -394,28 +395,48 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
       suspectedOutlier: validation.suspectedOutlier,
       sourceId: sourceIdOf(item),
       confidenceLabel: validation.displayType,
+      numericClaim: validation.claimType === "EXAMPLE" || validation.claimType === "FORMULA" ? "example" : undefined,
     };
   });
+  const wantsFormula = /c[aá]lculo|f[oó]rmula|calculadora|como calcular/.test(`${input.queryOriginal ?? ""} ${input.query ?? ""}`);
+  const primary = annotated
+    .filter((item) => {
+      const blob = `${item.title} ${item.snippet}`.toLowerCase();
+      const calculator = CALCULATOR_HINTS.some((hint) => blob.includes(hint)) || /calculadora/.test(blob);
+      if (wantsFormula) return true;
+      if (item.claimType === "EXAMPLE" || item.claimType === "FORMULA" || calculator) return false;
+      if (item.claimType === "OPINION") return false;
+      return true;
+    })
+    .slice(0, RESEARCH_LIMITS.maxAcceptedSources);
   const synthesis = synthesizeBenchmark({
     companyName: input.company?.name ?? "empresa",
     metricLabel: "CMV",
     internalValue: input.finance?.cogsPercent ?? null,
-    sources: annotated,
+    sources: primary,
     plan,
   });
   const trustworthy = Boolean(input.trustworthyBenchmark) || synthesis.nationalEligible;
   const tagged = { ...input, trustworthyBenchmark: trustworthy };
-  const external = buildExternalIntel(tagged, annotated, synthesis);
-  const proposed = proposeExternalOpportunity(input.company, annotated, input.researchKind);
+  const external = buildExternalIntel(tagged, primary, synthesis);
+  const proposed = proposeExternalOpportunity(input.company, primary, input.researchKind);
   const proposedActions = proposed ? [...answer.proposedActions, proposed].slice(0, 4) : answer.proposedActions;
+  const wasteHypothesis =
+    input.researchKind === "benchmark"
+      ? uniqueStatements(answer.hypotheses, {
+          kind: "HIPOTESE",
+          text: "Se o CMV persistir acima da meta, investigar ficha técnica, compras ou desperdício com evidência interna — não afirmar causa sem dado.",
+          source: "Financeiro",
+        })
+      : answer.hypotheses;
 
   return {
     ...answer,
-    summary: composeSummary(answer, tagged, annotated, synthesis),
-    researchUsed: input.used && annotated.length > 0,
+    summary: composeSummary(answer, tagged, primary, synthesis),
+    researchUsed: input.used && primary.length > 0,
     researchUnavailable: input.unavailable,
     external,
-    externalSources: annotated,
+    externalSources: primary,
     divergent: synthesis.divergent,
     divergenceNote: synthesis.divergenceNote,
     researchSessionId: input.sessionId ?? null,
@@ -423,19 +444,14 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
     temporalWarning: input.temporalWarning ?? null,
     proposedActions,
     hypotheses: proposed
-      ? uniqueStatements(answer.hypotheses, {
+      ? uniqueStatements(wasteHypothesis, {
           kind: "HIPOTESE",
           text: "Oportunidade externa é proposta, não evidência. Só entra na carteira após revisão humana.",
           source: "Cadastro",
         })
-      : answer.hypotheses,
-    nextActions: uniqueTexts([...benchmarkNextActions(answer, input), ...(synthesis.divergenceNote ? [synthesis.divergenceNote] : [])]),
+      : wasteHypothesis,
+    nextActions: uniqueTexts(benchmarkNextActions(answer, tagged)),
   };
-}
-
-function shortSnippet(text: string): string {
-  const clipped = text.replace(/\s+/g, " ").trim();
-  return clipped.length > 160 ? `${clipped.slice(0, 157)}…` : clipped;
 }
 
 function metricLabel(question?: string | null): string {
@@ -446,7 +462,28 @@ function metricLabel(question?: string | null): string {
   if (/\bltv\b/i.test(question)) return "LTV";
   if (/\broi\b/i.test(question)) return "ROI";
   if (/ticket/i.test(question)) return "ticket médio";
+  if (/margem/i.test(question)) return "margem";
+  if (/folha/i.test(question)) return "folha";
   return "indicador";
+}
+
+function metricSnapshot(
+  finance: ExecutiveFinance | null | undefined,
+  metric: string,
+): { current: number | null; target: number | null; currentLabel: string } {
+  if (metric === "CMV") {
+    return { current: finance?.cogsPercent ?? null, target: finance?.cogsTarget ?? null, currentLabel: "CMV atual" };
+  }
+  if (metric === "margem") {
+    return { current: finance?.grossMarginPercent ?? null, target: null, currentLabel: "Margem atual" };
+  }
+  if (metric === "folha") {
+    return { current: finance?.payrollPercent ?? null, target: null, currentLabel: "Folha atual" };
+  }
+  if (metric === "EBITDA") {
+    return { current: finance?.ebitdaPercent ?? null, target: null, currentLabel: "EBITDA atual" };
+  }
+  return { current: finance?.cogsPercent ?? null, target: finance?.cogsTarget ?? null, currentLabel: `${metric} atual` };
 }
 
 function benchmarkNextActions(answer: ExecutiveAnswer, input: ResearchApplyInput): string[] {
@@ -454,12 +491,8 @@ function benchmarkNextActions(answer: ExecutiveAnswer, input: ResearchApplyInput
     return answer.nextActions;
   }
   const metric = metricLabel(input.queryOriginal ?? input.query);
-  const name = input.company?.name ?? "a empresa";
   return [
-    `Manter acompanhamento semanal do ${metric} no financeiro persistido.`,
-    `Comparar o histórico interno de ${name} antes de tratar desvio como problema de mercado.`,
-    `Executar Diagnóstico 360° de ${name} se ainda não houver recorte persistido.`,
-    "Validar ficha técnica, compras e desperdício somente com evidência interna — a web não prova operação.",
+    `Fazer acompanhamento semanal do ${metric} e analisar o histórico interno antes de tratar o resultado como desvio estrutural.`,
   ];
 }
 
@@ -476,25 +509,18 @@ function buildExternalIntel(
     items.push({
       kind: "FONTE_EXTERNA",
       text: `CMV da ${companyName}: ${cmv == null ? "não informado no financeiro persistido" : formatPercent(cmv)}. DADO INTERNO.`,
-      sourceLabel: "DADO INTERNO / Financeiro",
+      sourceLabel: "DADO INTERNO",
     });
     items.push({
       kind: "FONTE_EXTERNA",
       text: synthesis.summary,
-      sourceLabel: synthesis.nationalEligible ? "FONTE EXTERNA / BENCHMARK" : "FONTE EXTERNA / REFERÊNCIA",
+      sourceLabel: synthesis.nationalEligible ? "FONTE EXTERNA" : "REFERÊNCIA EXTERNA",
     });
-    for (const claim of synthesis.cited) {
+    if (!sources.length) {
       items.push({
         kind: "FONTE_EXTERNA",
-        text: `${claim.text} [fontes: ${claim.sourceIds.join(", ")}]`,
-        sourceLabel: claim.claimType,
-      });
-    }
-    if (synthesis.divergenceNote) {
-      items.push({
-        kind: "FONTE_EXTERNA",
-        text: synthesis.divergenceNote,
-        sourceLabel: "DIVERGÊNCIA",
+        text: "Nenhuma fonte semanticamente adequada foi enviada ao modelo.",
+        sourceLabel: "FILTRO",
       });
     }
   } else if (input.researchKind === "competition") {
@@ -505,18 +531,10 @@ function buildExternalIntel(
     });
   }
 
-  for (const source of sources) {
-    items.push({
-      kind: "FONTE_EXTERNA",
-      text: `${source.displayType ?? source.confidenceLabel} · ${source.title}${source.domain ? ` · ${source.domain}` : ""}${source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}. ${shortSnippet(source.snippet)}`,
-      sourceLabel: source.displayType ?? source.confidenceLabel,
-    });
-  }
-
   items.push({
     kind: "FONTE_EXTERNA",
     text: "Fonte externa não altera score, evidência interna, memória validada nem resultado de experimento.",
-    sourceLabel: "REGRA",
+    sourceLabel: "FONTE EXTERNA",
   });
   return items;
 }
@@ -528,7 +546,44 @@ function composeSummary(
   synthesis: ReturnType<typeof synthesizeBenchmark>,
 ): string {
   if (input.researchKind === "benchmark") {
-    return synthesis.summary;
+    const metric = metricLabel(input.queryOriginal ?? input.query);
+    const snapshot = metricSnapshot(input.finance, metric);
+    const lines: string[] = ["RESUMO EXECUTIVO"];
+    if (snapshot.current != null) lines.push(`${snapshot.currentLabel}: ${formatPercent(snapshot.current)}`);
+    if (snapshot.target != null) lines.push(`Meta interna: ${formatPercent(snapshot.target)}`);
+    if (snapshot.current != null && snapshot.target != null) {
+      const delta = Math.round((snapshot.current - snapshot.target) * 10) / 10;
+      const sign = delta > 0 ? "+" : "";
+      lines.push(`Desvio: ${sign}${delta.toLocaleString("pt-BR")} p.p.`);
+    }
+    const comparison = !sources.length
+      ? synthesis.summary
+      : synthesis.divergent
+        ? "As fontes relevantes encontradas apresentam valores diferentes. Não há sustentação suficiente para afirmar uma única média nacional."
+        : synthesis.summary;
+    const reading =
+      snapshot.current != null && snapshot.target != null
+        ? `O ${metric} atual está ${
+            snapshot.current - snapshot.target > 0
+              ? `${Math.abs(Math.round((snapshot.current - snapshot.target) * 10) / 10)} p.p. acima da meta interna`
+              : snapshot.current - snapshot.target < 0
+                ? `${Math.abs(Math.round((snapshot.current - snapshot.target) * 10) / 10)} p.p. abaixo da meta interna`
+                : "em linha com a meta interna"
+          }.${
+            sources.length
+              ? ` Externamente, ${formatPercent(snapshot.current)} está dentro de algumas referências encontradas, mas isso não constitui validação estatística.`
+              : " Sem fonte externa adequada para comparação de mercado."
+          }`
+        : null;
+    const action = `Fazer acompanhamento semanal do ${metric} e analisar o histórico interno antes de tratar o resultado como desvio estrutural.`;
+    return [
+      lines.join("\n"),
+      `COMPARAÇÃO EXTERNA\n${comparison}`,
+      reading ? `LEITURA\n${reading}` : null,
+      `AÇÃO RECOMENDADA\n${action}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
   }
   if (input.used && sources.length) {
     return `${answer.summary} Pesquisa externa utilizada com ${sources.length} fonte(s) já filtrada(s). Fonte externa não é evidência da empresa.`;
