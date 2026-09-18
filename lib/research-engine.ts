@@ -10,13 +10,16 @@ import {
 import {
   FRESHNESS_MS,
   RESEARCH_LIMITS,
-  SOURCE_HIERARCHY_LABEL,
   SOURCE_HIERARCHY_RANK,
   type FreshnessKind,
   type SourceHierarchy,
 } from "@/lib/research-config";
-import { inspectExternalUrl } from "@/lib/research-ssrf";
+import { classifyNumericClaim } from "@/lib/research-filter";
 import type { RawSearchHit } from "@/lib/research-providers";
+import { inspectExternalUrl } from "@/lib/research-ssrf";
+
+export { buildResearchQuery } from "@/lib/research-query";
+export type { ResearchQueryPlan } from "@/lib/research-query";
 
 export type ResearchKind =
   | "none"
@@ -73,6 +76,9 @@ export type ResearchApplyInput = {
   temporalWarning?: string | null;
   sessionId?: string | null;
   accessedAt?: string;
+  trustworthyBenchmark?: boolean;
+  rejectedTitles?: string[];
+  queryOriginal?: string | null;
 };
 
 const PURE_INTERNAL = [
@@ -195,30 +201,6 @@ function isPureInternalQuestion(q: string, intent: QuestionIntent): boolean {
 
 export function isTemporalQuery(query: string): boolean {
   return TEMPORAL_QUERY.test(query.toLowerCase());
-}
-
-export function buildResearchQuery(
-  question: string,
-  company?: Pick<ExecutiveCompany, "name" | "segment" | "city" | "state"> | null,
-): string {
-  const decision = shouldUseExternalResearch({ question });
-  const segment = company?.segment?.trim() || "empresa brasileira";
-  const city = company?.city?.trim() || "";
-  const state = company?.state?.trim() || "";
-  const place = [city, state].filter(Boolean).join(" ");
-  if (decision.researchKind === "benchmark") {
-    return clipQuery(`benchmark CMV percentual ${segment} ${place} Brasil`);
-  }
-  if (decision.researchKind === "competition") {
-    return clipQuery(`concorrentes ${segment} ${place} Brasil site público`);
-  }
-  if (decision.researchKind === "market") {
-    return clipQuery(`tendências ${segment} ${place} Brasil setor`);
-  }
-  if (decision.researchKind === "external_opportunity") {
-    return clipQuery(`oportunidades de mercado ${segment} ${place} Brasil`);
-  }
-  return clipQuery(question);
 }
 
 function clipQuery(value: string): string {
@@ -380,18 +362,25 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
     };
   }
 
-  const divergence = detectSourceDivergence(input.sources);
+  const numericSources = input.sources.filter(
+    (item) => classifyNumericClaim(`${item.title} ${item.snippet}`) !== "example",
+  );
+  const divergence = detectSourceDivergence(numericSources);
+  const trustworthy =
+    input.trustworthyBenchmark ??
+    input.sources.some((item) => classifyNumericClaim(`${item.title} ${item.snippet}`) === "benchmark");
   const sources = input.sources.map((item) => ({
     ...item,
     confidenceLabel: confidenceLabel(item.sourceType, item.freshness, divergence.divergent),
   }));
-  const external = buildExternalIntel(input, sources, divergence);
+  const tagged = { ...input, trustworthyBenchmark: trustworthy };
+  const external = buildExternalIntel(tagged, sources, divergence);
   const proposed = proposeExternalOpportunity(input.company, sources, input.researchKind);
   const proposedActions = proposed ? [...answer.proposedActions, proposed].slice(0, 4) : answer.proposedActions;
 
   return {
     ...answer,
-    summary: composeSummary(answer, input, sources, divergence),
+    summary: composeSummary(answer, tagged, sources, divergence),
     researchUsed: input.used && sources.length > 0,
     researchUnavailable: input.unavailable,
     external,
@@ -417,6 +406,11 @@ export function applyExternalResearch(answer: ExecutiveAnswer, input: ResearchAp
   };
 }
 
+function shortSnippet(text: string): string {
+  const clipped = text.replace(/\s+/g, " ").trim();
+  return clipped.length > 160 ? `${clipped.slice(0, 157)}…` : clipped;
+}
+
 function buildExternalIntel(
   input: ResearchApplyInput,
   sources: NormalizedSource[],
@@ -424,44 +418,42 @@ function buildExternalIntel(
 ): ExternalIntelItem[] {
   if (!input.used) return [];
   const items: ExternalIntelItem[] = [];
+  const companyName = input.company?.name ?? "empresa";
   if (input.researchKind === "benchmark") {
     const cmv = input.finance?.cogsPercent ?? null;
     items.push({
       kind: "FONTE_EXTERNA",
-      text: `CMV da empresa: ${cmv == null ? "não informado no financeiro persistido" : formatPercent(cmv)}. Este número é DADO INTERNO, não fonte externa.`,
+      text: `CMV da ${companyName}: ${cmv == null ? "não informado no financeiro persistido" : formatPercent(cmv)}. DADO INTERNO.`,
       sourceLabel: "DADO INTERNO / Financeiro",
     });
-    if (!sources.length || divergence.values.length === 0) {
+    if (!input.trustworthyBenchmark) {
       items.push({
         kind: "FONTE_EXTERNA",
-        text: "Não há fonte confiável com valor de benchmark. Nenhum indicador de mercado foi inventado.",
+        text: "Não encontrei fonte suficientemente confiável para afirmar uma média nacional de CMV para este segmento. Nenhum valor foi inventado.",
         sourceLabel: "FONTE EXTERNA",
       });
+      if (sources.length) {
+        items.push({
+          kind: "FONTE_EXTERNA",
+          text: `${sources.length} referência(s) encontrada(s). Não tratar como média nacional.`,
+          sourceLabel: "REFERÊNCIAS",
+        });
+      }
     } else if (divergence.divergent) {
       items.push({
         kind: "FONTE_EXTERNA",
-        text: `Benchmark encontrado em faixas divergentes: ${divergence.values.map((item) => `${item}%`).join(", ")}. ${divergence.note}`,
+        text: `Fontes relevantes apresentam faixas diferentes (${divergence.values.map((item) => `${item}%`).join(", ")}). Nenhuma foi escolhida silenciosamente.`,
         sourceLabel: "FONTE EXTERNA / BENCHMARK",
       });
     } else {
       const min = Math.min(...divergence.values);
       const max = Math.max(...divergence.values);
       const range = min === max ? `${min}%` : `${min}–${max}%`;
-      const top = sources[0];
       items.push({
         kind: "FONTE_EXTERNA",
-        text: `Benchmark encontrado: ${range}. Fonte: ${top.title}${top.domain ? ` (${top.domain})` : ""}. Não é evidência da empresa.`,
+        text: `Faixa observada nas fontes: ${range}. Referência setorial, não evidência da empresa.`,
         sourceLabel: "FONTE EXTERNA / BENCHMARK",
       });
-      if (cmv != null) {
-        const mid = (min + max) / 2;
-        const diff = cmv - mid;
-        items.push({
-          kind: "FONTE_EXTERNA",
-          text: `Diferença vs. ponto médio do benchmark (${mid.toFixed(1)}%): ${diff > 0 ? "+" : ""}${diff.toFixed(1)} p.p. Interpretação é inferência, não evidência.`,
-          sourceLabel: "INFERÊNCIA a partir de FONTE EXTERNA",
-        });
-      }
     }
   } else if (input.researchKind === "competition") {
     items.push({
@@ -474,7 +466,7 @@ function buildExternalIntel(
   for (const source of sources) {
     items.push({
       kind: "FONTE_EXTERNA",
-      text: `${source.title}${source.domain ? ` · ${source.domain}` : ""}${source.publishedAt ? ` · publicado ${source.publishedAt.slice(0, 10)}` : " · sem data"} · consultado ${source.accessedAt.slice(0, 10)}. ${source.snippet || "Trecho não informado."} ${SOURCE_HIERARCHY_LABEL[source.sourceType]}.`,
+      text: `${source.title}${source.domain ? ` · ${source.domain}` : ""}${source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}. ${shortSnippet(source.snippet)}`,
       sourceLabel: source.confidenceLabel,
     });
   }
@@ -493,19 +485,27 @@ function composeSummary(
   sources: NormalizedSource[],
   divergence: DivergenceResult,
 ): string {
+  const companyName = input.company?.name ?? "empresa";
   if (input.researchKind === "benchmark") {
     const cmv = input.finance?.cogsPercent;
-    const cmvLabel = cmv == null ? "CMV da empresa não informado" : `CMV da empresa: ${formatPercent(cmv)}`;
-    if (!sources.length || divergence.values.length === 0) {
-      return `${cmvLabel}. Não há fonte confiável de benchmark; nenhum valor de mercado foi inventado.`;
+    const cmvLabel = cmv == null ? `CMV da ${companyName} não informado` : `CMV da ${companyName}: ${formatPercent(cmv)}`;
+    if (!sources.length) {
+      return `${cmvLabel}. Não encontrei fonte suficientemente confiável para afirmar uma média nacional de CMV para este segmento.`;
+    }
+    if (!input.trustworthyBenchmark) {
+      return `${cmvLabel}. Não encontrei fonte suficientemente confiável para afirmar uma média nacional de CMV para este segmento. ${sources.length} referência(s) rastreável(is), sem tratar exemplo de cálculo como média brasileira.`;
     }
     const min = Math.min(...divergence.values);
     const max = Math.max(...divergence.values);
-    const range = min === max ? `${min}%` : `${min}–${max}%`;
-    return `${cmvLabel}. Benchmark encontrado: ${range} (fonte externa). ${divergence.divergent ? "Fontes apresentam valores diferentes." : ""}`.trim();
+    const range = Number.isFinite(min) ? (min === max ? `${min}%` : `${min}–${max}%`) : "não consolidada";
+    if (sources.length === 1) {
+      return `${cmvLabel}. Uma fonte relevante descreve faixa ${range}. Não generalizar como média nacional sem outras confirmações. Fonte externa não é evidência interna.`;
+    }
+    const divergenceNote = divergence.divergent ? " Fontes apresentam valores diferentes." : "";
+    return `${cmvLabel}. Foram encontradas ${sources.length} fonte(s) relevante(s). Faixa observada: ${range}.${divergenceNote} Fonte externa não é evidência interna.`;
   }
   if (input.used && sources.length) {
-    return `${answer.summary} Pesquisa externa utilizada com ${sources.length} fonte(s). Fonte externa não é evidência da empresa.`;
+    return `${answer.summary} Pesquisa externa utilizada com ${sources.length} fonte(s) já filtrada(s). Fonte externa não é evidência da empresa.`;
   }
   return answer.summary;
 }

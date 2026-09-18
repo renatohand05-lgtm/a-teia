@@ -56,7 +56,7 @@ export function createTavilyProvider(apiKey: string): WebSearchProvider {
           },
           body: JSON.stringify({
             query,
-            max_results: RESEARCH_LIMITS.maxSources,
+            max_results: RESEARCH_LIMITS.tavilyFetchCount,
             include_answer: false,
             search_depth: "basic",
           }),
@@ -72,7 +72,7 @@ export function createTavilyProvider(apiKey: string): WebSearchProvider {
       const json = (await response.json()) as {
         results?: Array<{ title?: string; url?: string; content?: string; published_date?: string }>;
       };
-      return (json.results ?? []).slice(0, RESEARCH_LIMITS.maxSources).map((item) => ({
+      return (json.results ?? []).slice(0, RESEARCH_LIMITS.tavilyFetchCount).map((item) => ({
         title: item.title?.trim() || "Fonte sem título",
         url: item.url?.trim() || "",
         snippet: item.content?.trim() || "",

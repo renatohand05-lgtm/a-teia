@@ -191,6 +191,9 @@ export async function askExecutiveAssistant(input: {
     finance: context?.finance ?? null,
   });
   answer = applyExternalResearch(answer, research);
+  if (research.researchDebug) {
+    answer = { ...answer, researchDebug: research.researchDebug };
+  }
   if (research.proposedOpportunity) {
     await writeAudit({
       actorId: input.userId,
@@ -210,16 +213,14 @@ export async function askExecutiveAssistant(input: {
     try {
       const externalBlock =
         research.used && research.sources.length
-          ? wrapExternalAsData({
+          ? research.externalContext ??
+            wrapExternalAsData({
               query: research.query,
               sources: research.sources.map((item) => ({
                 title: item.title,
                 url: item.url,
                 domain: item.domain,
-                publishedAt: item.publishedAt,
-                accessedAt: item.accessedAt,
-                snippet: item.snippet,
-                sourceType: item.sourceType,
+                snippet: item.snippet?.slice(0, 220),
               })),
             })
           : research.unavailable

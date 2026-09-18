@@ -281,6 +281,15 @@ function MessageBubble({
           {answer.temporalWarning}
         </p>
       ) : null}
+      {answer?.researchDebug ? (
+        <pre className="overflow-auto rounded-lg p-2 text-[10px]" style={{ background: "rgba(0,0,0,.35)", color: "var(--text-3)" }}>
+          {`queryOriginal: ${answer.researchDebug.queryOriginal}
+queryExpanded: ${answer.researchDebug.queryExpanded}
+resultsReceived: ${answer.researchDebug.resultsReceived}
+resultsAccepted: ${answer.researchDebug.resultsAccepted}
+resultsRejected: ${answer.researchDebug.resultsRejected.join(" | ") || "—"}`}
+        </pre>
+      ) : null}
       {answer ? <AnswerBlocks answer={answer} /> : null}
       {answer?.externalSources.length ? (
         <div>
@@ -303,7 +312,6 @@ function MessageBubble({
                   <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
                     {source.domain ?? "domínio indisponível"}
                     {source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}
-                    {` · consultado ${source.accessedAt.slice(0, 10)}`}
                   </p>
                   {source.url ? (
                     <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>

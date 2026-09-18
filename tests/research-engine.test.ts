@@ -291,7 +291,7 @@ describe("consulta e contexto interno + externo", () => {
       segment: "Oficina",
       city: "Belo Horizonte",
       state: "MG",
-    })).toMatch(/benchmark CMV/i);
+    }).query).toMatch(/Custo da Mercadoria Vendida/i);
   });
 
   it("extrai percentuais de snippet", () => {

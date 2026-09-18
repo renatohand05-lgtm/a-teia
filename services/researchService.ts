@@ -11,13 +11,14 @@ import {
   limitQueries,
   normalizeSource,
   proposeExternalOpportunity,
-  rankAndLimitSources,
   shouldUseExternalResearch,
   wrapExternalAsData,
   type NormalizedSource,
   type ResearchApplyInput,
   type ResearchKind,
 } from "@/lib/research-engine";
+import { filterRelevantSources, hasTrustworthyBenchmark, selectSourcesForIntent } from "@/lib/research-filter";
+import { appEnvironment } from "@/lib/release";
 import { resolveWebSearchProvider } from "@/lib/research-providers";
 import { IntegrationError, friendlyIntegrationMessage } from "@/lib/integrations";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +32,13 @@ export type MarketIntelSummary = {
 export type ResearchRunResult = ResearchApplyInput & {
   proposedOpportunity: ProposedAction | null;
   externalContext: string | null;
+  researchDebug?: {
+    queryOriginal: string;
+    queryExpanded: string;
+    resultsReceived: number;
+    resultsAccepted: number;
+    resultsRejected: string[];
+  } | null;
 };
 
 function toRunResult(input: ResearchApplyInput): ResearchRunResult {
@@ -103,7 +111,8 @@ export async function runExternalResearch(input: {
     });
   }
 
-  const query = limitQueries([buildResearchQuery(input.question, input.company)])[0] ?? null;
+  const plan = buildResearchQuery(input.question, input.company);
+  const query = limitQueries([plan.query])[0] ?? null;
   if (!query) {
     return toRunResult({
       ...emptyResearchApply(),
@@ -180,9 +189,9 @@ export async function runExternalResearch(input: {
   });
 
   if (cached) {
-    const sources = findingsToSources(cached.findings, query);
+    const sources = refineHits(findingsToSources(cached.findings, query), plan);
     return bundleFromSources({
-      sources,
+      sources: sources.selected,
       query,
       researchKind: decision.researchKind,
       finance: input.finance,
@@ -192,15 +201,21 @@ export async function runExternalResearch(input: {
       temporalWarning: isTemporalQuery(query)
         ? "Resultado em cache. Assunto pode ser temporal; a data da consulta está nas fontes."
         : null,
+      trustworthyBenchmark: hasTrustworthyBenchmark(sources.selected),
+      queryOriginal: plan.original,
+      rejectedTitles: sources.rejected.map((item) => item.title),
+      resultsReceived: sources.received,
     });
   }
 
   try {
     const raw = await provider.search(query);
     const accessedAt = new Date().toISOString();
-    const normalized = rankAndLimitSources(
-      raw.map((hit) => normalizeSource(hit, query, accessedAt)).filter((item): item is NormalizedSource => Boolean(item)),
-    );
+    const normalized = raw
+      .map((hit) => normalizeSource(hit, query, accessedAt))
+      .filter((item): item is NormalizedSource => Boolean(item));
+    const sources = refineHits(normalized, plan);
+    const selected = sources.selected;
     const session = await prisma.researchSession.create({
       data: {
         userId: input.userId,
@@ -212,13 +227,13 @@ export async function runExternalResearch(input: {
         provider: provider.id,
         status: ResearchStatus.COMPLETED,
         usedWeb: true,
-        sourceCount: normalized.length,
-        conclusion: normalized.length
-          ? `Pesquisa externa concluída com ${normalized.length} fonte(s). Fonte externa não é evidência interna.`
-          : "Pesquisa executada, mas nenhuma fonte segura foi aproveitada.",
+        sourceCount: selected.length,
+        conclusion: selected.length
+          ? `Pesquisa externa concluída com ${selected.length} fonte(s) relevante(s) de ${normalized.length} recebida(s). Fonte externa não é evidência interna.`
+          : "Pesquisa executada, mas nenhuma fonte relevante foi aproveitada.",
         ranAt: new Date(),
         findings: {
-          create: normalized.map((item) => ({
+          create: selected.map((item) => ({
             kind: KnowledgeKind.EXTERNAL_SOURCE,
             title: item.title,
             url: item.url,
@@ -241,16 +256,25 @@ export async function runExternalResearch(input: {
       action: "research.completed",
       entity: "ResearchSession",
       entityId: session.id,
-      newValue: { sources: normalized.length, provider: provider.id },
+      newValue: {
+        provider: provider.id,
+        received: normalized.length,
+        accepted: selected.length,
+        rejected: sources.rejected.length,
+      },
       origin: AuditSource.RESEARCH,
     });
     return bundleFromSources({
-      sources: normalized,
+      sources: selected,
       query,
       researchKind: decision.researchKind,
       finance: input.finance,
       company: input.company,
       sessionId: session.id,
+      trustworthyBenchmark: hasTrustworthyBenchmark(selected),
+      queryOriginal: plan.original,
+      rejectedTitles: sources.rejected.map((item) => item.title),
+      resultsReceived: sources.received,
     });
   } catch (error) {
     const code = error instanceof IntegrationError ? error.code : "TAVILY_PROVIDER_ERROR";
@@ -326,6 +350,16 @@ function findingsToSources(
     .map((item, index) => ({ ...item, rank: index + 1 }));
 }
 
+function refineHits(items: NormalizedSource[], plan: ReturnType<typeof buildResearchQuery>) {
+  const filtered = filterRelevantSources(items, plan);
+  const selected = selectSourcesForIntent(filtered.accepted, plan.intent);
+  return {
+    selected,
+    rejected: [...filtered.rejected, ...filtered.accepted.slice(selected.length)],
+    received: items.length,
+  };
+}
+
 function bundleFromSources(input: {
   sources: NormalizedSource[];
   query: string;
@@ -335,6 +369,10 @@ function bundleFromSources(input: {
   sessionId: string;
   cached?: boolean;
   temporalWarning?: string | null;
+  trustworthyBenchmark?: boolean;
+  queryOriginal?: string | null;
+  rejectedTitles?: string[];
+  resultsReceived?: number;
 }): ResearchRunResult {
   const applyInput: ResearchApplyInput = {
     used: true,
@@ -348,7 +386,20 @@ function bundleFromSources(input: {
     sessionId: input.sessionId,
     cached: input.cached,
     temporalWarning: input.temporalWarning ?? null,
+    trustworthyBenchmark: input.trustworthyBenchmark,
+    queryOriginal: input.queryOriginal ?? null,
+    rejectedTitles: input.rejectedTitles ?? [],
   };
+  const debug =
+    appEnvironment() === "production"
+      ? null
+      : {
+          queryOriginal: input.queryOriginal ?? input.query,
+          queryExpanded: input.query,
+          resultsReceived: input.resultsReceived ?? input.sources.length + (input.rejectedTitles?.length ?? 0),
+          resultsAccepted: input.sources.length,
+          resultsRejected: input.rejectedTitles ?? [],
+        };
   return {
     ...applyInput,
     proposedOpportunity: proposeExternalOpportunity(input.company, input.sources, input.researchKind),
@@ -360,10 +411,11 @@ function bundleFromSources(input: {
         domain: item.domain,
         publishedAt: item.publishedAt,
         accessedAt: item.accessedAt,
-        snippet: item.snippet,
+        snippet: item.snippet?.slice(0, 220),
         sourceType: item.sourceType,
       })),
     }),
+    researchDebug: debug,
   };
 }
 

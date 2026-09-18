@@ -1,7 +1,9 @@
 export const RESEARCH_LIMITS = {
   maxQueriesPerRequest: 1,
   maxSources: 5,
-  maxContextCharacters: 6_000,
+  maxBenchmarkSources: 4,
+  tavilyFetchCount: 8,
+  maxContextCharacters: 3_000,
   cacheTtlMs: 6 * 60 * 60 * 1000,
   temporalCacheTtlMs: 60 * 60 * 1000,
 } as const;
