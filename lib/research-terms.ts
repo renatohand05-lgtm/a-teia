@@ -48,6 +48,48 @@ export const METRIC_ACRONYMS: MetricAcronym[] = [
     expansions: ["Ticket médio", "ticket medio"],
     contextHints: ["venda", "consumo", "cliente"],
   },
+  {
+    key: "MARGEM",
+    acronym: "margem",
+    expansions: ["Margem bruta", "gross margin"],
+    contextHints: ["lucro", "markup", "contribuição"],
+  },
+  {
+    key: "FOLHA",
+    acronym: "folha",
+    expansions: ["Folha de pagamento", "payroll percent"],
+    contextHints: ["pessoal", "salário", "encargos"],
+  },
+  {
+    key: "CONVERSAO",
+    acronym: "conversão",
+    expansions: ["Taxa de conversão", "conversion rate"],
+    contextHints: ["venda", "funil", "lead"],
+  },
+  {
+    key: "RECORRENCIA",
+    acronym: "recorrência",
+    expansions: ["Taxa de recorrência", "repeat purchase"],
+    contextHints: ["cliente", "frequência", "retenção"],
+  },
+  {
+    key: "DELIVERY",
+    acronym: "delivery",
+    expansions: ["Taxa de delivery", "food delivery mix"],
+    contextHints: ["entrega", "ifood", "aplicativo"],
+  },
+  {
+    key: "ESTOQUE",
+    acronym: "estoque",
+    expansions: ["Giro de estoque", "inventory turnover"],
+    contextHints: ["armazenagem", "perda", "validade"],
+  },
+  {
+    key: "PRODUTIVIDADE",
+    acronym: "produtividade",
+    expansions: ["Produtividade operacional", "labor productivity"],
+    contextHints: ["hora", "atendimento", "eficiência"],
+  },
 ];
 
 export const AGGREGATOR_DOMAINS = [
@@ -74,6 +116,14 @@ export const DIRECTORY_HINTS = [
   "contact information",
   "email format",
   "org chart",
+];
+
+export const CALCULATOR_HINTS = [
+  "calculadora de cmv",
+  "cmv calculator",
+  "simule seu cmv",
+  "calcule grátis",
+  "planilha pronta",
 ];
 
 export const HOMONYM_ORG_SUFFIXES = [

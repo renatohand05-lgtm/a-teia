@@ -1,9 +1,13 @@
 export const RESEARCH_LIMITS = {
-  maxQueriesPerRequest: 1,
+  maxQueriesPerRequest: 2,
+  maxExternalQueries: 2,
   maxSources: 5,
   maxBenchmarkSources: 4,
+  maxAcceptedSources: 4,
   tavilyFetchCount: 8,
-  maxContextCharacters: 3_000,
+  maxSourceCharacters: 220,
+  maxContextCharacters: 2_500,
+  maxAIContextCharacters: 2_500,
   cacheTtlMs: 6 * 60 * 60 * 1000,
   temporalCacheTtlMs: 60 * 60 * 1000,
 } as const;

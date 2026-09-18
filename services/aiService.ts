@@ -17,6 +17,7 @@ import {
 } from "@/lib/ai-executive-engine";
 import { assertNotSecretLeak } from "@/lib/knowledge";
 import { applyExternalResearch, extractResearchNumbers, wrapExternalAsData } from "@/lib/research-engine";
+import { hasForbiddenNationalLanguage } from "@/lib/research-claims";
 import { IntegrationError, classifyHttpStatus, friendlyIntegrationMessage, getOpenAIApiKey } from "@/lib/integrations";
 import { prisma } from "@/lib/prisma";
 import { getExecutiveContext } from "@/services/aiContextService";
@@ -221,6 +222,9 @@ export async function askExecutiveAssistant(input: {
                 url: item.url,
                 domain: item.domain,
                 snippet: item.snippet?.slice(0, 220),
+                sourceType: item.sourceType,
+                claimType: item.claimType ?? null,
+                qualityLevel: item.qualityLevel ?? null,
               })),
             })
           : research.unavailable
@@ -236,14 +240,22 @@ export async function askExecutiveAssistant(input: {
       );
       const parsed = parseOpenAISummary(narrative);
       const known = new Set([...extractKnownNumbers(sliced), ...extractResearchNumbers(research.sources)]);
-      if (parsed && !narrativeIntroducesUnknownNumbers(parsed, known)) {
+      const blockedNational =
+        research.researchKind === "benchmark" &&
+        parsed &&
+        hasForbiddenNationalLanguage(parsed) &&
+        !research.trustworthyBenchmark;
+      const tooLong = Boolean(parsed && parsed.length > 720);
+      if (parsed && !narrativeIntroducesUnknownNumbers(parsed, known) && !blockedNational && !tooLong) {
         answer = mergeOpenAINarrative(answer, parsed, model);
       } else {
         answer = {
           ...answer,
           provider: "openai",
           model,
-          unavailableReason: "A resposta externa foi descartada porque introduziu informação ausente do contexto. O briefing determinístico foi mantido.",
+          unavailableReason: blockedNational || tooLong
+            ? "O resumo externo foi descartado para preservar a síntese determinística de benchmark."
+            : "A resposta externa foi descartada porque introduziu informação ausente do contexto. O briefing determinístico foi mantido.",
         };
       }
     } catch (error) {
@@ -296,6 +308,11 @@ export async function askExecutiveAssistant(input: {
           sourceType: source.sourceType,
           freshness: source.freshness,
           rank: source.rank,
+          claimType: source.claimType ?? null,
+          qualityLevel: source.qualityLevel ?? null,
+          relevanceReason: source.usageReason ?? null,
+          benchmarkEligible: source.benchmarkEligible ?? null,
+          suspectedOutlier: source.suspectedOutlier ?? null,
         })),
       ],
     });

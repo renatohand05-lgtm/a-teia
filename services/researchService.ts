@@ -17,7 +17,8 @@ import {
   type ResearchApplyInput,
   type ResearchKind,
 } from "@/lib/research-engine";
-import { filterRelevantSources, hasTrustworthyBenchmark, selectSourcesForIntent } from "@/lib/research-filter";
+import { buildLayeredQueries } from "@/lib/research-query";
+import { filterRelevantSources, hasSufficientOfficialLayer, hasTrustworthyBenchmark, selectSourcesForIntent } from "@/lib/research-filter";
 import { appEnvironment } from "@/lib/release";
 import { resolveWebSearchProvider } from "@/lib/research-providers";
 import { IntegrationError, friendlyIntegrationMessage } from "@/lib/integrations";
@@ -112,7 +113,8 @@ export async function runExternalResearch(input: {
   }
 
   const plan = buildResearchQuery(input.question, input.company);
-  const query = limitQueries([plan.query])[0] ?? null;
+  const queries = limitQueries(buildLayeredQueries(plan), RESEARCH_LIMITS.maxExternalQueries);
+  const query = queries[0] ?? null;
   if (!query) {
     return toRunResult({
       ...emptyResearchApply(),
@@ -198,9 +200,11 @@ export async function runExternalResearch(input: {
       company: input.company,
       sessionId: cached.id,
       cached: true,
-      temporalWarning: isTemporalQuery(query)
+      temporalWarning: isTemporalQuery(input.question) || isTemporalQuery(query)
         ? "Resultado em cache. Assunto pode ser temporal; a data da consulta está nas fontes."
-        : null,
+        : cached.ranAt
+          ? `Consulta recuperada do cache (coletada em ${cached.ranAt.toISOString().slice(0, 10)}).`
+          : null,
       trustworthyBenchmark: hasTrustworthyBenchmark(sources.selected),
       queryOriginal: plan.original,
       rejectedTitles: sources.rejected.map((item) => item.title),
@@ -209,13 +213,23 @@ export async function runExternalResearch(input: {
   }
 
   try {
-    const raw = await provider.search(query);
     const accessedAt = new Date().toISOString();
-    const normalized = raw
-      .map((hit) => normalizeSource(hit, query, accessedAt))
-      .filter((item): item is NormalizedSource => Boolean(item));
+    const seen = new Set<string>();
+    const normalized: NormalizedSource[] = [];
+    for (const layerQuery of queries) {
+      const raw = await provider.search(layerQuery);
+      for (const hit of raw) {
+        const item = normalizeSource(hit, layerQuery, accessedAt);
+        if (!item?.url || seen.has(item.url)) continue;
+        seen.add(item.url);
+        normalized.push(item);
+      }
+      const preview = refineHits(normalized, plan);
+      if (hasSufficientOfficialLayer(preview.selected) || preview.selected.length >= 2) break;
+    }
     const sources = refineHits(normalized, plan);
     const selected = sources.selected;
+    const rejectedAudit = sources.rejected.slice(0, 8);
     const session = await prisma.researchSession.create({
       data: {
         userId: input.userId,
@@ -233,21 +247,49 @@ export async function runExternalResearch(input: {
           : "Pesquisa executada, mas nenhuma fonte relevante foi aproveitada.",
         ranAt: new Date(),
         findings: {
-          create: selected.map((item) => ({
-            kind: KnowledgeKind.EXTERNAL_SOURCE,
-            title: item.title,
-            url: item.url,
-            body: item.snippet,
-            snippet: item.snippet,
-            publisher: item.publisher,
-            domain: item.domain,
-            publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
-            accessedAt: new Date(item.accessedAt),
-            sourceType: item.sourceType,
-            freshness: item.freshness,
-            rank: item.rank,
-            query: item.query,
-          })),
+          create: [
+            ...selected.map((item) => ({
+              kind: KnowledgeKind.EXTERNAL_SOURCE,
+              title: item.title,
+              url: item.url,
+              body: item.snippet,
+              snippet: item.snippet?.slice(0, RESEARCH_LIMITS.maxSourceCharacters),
+              publisher: item.publisher,
+              domain: item.domain,
+              publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
+              accessedAt: new Date(item.accessedAt),
+              sourceType: item.sourceType,
+              freshness: item.freshness,
+              rank: item.rank,
+              query: item.query,
+              claimType: item.claimType ?? null,
+              qualityLevel: item.qualityLevel ?? null,
+              relevanceReason: item.usageReason ?? null,
+              benchmarkEligible: item.benchmarkEligible ?? null,
+              suspectedOutlier: item.suspectedOutlier ?? null,
+            })),
+            ...rejectedAudit.map((item) => ({
+              kind: KnowledgeKind.EXTERNAL_SOURCE,
+              title: item.title,
+              url: item.url,
+              body: item.snippet,
+              snippet: item.snippet?.slice(0, RESEARCH_LIMITS.maxSourceCharacters),
+              publisher: item.publisher,
+              domain: item.domain,
+              publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
+              accessedAt: new Date(item.accessedAt),
+              sourceType: item.sourceType,
+              freshness: item.freshness,
+              rank: item.rank,
+              query: item.query,
+              claimType: item.claimType ?? null,
+              qualityLevel: item.qualityLevel ?? null,
+              relevanceReason: item.usageReason ?? null,
+              rejectedReason: item.rejectReason ?? "low_relevance",
+              benchmarkEligible: false,
+              suspectedOutlier: item.suspectedOutlier ?? null,
+            })),
+          ],
         },
       },
     });
@@ -331,11 +373,12 @@ function findingsToSources(
     freshness: string | null;
     rank: number | null;
     query: string | null;
+    rejectedReason?: string | null;
   }>,
   query: string,
 ): NormalizedSource[] {
   return findings
-    .filter((item) => item.url)
+    .filter((item) => item.url && !item.rejectedReason)
     .map((item) => {
       const hit = {
         title: item.title,
@@ -411,8 +454,10 @@ function bundleFromSources(input: {
         domain: item.domain,
         publishedAt: item.publishedAt,
         accessedAt: item.accessedAt,
-        snippet: item.snippet?.slice(0, 220),
+        snippet: item.snippet?.slice(0, RESEARCH_LIMITS.maxSourceCharacters),
         sourceType: item.sourceType,
+        claimType: item.claimType ?? null,
+        qualityLevel: item.qualityLevel ?? null,
       })),
     }),
     researchDebug: debug,

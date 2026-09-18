@@ -95,7 +95,7 @@ export function buildResearchQuery(
   let query = clipQuery(input.question);
   if (intent === "BENCHMARK") {
     query = clipQuery(
-      `${expansion} ${acronym} ${segment} ${country} benchmark percentual médio faixa referência setorial`.trim(),
+      `${expansion} ${acronym} ${segment} ${country} estudo pesquisa relatório associação benchmark média setor faixa referência`.trim(),
     );
   } else if (intent === "COMPETITOR") {
     query = clipQuery(`concorrentes públicos ${segment} ${country}`.trim());
@@ -119,6 +119,18 @@ export function buildResearchQuery(
     segment,
     researchKind: researchKindFromTopic(intent),
   };
+}
+
+export function buildLayeredQueries(plan: ResearchQueryPlan): string[] {
+  if (plan.intent !== "BENCHMARK") return [plan.query];
+  const expansion = plan.expandedTerms.join(" ");
+  const layerOfficial = clipQuery(
+    `${expansion} ${plan.segment} ${plan.country} estudo relatório associação IBGE Sebrae média setor`.trim(),
+  );
+  const layerSpecialized = clipQuery(
+    `${expansion} ${plan.segment} ${plan.country} pesquisa referência especializada faixa setor`.trim(),
+  );
+  return [...new Set([plan.query, layerOfficial, layerSpecialized].filter(Boolean))];
 }
 
 function researchKindFromTopic(intent: ResearchTopicIntent): ResearchKindAlias {

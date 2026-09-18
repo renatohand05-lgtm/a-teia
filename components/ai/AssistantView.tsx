@@ -250,6 +250,8 @@ function MessageBubble({
   onReject: (id: string) => void;
 }) {
   const [showSources, setShowSources] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showInternal, setShowInternal] = useState(false);
   if (item.role === "USER") {
     return (
       <div className="max-w-[80%] self-end rounded-2xl px-3.5 py-3 text-[13px] font-semibold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
@@ -266,6 +268,18 @@ function MessageBubble({
         </p>
       ) : null}
       <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{answer?.summary ?? item.content}</p>
+      {answer?.nextActions.length ? (
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+            Próxima ação
+          </p>
+          <ul className="mt-1 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+            {answer.nextActions.slice(0, 4).map((itemAction) => (
+              <li key={itemAction}>{itemAction}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {answer?.unavailableReason ? (
         <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
           {answer.unavailableReason}
@@ -290,7 +304,37 @@ resultsAccepted: ${answer.researchDebug.resultsAccepted}
 resultsRejected: ${answer.researchDebug.resultsRejected.join(" | ") || "—"}`}
         </pre>
       ) : null}
-      {answer ? <AnswerBlocks answer={answer} /> : null}
+      {answer ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAnalysis((value) => !value)}
+            className="text-[11px] font-extrabold"
+            style={{ color: "var(--gold-soft)" }}
+          >
+            {showAnalysis ? "Ocultar análise completa" : "Ver análise completa"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowInternal((value) => !value)}
+            className="text-[11px] font-extrabold"
+            style={{ color: "var(--gold-soft)" }}
+          >
+            {showInternal ? "Ocultar dados utilizados" : "Ver dados utilizados"}
+          </button>
+        </div>
+      ) : null}
+      {answer && showInternal ? (
+        <ul className="space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+          {answer.data
+            .filter((itemData) => /cmv|faturamento|receita|margem|ebitda|ticket|folha/i.test(itemData.text))
+            .slice(0, 6)
+            .map((itemData, index) => (
+              <li key={`data-${index}`}>{itemData.kind} · {itemData.text}</li>
+            ))}
+        </ul>
+      ) : null}
+      {answer && showAnalysis ? <AnswerBlocks answer={answer} hideActions /> : null}
       {answer?.externalSources.length ? (
         <div>
           <button
@@ -303,16 +347,22 @@ resultsRejected: ${answer.researchDebug.resultsRejected.join(" | ") || "—"}`}
           </button>
           {showSources ? (
             <div className="mt-2 grid gap-2">
-              {answer.externalSources.map((source) => (
+              {answer.externalSources.slice(0, 4).map((source) => (
                 <article key={`${source.url ?? source.title}-${source.rank}`} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                    Fonte · {source.confidenceLabel}
+                    {source.displayType ?? source.confidenceLabel}
+                    {source.qualityLevel ? ` · Nível ${source.qualityLevel}` : ""}
                   </p>
                   <p className="mt-1 text-[13px] font-bold">{source.title}</p>
                   <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {source.domain ?? "domínio indisponível"}
+                    {source.domain ?? source.publisher ?? "domínio indisponível"}
                     {source.publishedAt ? ` · ${source.publishedAt.slice(0, 10)}` : " · sem data"}
                   </p>
+                  {source.usageReason ? (
+                    <p className="mt-1 text-[11px]" style={{ color: "var(--text-2)" }}>
+                      {source.usageReason}
+                    </p>
+                  ) : null}
                   {source.url ? (
                     <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
                       Abrir fonte
@@ -339,9 +389,8 @@ resultsRejected: ${answer.researchDebug.resultsRejected.join(" | ") || "—"}`}
   );
 }
 
-function AnswerBlocks({ answer }: { answer: ExecutiveAnswer }) {
+function AnswerBlocks({ answer, hideActions = false }: { answer: ExecutiveAnswer; hideActions?: boolean }) {
   const blocks = [
-    { title: "Dados da empresa", items: answer.data.map((item) => `${item.kind} · ${item.text}`) },
     { title: "Evidências internas", items: answer.evidence.map((item) => `${item.kind} · ${item.text}`) },
     { title: "Inteligência externa", items: answer.external.map((item) => `${item.sourceLabel} · ${item.text}`) },
     { title: "Análise", items: answer.inferences.map((item) => `${item.kind} · ${item.text}`) },
@@ -371,7 +420,7 @@ function AnswerBlocks({ answer }: { answer: ExecutiveAnswer }) {
           Fontes internas: {answer.sources.map((source) => `${source.kind} (${source.label})`).join(" · ")}
         </p>
       ) : null}
-      {answer.nextActions.length ? (
+      {!hideActions && answer.nextActions.length ? (
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
             Próximas ações sugeridas

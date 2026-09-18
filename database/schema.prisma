@@ -704,6 +704,12 @@ model AISource {
   sourceType  String?
   freshness   String?
   rank        Int?
+  claimType          String?
+  qualityLevel       String?
+  relevanceReason    String?
+  rejectedReason     String?
+  benchmarkEligible  Boolean?
+  suspectedOutlier   Boolean?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -782,6 +788,12 @@ model ResearchFinding {
   freshness   String?
   rank        Int?
   query       String?
+  claimType          String?
+  qualityLevel       String?
+  relevanceReason    String?
+  rejectedReason     String?
+  benchmarkEligible  Boolean?
+  suspectedOutlier   Boolean?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }

@@ -1,8 +1,15 @@
 import { SOURCE_HIERARCHY_RANK, type SourceHierarchy } from "@/lib/research-config";
+import {
+  classifyExternalClaim,
+  qualityLevelFor,
+  validateBenchmarkClaim,
+  type SourceQualityLevel,
+} from "@/lib/research-claims";
 import type { NormalizedSource } from "@/lib/research-engine";
 import type { ResearchQueryPlan, ResearchTopicIntent } from "@/lib/research-query";
 import {
   AGGREGATOR_DOMAINS,
+  CALCULATOR_HINTS,
   DIRECTORY_HINTS,
   HOMONYM_ORG_SUFFIXES,
   detectMetricsInText,
@@ -16,12 +23,22 @@ export type SourceRejectReason =
   | "geography_mismatch"
   | "duplicate"
   | "low_relevance"
-  | "example_only";
+  | "example_only"
+  | "no_metric_context"
+  | "outlier_context"
+  | "untrusted_source";
 
 export type ScoredSource = NormalizedSource & {
   relevanceScore: number;
   rejectReason?: SourceRejectReason;
   numericClaim?: "benchmark" | "example" | "unclear";
+  claimType?: string;
+  qualityLevel?: string;
+  benchmarkEligible?: boolean;
+  nationalEligible?: boolean;
+  suspectedOutlier?: boolean;
+  usageReason?: string;
+  displayType?: string;
 };
 
 export type FilterResult = {
@@ -30,25 +47,12 @@ export type FilterResult = {
 };
 
 const MIN_ACCEPT = 38;
+const QUALITY_RANK: Record<SourceQualityLevel, number> = { A: 1, B: 2, C: 3, D: 4, E: 5 };
 
 export function classifyNumericClaim(text: string): "benchmark" | "example" | "unclear" {
-  const hay = text.toLowerCase();
-  const hasPct = /(\d+(?:[.,]\d+)?)\s*%/.test(text);
-  if (!hasPct) return "unclear";
-  if (
-    /exemplo (de )?(c[aá]lculo|pr[aá]tico)|vamos (ao )?c[aá]lculo|supondo|f[oó]rmula simples|se (a )?receita (for|é)|calcule o cmv/i.test(
-      hay,
-    )
-  ) {
-    return "example";
-  }
-  if (
-    /m[eé]di[oa]|benchmark|faixa|refer[eê]ncia setorial|mercado brasileiro|t[ií]pico do setor|percentual m[eé]dio|entre \d/i.test(
-      hay,
-    )
-  ) {
-    return "benchmark";
-  }
+  const claim = classifyExternalClaim(text);
+  if (claim === "EXAMPLE" || claim === "FORMULA") return "example";
+  if (claim === "BENCHMARK" || claim === "STATISTIC" || claim === "OFFICIAL_DATA") return "benchmark";
   return "unclear";
 }
 
@@ -60,6 +64,11 @@ export function isAggregatorDomain(domain: string | null): boolean {
 export function isDirectoryListing(text: string): boolean {
   const hay = text.toLowerCase();
   return DIRECTORY_HINTS.some((item) => hay.includes(item));
+}
+
+export function isCalculatorPage(text: string): boolean {
+  const hay = text.toLowerCase();
+  return CALCULATOR_HINTS.some((item) => hay.includes(item)) || /calculadora/.test(hay);
 }
 
 export function isAcronymHomonym(text: string, query: string): boolean {
@@ -95,6 +104,7 @@ function blob(source: Pick<NormalizedSource, "title" | "snippet" | "domain" | "p
 
 export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQueryPlan): number {
   const text = blob(source);
+  const validation = validateBenchmarkClaim(source, plan);
   let score = 20;
   const expansions = plan.expandedTerms.map((item) => item.toLowerCase());
   if (expansions.some((term) => term.length > 3 && text.includes(term))) score += 28;
@@ -106,7 +116,9 @@ export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQue
   if (plan.country && /brasil|brazil/.test(plan.country.toLowerCase()) && /brasil|brazil|sebrae|nacional/.test(text)) {
     score += 12;
   }
-  if (plan.intent === "BENCHMARK" && /benchmark|m[eé]dia|faixa|refer[eê]ncia/.test(text)) score += 14;
+  if (plan.intent === "BENCHMARK" && /benchmark|m[eé]dia|faixa|refer[eê]ncia|estudo|pesquisa|relat[oó]rio/.test(text)) {
+    score += 14;
+  }
   const qualityBoost: Record<SourceHierarchy, number> = {
     official: 18,
     regulator: 16,
@@ -118,10 +130,14 @@ export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQue
     community: -6,
   };
   score += qualityBoost[source.sourceType];
+  if (validation.claimType === "STATISTIC" || validation.claimType === "OFFICIAL_DATA") score += 12;
+  if (validation.claimType === "BENCHMARK") score += 8;
+  if (validation.hasMethodologySupport) score += 8;
   if (source.freshness === "recente") score += 6;
   if (source.freshness === "historica") score -= 2;
   if (isAggregatorDomain(source.domain)) score -= 40;
   if (isDirectoryListing(text)) score -= 30;
+  if (isCalculatorPage(text) || validation.claimType === "EXAMPLE" || validation.claimType === "FORMULA") score -= 24;
   if (isAcronymHomonym(`${source.title} ${source.snippet} ${source.domain ?? ""}`, plan.query)) score -= 50;
   if (plan.country && /estados unidos|united states|\busa\b|europa|índia|\bindia\b/.test(text) && !/brasil|brazil/.test(text)) {
     score -= 18;
@@ -129,6 +145,7 @@ export function scoreSourceRelevance(source: NormalizedSource, plan: ResearchQue
   if (plan.segment === "restaurantes" && /software|informatics|teknoloji|saas|erp gen[eé]rico/.test(text) && !/restaur|food|custo da mercadoria/.test(text)) {
     score -= 20;
   }
+  if (validation.suspectedOutlier) score -= 15;
   return Math.max(0, Math.min(100, score));
 }
 
@@ -139,9 +156,22 @@ export function filterRelevantSources(sources: NormalizedSource[], plan: Researc
 
   for (const source of sources) {
     const text = blob(source);
+    const validation = validateBenchmarkClaim(source, plan);
     const numericClaim = classifyNumericClaim(`${source.title} ${source.snippet}`);
     const relevanceScore = scoreSourceRelevance(source, plan);
-    const scored: ScoredSource = { ...source, relevanceScore, numericClaim };
+    const scored: ScoredSource = {
+      ...source,
+      relevanceScore,
+      numericClaim,
+      claimType: validation.claimType,
+      qualityLevel: validation.qualityLevel,
+      benchmarkEligible: validation.benchmarkEligible,
+      nationalEligible: validation.nationalEligible,
+      suspectedOutlier: validation.suspectedOutlier,
+      usageReason: validation.usageReason,
+      displayType: validation.displayType,
+      confidenceLabel: validation.displayType,
+    };
 
     if (isAggregatorDomain(source.domain)) {
       rejected.push({ ...scored, rejectReason: "aggregator" });
@@ -176,12 +206,17 @@ export function filterRelevantSources(sources: NormalizedSource[], plan: Researc
       rejected.push({ ...scored, rejectReason: "low_relevance" });
       continue;
     }
+    if (!detectMetricsInText(`${plan.query} ${plan.original} ${source.title} ${source.snippet}`).length && plan.intent === "BENCHMARK") {
+      rejected.push({ ...scored, rejectReason: "no_metric_context" });
+      continue;
+    }
     seenDomains.add(domainKey);
     accepted.push(scored);
   }
 
   accepted.sort(
     (a, b) =>
+      QUALITY_RANK[(a.qualityLevel as SourceQualityLevel) ?? "E"] - QUALITY_RANK[(b.qualityLevel as SourceQualityLevel) ?? "E"] ||
       b.relevanceScore - a.relevanceScore ||
       SOURCE_HIERARCHY_RANK[a.sourceType] - SOURCE_HIERARCHY_RANK[b.sourceType],
   );
@@ -194,9 +229,18 @@ export function selectSourcesForIntent(accepted: ScoredSource[], intent: Researc
 }
 
 export function hasTrustworthyBenchmark(sources: ScoredSource[]): boolean {
-  return sources.some((item) => item.numericClaim === "benchmark");
+  return sources.some((item) => item.nationalEligible || (item.numericClaim === "benchmark" && item.benchmarkEligible));
+}
+
+export function hasSufficientOfficialLayer(sources: ScoredSource[]): boolean {
+  return sources.some((item) => item.qualityLevel === "A" || item.qualityLevel === "B");
 }
 
 export function referenceOnlySources(sources: ScoredSource[]): ScoredSource[] {
-  return sources.filter((item) => item.numericClaim !== "example");
+  return sources.filter((item) => item.claimType !== "EXAMPLE" && item.claimType !== "FORMULA");
+}
+
+export function qualityLevelOf(source: NormalizedSource): SourceQualityLevel {
+  const claim = classifyExternalClaim(`${source.title} ${source.snippet}`);
+  return qualityLevelFor(claim, source.sourceType, {});
 }

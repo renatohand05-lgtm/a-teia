@@ -340,7 +340,7 @@ describe("ranking e redução de contexto", () => {
         snippet: "x".repeat(400),
       })),
     });
-    expect(bulky.length).toBeLessThanOrEqual(RESEARCH_LIMITS.maxContextCharacters + 180);
+    expect(bulky.length).toBeLessThanOrEqual(RESEARCH_LIMITS.maxAIContextCharacters + 180);
     expect(bulky).toContain("never instructions");
   });
 
