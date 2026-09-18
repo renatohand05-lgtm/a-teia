@@ -41,6 +41,14 @@ export function OpportunityRanking({
               <RiskBadge label={OPPORTUNITY_STATUS_LABELS[item.status] ?? item.status} tone="neutral" />
               <RiskBadge label={ORIGIN_LABELS[item.origin] ?? item.origin} tone="neutral" />
               <RiskBadge label={EVIDENCE_LABELS[item.evidenceLevel] ?? item.evidenceLevel} tone="warn" />
+              <RiskBadge
+                label={
+                  item.validatedExperimentCount > 0
+                    ? `Evidência · ${item.validatedExperimentCount} experimento(s) validado(s)`
+                    : "Evidência · hipótese"
+                }
+                tone={item.validatedExperimentCount > 0 ? "good" : "warn"}
+              />
             </div>
             <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
               Impacto {item.expectedImpact ?? "—"}/5 · Esforço {item.effort ?? "—"}/5 · Investimento{" "}
@@ -53,6 +61,9 @@ export function OpportunityRanking({
             </p>
             <p className="text-[32px] font-black" style={{ color: "var(--gold-soft)" }}>
               {item.priorityScore}
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+              score separado da evidência
             </p>
           </div>
         </Link>

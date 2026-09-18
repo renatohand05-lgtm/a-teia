@@ -91,6 +91,13 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
               realizedReturn={plan.realizedReturn}
             />
           </div>
+          <Link
+            href={`/empresas/${id}/experimentos/novo?planId=${plan.id}${plan.opportunityId ? `&opportunityId=${plan.opportunityId}` : ""}`}
+            className="mt-4 inline-flex rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+          >
+            Testar este plano com um experimento
+          </Link>
         </section>
 
         <section className="space-y-3">

@@ -55,6 +55,8 @@ export type OpportunityDTO = {
   status: OpportunityStatus;
   evidenceLevel: EvidenceLevel;
   queuedForPlan: boolean;
+  experimentCount: number;
+  validatedExperimentCount: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -179,6 +181,8 @@ export function toOpportunityDTO(
     status: row.status,
     evidenceLevel: row.evidenceLevel,
     queuedForPlan: row.queuedForPlan,
+    experimentCount: 0,
+    validatedExperimentCount: 0,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -245,6 +249,7 @@ export async function listOpportunities(
   });
 
   let list = rows.map((row) => toOpportunityDTO(row));
+  list = await attachExperimentStats(ownerId, companyId, list);
   if (filters.financial === "with") {
     list = list.filter((item) => item.estimatedInvestment != null && item.expectedMonthlyReturn != null);
   }
@@ -271,7 +276,27 @@ export async function getOpportunity(
   });
   if (!row) return null;
   const dimensionScore = await dimensionScoreFor(companyId, row.sourceDimension ?? "", row.diagnosisId);
-  return toOpportunityDTO(row, dimensionScore);
+  const [dto] = await attachExperimentStats(ownerId, companyId, [toOpportunityDTO(row, dimensionScore)]);
+  return dto ?? null;
+}
+
+async function attachExperimentStats(ownerId: string, companyId: string, list: OpportunityDTO[]): Promise<OpportunityDTO[]> {
+  if (!list.length) return list;
+  const stats = await prisma.experiment.groupBy({
+    by: ["opportunityId", "classification"],
+    where: { companyId, company: { ownerId }, opportunityId: { in: list.map((item) => item.id) } },
+    _count: { _all: true },
+  });
+  return list.map((item) => {
+    const related = stats.filter((stat) => stat.opportunityId === item.id);
+    return {
+      ...item,
+      experimentCount: related.reduce((sum, stat) => sum + stat._count._all, 0),
+      validatedExperimentCount: related
+        .filter((stat) => stat.classification === "VALIDATED")
+        .reduce((sum, stat) => sum + stat._count._all, 0),
+    };
+  });
 }
 
 export async function createManualOpportunity(

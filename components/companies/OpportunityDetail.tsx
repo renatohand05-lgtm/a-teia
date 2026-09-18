@@ -13,13 +13,17 @@ import {
 import { formatBRL, formatPercent } from "@/lib/format";
 import { calculatePayback, calculateROI } from "@/lib/financial-engine";
 import type { OpportunityDTO } from "@/services/opportunityService";
+import type { ExperimentDTO } from "@/services/experimentService";
+import { ExperimentClassBadge, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
 
 export function OpportunityDetail({
   companyId,
   opportunity,
+  experiments = [],
 }: {
   companyId: string;
   opportunity: OpportunityDTO;
+  experiments?: ExperimentDTO[];
 }) {
   return (
     <div className="space-y-5">
@@ -127,6 +131,44 @@ export function OpportunityDetail({
         >
           Criar plano 30/60/90
         </Link>
+        <Link
+          href={`/empresas/${companyId}/experimentos/novo?opportunityId=${opportunity.id}`}
+          className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+        >
+          Testar oportunidade
+        </Link>
+      </section>
+      <section className="space-y-3">
+        <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+          Experimentos vinculados
+        </h3>
+        {experiments.length === 0 ? (
+          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            Nenhum teste ainda. Uma oportunidade pode ter vários experimentos — uma tentativa não vira verdade universal.
+          </p>
+        ) : (
+          experiments.map((item) => (
+            <Link
+              key={item.id}
+              href={`/empresas/${companyId}/experimentos/${item.id}`}
+              className="block rounded-2xl border p-4"
+              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="font-bold">{item.title}</div>
+                <div className="flex flex-wrap gap-2">
+                  <ExperimentStatusBadge status={item.status} />
+                  <ExperimentClassBadge classification={item.classification} />
+                </div>
+              </div>
+              <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                KPI {item.kpi ?? "—"} · resultado {item.finalValue ?? item.latestMeasurement ?? "em aberto"}
+                {item.evidence.length ? " · evidência rastreável" : " · sem evidência ainda"}
+              </p>
+            </Link>
+          ))
+        )}
       </section>
       <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
         Executar o plano não transforma a hipótese em evidência validada. Evidência só nasce de resultado real medido.

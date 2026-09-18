@@ -10,6 +10,7 @@ import { getLatestDiagnosis, listDiagnoses } from "@/services/diagnosisService";
 import { getOpportunitySummary, getTopOpportunities } from "@/services/opportunityService";
 import { getExecutionSummary } from "@/services/executionService";
 import { getFinancialMiniSummary } from "@/services/financialService";
+import { getExperimentSummary } from "@/services/experimentService";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { userId, name, company } = await requireOwnedCompany(id);
 
-  const [onboarding, latest, history, summary, top, execution, finance] = await Promise.all([
+  const [onboarding, latest, history, summary, top, execution, finance, experimentSummary] = await Promise.all([
     getOnboarding(userId, id),
     getLatestDiagnosis(userId, id),
     listDiagnoses(userId, id),
@@ -25,6 +26,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
     getTopOpportunities(userId, id, 3),
     getExecutionSummary(userId, id),
     getFinancialMiniSummary(userId, id),
+    getExperimentSummary(userId, id),
   ]);
   const financeSummary = finance
     ? {
@@ -48,6 +50,12 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
           latest={latest}
           historyCount={history.length}
           finance={financeSummary}
+          experiments={{
+            active: experimentSummary.active,
+            completed: experimentSummary.completed,
+            validated: experimentSummary.validated,
+            inconclusive: experimentSummary.inconclusive,
+          }}
         />
         <OpportunityOverview companyId={company.id} summary={summary} top={top} />
 

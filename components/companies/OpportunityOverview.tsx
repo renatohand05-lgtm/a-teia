@@ -75,9 +75,13 @@ export function OpportunityOverview({
                   </div>
                   <div>
                     <dt className="font-bold text-[10px] uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
-                      Qual impacto esperado?
+                      Evidência
                     </dt>
-                    <dd>{item.expectedImpact ?? "—"}/5</dd>
+                    <dd>
+                      {item.validatedExperimentCount > 0
+                        ? `${item.validatedExperimentCount} experimento(s) validado(s)`
+                        : "Hipótese — ainda sem evidência medida"}
+                    </dd>
                   </div>
                 </dl>
               </Link>

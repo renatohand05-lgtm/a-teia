@@ -44,9 +44,24 @@ enum TaskStatus {
 
 enum ExperimentStatus {
   PLANNED
+  DRAFT
+  READY
   RUNNING
   COMPLETED
   ABANDONED
+  CANCELLED
+}
+
+enum ExperimentDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+enum ExperimentClassification {
+  VALIDATED
+  PARTIALLY_VALIDATED
+  INCONCLUSIVE
+  REFUTED
 }
 
 enum AuditSource {
@@ -129,6 +144,8 @@ model User {
   onboardings       CompanyOnboarding[]
   diagnoses         Diagnosis[]
   opportunities     Opportunity[]
+  experiments       Experiment[]
+  experimentResults ExperimentResult[]
 }
 
 model Company {
@@ -374,6 +391,7 @@ model Opportunity {
 
   decisions   Decision[]
   experiments Experiment[]
+  evidence    Evidence[]
 
   @@index([companyId, status])
   @@index([companyId, score])
@@ -391,7 +409,8 @@ model Strategy {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  decisions Decision[]
+  decisions   Decision[]
+  experiments Experiment[]
 
   @@index([companyId])
 }
@@ -439,7 +458,8 @@ model ActionPlan {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  tasks Task[]
+  tasks       Task[]
+  experiments Experiment[]
 }
 
 model Task {
@@ -457,52 +477,84 @@ model Task {
 }
 
 model Experiment {
-  id            String           @id @default(cuid())
-  companyId     String?
-  company       Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  opportunityId String?
-  opportunity   Opportunity?     @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  title         String
-  hypothesis    String?
-  kpi           String?
-  investment    Decimal?         @db.Decimal(14, 2)
-  status        ExperimentStatus @default(PLANNED)
-  startedAt     DateTime?
-  endedAt       DateTime?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                   String                     @id @default(cuid())
+  companyId            String?
+  company              Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  opportunityId        String?
+  opportunity          Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  actionPlanId         String?
+  actionPlan           ActionPlan?                @relation(fields: [actionPlanId], references: [id], onDelete: SetNull)
+  strategyId           String?
+  strategy             Strategy?                  @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  createdById          String?
+  createdBy            User?                      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  title                String
+  hypothesis           String?
+  kpi                  String?
+  kpiUnit              String?
+  direction            ExperimentDirection        @default(HIGHER_IS_BETTER)
+  baseline             Decimal?                   @db.Decimal(14, 4)
+  target               Decimal?                   @db.Decimal(14, 4)
+  testDescription      String?
+  successCriteria      String?
+  notes                String?
+  investment           Decimal?                   @db.Decimal(14, 2)
+  realizedInvestment   Decimal?                   @db.Decimal(14, 2)
+  realizedReturn       Decimal?                   @db.Decimal(14, 2)
+  status               ExperimentStatus           @default(PLANNED)
+  classification       ExperimentClassification?
+  classificationReason String?
+  finalValue           Decimal?                   @db.Decimal(14, 4)
+  startedAt            DateTime?
+  plannedEndAt         DateTime?
+  endedAt              DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
 
-  results ExperimentResult[]
+  results  ExperimentResult[]
+  evidence Evidence[]
+
+  @@index([companyId, status])
+  @@index([opportunityId])
+  @@index([actionPlanId])
 }
 
 /// Resultados nunca substituem o registro anterior — novo resultado = nova linha.
 model ExperimentResult {
-  id           String     @id @default(cuid())
-  experimentId String
-  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  outcome      String
-  measuredValue Decimal?  @db.Decimal(14, 4)
-  notes        String?
-  recordedAt   DateTime   @default(now())
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id            String      @id @default(cuid())
+  experimentId  String
+  experiment    Experiment  @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  recordedById  String?
+  recordedBy    User?       @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  outcome       String
+  measuredValue Decimal?    @db.Decimal(14, 4)
+  notes         String?
+  recordedAt    DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([experimentId, recordedAt])
 }
 
 model Evidence {
-  id         String        @id @default(cuid())
-  companyId  String?
-  company    Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  kind       KnowledgeKind
-  title      String
-  body       String
-  url        String?
-  confidence Int?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id             String                     @id @default(cuid())
+  companyId      String?
+  company        Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  experimentId   String?
+  experiment     Experiment?                @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  opportunityId  String?
+  opportunity    Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  kind           KnowledgeKind
+  title          String
+  body           String
+  url            String?
+  confidence     Int?
+  classification ExperimentClassification?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
 
   @@index([companyId, kind])
+  @@index([experimentId])
 }
 
 /// Memória estratégica é acumulativa: aprendizados novos não apagam os anteriores.

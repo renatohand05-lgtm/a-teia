@@ -6,7 +6,7 @@ import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 
-const FUTURE = ["Experimentos", "Memória estratégica"];
+const FUTURE = ["Memória estratégica"];
 
 export function CompanyCockpit({
   company,
@@ -14,6 +14,7 @@ export function CompanyCockpit({
   latest,
   historyCount,
   finance,
+  experiments,
 }: {
   company: CompanyDTO;
   onboarding: OnboardingDTO | null;
@@ -26,6 +27,12 @@ export function CompanyCockpit({
     cogsPercent: number | null;
     breakEven: number | null;
     revenueGap: number | null;
+  } | null;
+  experiments?: {
+    active: number;
+    completed: number;
+    validated: number;
+    inconclusive: number;
   } | null;
 }) {
   const onboardingLabel = !onboarding ? "Não iniciado" : onboarding.status === "COMPLETE" ? "Completo" : "Em andamento";
@@ -106,6 +113,7 @@ export function CompanyCockpit({
         ) : null}
         <GhostLink href={`/empresas/${company.id}/execucao`}>Execução 30/60/90</GhostLink>
         <GoldLink href={`/empresas/${company.id}/financeiro`}>Ver financeiro</GoldLink>
+        <GhostLink href={`/empresas/${company.id}/experimentos`}>Ver experimentos</GhostLink>
       </section>
 
       {finance ? (
@@ -120,6 +128,26 @@ export function CompanyCockpit({
             <Mini label="CMV %" value={finance.cogsPercent != null ? `${finance.cogsPercent}%` : "—"} />
             <Mini label="Ponto de equilíbrio" value={finance.breakEven != null ? String(finance.breakEven.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
             <Mini label="Gap para meta" value={finance.revenueGap != null ? String(finance.revenueGap.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })) : "—"} />
+          </div>
+        </section>
+      ) : null}
+
+      {experiments ? (
+        <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Validação real</div>
+              <h3 className="mt-1 text-[18px] font-black">Experimentos e evidências</h3>
+            </div>
+            <Link href={`/empresas/${company.id}/experimentos`} className="rounded-xl px-4 py-2.5 text-[13px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+              Ver experimentos
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Mini label="Experimentos ativos" value={String(experiments.active)} />
+            <Mini label="Concluídos" value={String(experiments.completed)} />
+            <Mini label="Estratégias validadas" value={String(experiments.validated)} />
+            <Mini label="Testes inconclusivos" value={String(experiments.inconclusive)} />
           </div>
         </section>
       ) : null}

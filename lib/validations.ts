@@ -253,6 +253,93 @@ export const executionFinanceSchema = z.object({
 
 export type ExecutionFinanceInput = z.infer<typeof executionFinanceSchema>;
 
+function optionalFinite() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().finite().optional());
+}
+
+function requiredFinite() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return Number.NaN;
+    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+    return Number.isFinite(n) ? n : Number.NaN;
+  }, z.number().finite());
+}
+
+function optionalDate() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }, z.date().optional());
+}
+
+export const experimentInputSchema = z
+  .object({
+    companyId: z.string().cuid("Empresa inválida."),
+    opportunityId: z.string().cuid().optional(),
+    actionPlanId: z.string().cuid().optional(),
+    strategyId: z.string().cuid().optional(),
+    title: z.string().trim().min(3, "Informe um título com pelo menos 3 caracteres.").max(160),
+    hypothesis: z.string().trim().min(8, "Descreva a hipótese a ser testada.").max(4000),
+    kpi: z.string().trim().min(2, "Informe o KPI principal.").max(80),
+    kpiCustom: optionalText(80),
+    kpiUnit: optionalText(40),
+    direction: z.enum(["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]),
+    baseline: optionalFinite(),
+    target: optionalFinite(),
+    startedAt: optionalDate(),
+    plannedEndAt: optionalDate(),
+    investment: optionalMoney(),
+    testDescription: optionalText(4000),
+    successCriteria: optionalText(4000),
+    notes: optionalText(4000),
+  })
+  .superRefine((value, ctx) => {
+    if (value.startedAt && value.plannedEndAt && value.plannedEndAt.getTime() < value.startedAt.getTime()) {
+      ctx.addIssue({ code: "custom", message: "A data final prevista deve ser igual ou posterior à inicial.", path: ["plannedEndAt"] });
+    }
+    if (value.kpi === "custom" && !value.kpiCustom) {
+      ctx.addIssue({ code: "custom", message: "Informe o KPI customizado.", path: ["kpiCustom"] });
+    }
+  })
+  .transform((value) => ({
+    ...value,
+    kpi: value.kpi === "custom" ? value.kpiCustom ?? value.kpi : value.kpi,
+  }));
+
+export type ExperimentInput = z.infer<typeof experimentInputSchema>;
+
+export const experimentMeasurementSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  experimentId: z.string().cuid("Experimento inválido."),
+  measuredValue: requiredFinite(),
+  recordedAt: optionalDate(),
+  notes: optionalText(4000),
+});
+
+export type ExperimentMeasurementInput = z.infer<typeof experimentMeasurementSchema>;
+
+export const experimentResultSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  experimentId: z.string().cuid("Experimento inválido."),
+  finalValue: requiredFinite(),
+  realizedInvestment: optionalMoney(),
+  realizedReturn: optionalMoney(),
+  revenueBase: optionalMoney(),
+  notes: optionalText(4000),
+});
+
+export type ExperimentResultInput = z.infer<typeof experimentResultSchema>;
+
+export const experimentIdSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  experimentId: z.string().cuid("Experimento inválido."),
+});
+
 export const aiRequestSchema = z.object({
   message: z.string().trim().min(3).max(8000),
   conversationId: z.string().cuid().optional(),
