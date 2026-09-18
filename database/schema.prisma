@@ -123,6 +123,30 @@ enum OpportunityOrigin {
   MANUAL
 }
 
+enum MemoryOrigin {
+  OBSERVATION
+  EXPERIMENT_EVIDENCE
+  MANUAL_LESSON
+}
+
+enum MemoryConfidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MemoryStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
+enum MemoryPolarity {
+  POSITIVE
+  NEGATIVE
+  INCONCLUSIVE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -141,6 +165,7 @@ model User {
   auditLogs         AuditLog[]
   uploadedFiles     StoredFile[]
   memories          StrategicMemory[]
+  approvedMemories  StrategicMemory[] @relation("MemoryApprover")
   onboardings       CompanyOnboarding[]
   diagnoses         Diagnosis[]
   opportunities     Opportunity[]
@@ -392,6 +417,7 @@ model Opportunity {
   decisions   Decision[]
   experiments Experiment[]
   evidence    Evidence[]
+  memories    StrategicMemory[]
 
   @@index([companyId, status])
   @@index([companyId, score])
@@ -411,6 +437,7 @@ model Strategy {
 
   decisions   Decision[]
   experiments Experiment[]
+  memories    StrategicMemory[]
 
   @@index([companyId])
 }
@@ -513,6 +540,7 @@ model Experiment {
 
   results  ExperimentResult[]
   evidence Evidence[]
+  memories StrategicMemory[]
 
   @@index([companyId, status])
   @@index([opportunityId])
@@ -553,24 +581,59 @@ model Evidence {
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
 
+  memories StrategicMemory[]
+
   @@index([companyId, kind])
   @@index([experimentId])
 }
 
 /// Memória estratégica é acumulativa: aprendizados novos não apagam os anteriores.
 model StrategicMemory {
-  id         String   @id @default(cuid())
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  authorId   String?
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  title      String
-  lesson     String
-  validated  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String                     @id @default(cuid())
+  companyId       String?
+  company         Company?                   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  authorId        String?
+  author          User?                      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  title           String
+  lesson          String
+  validated       Boolean                    @default(false)
+  origin          MemoryOrigin               @default(OBSERVATION)
+  status          MemoryStatus               @default(PROPOSED)
+  confidence      MemoryConfidence           @default(LOW)
+  polarity        MemoryPolarity?
+  evidenceId      String?
+  evidence        Evidence?                  @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  experimentId    String?
+  experiment      Experiment?                @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  opportunityId   String?
+  opportunity     Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  strategyId      String?
+  strategy        Strategy?                  @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  context         String?
+  segment         String?
+  kpi             String?
+  family          String?
+  baseline        Decimal?                   @db.Decimal(14, 4)
+  target          Decimal?                   @db.Decimal(14, 4)
+  measuredResult  Decimal?                   @db.Decimal(14, 4)
+  classification  ExperimentClassification?
+  limitations     String?
+  conditions      String?
+  investment      Decimal?                   @db.Decimal(14, 2)
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  approvedById    String?
+  approvedBy      User?                      @relation("MemoryApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt      DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
 
   @@index([companyId, createdAt])
+  @@index([companyId, status])
+  @@index([origin, status])
+  @@index([family, kpi])
+  @@index([evidenceId])
+  @@index([experimentId])
 }
 
 model AIConversation {

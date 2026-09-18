@@ -340,6 +340,41 @@ export const experimentIdSchema = z.object({
   experimentId: z.string().cuid("Experimento inválido."),
 });
 
+export const memoryProposeSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  evidenceId: z.string().cuid("Evidência inválida."),
+  title: z.string().trim().min(3, "Informe um título com pelo menos 3 caracteres.").max(160),
+  lesson: z.string().trim().min(8, "Descreva a lição aprendida.").max(4000),
+  context: optionalText(4000),
+  limitations: optionalText(4000),
+  conditions: optionalText(4000),
+});
+
+export type MemoryProposeInput = z.infer<typeof memoryProposeSchema>;
+
+export const memoryObservationSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  origin: z.enum(["OBSERVATION", "MANUAL_LESSON"]),
+  title: z.string().trim().min(3, "Informe um título com pelo menos 3 caracteres.").max(160),
+  lesson: z.string().trim().min(8, "Descreva a observação ou lição.").max(4000),
+  context: optionalText(4000),
+  segment: optionalText(80),
+  kpi: optionalText(80),
+  family: optionalText(80),
+  baseline: optionalFinite(),
+  target: optionalFinite(),
+  measuredResult: optionalFinite(),
+  limitations: optionalText(4000),
+  conditions: optionalText(4000),
+});
+
+export type MemoryObservationInput = z.infer<typeof memoryObservationSchema>;
+
+export const memoryIdSchema = z.object({
+  companyId: z.string().cuid("Empresa inválida."),
+  memoryId: z.string().cuid("Memória inválida."),
+});
+
 export const aiRequestSchema = z.object({
   message: z.string().trim().min(3).max(8000),
   conversationId: z.string().cuid().optional(),

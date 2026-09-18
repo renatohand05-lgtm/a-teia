@@ -10,6 +10,7 @@ export type NavItem = {
 export const PRIMARY_NAV: NavItem[] = [
   { href: "/cockpit", label: "Meu Cockpit", enabled: true, group: "Núcleo" },
   { href: "/empresas", label: "Empresas", enabled: true, group: "Núcleo" },
+  { href: "/memoria", label: "Memória", enabled: true, group: "Núcleo" },
 ];
 
 export const FUTURE_NAV: NavItem[] = [
@@ -20,6 +21,5 @@ export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Execução", enabled: false, group: "Em breve" },
   { href: "#", label: "Financeiro & Cenários", enabled: false, group: "Em breve" },
   { href: "#", label: "Assistente IA", enabled: false, group: "Em breve" },
-  { href: "#", label: "Memória", enabled: false, group: "Em breve" },
   { href: "#", label: "Auditoria", enabled: false, group: "Em breve" },
 ];

@@ -8,6 +8,7 @@ import { requireOwnedCompany } from "@/lib/access";
 import { formatBRL, formatPercent } from "@/lib/format";
 import { calculateAbsoluteVariation, calculatePercentageVariation, isDraftStatus } from "@/lib/experiment-engine";
 import { getExperiment } from "@/services/experimentService";
+import { getExperimentMemories } from "@/services/memoryService";
 import { cancelExperimentAction, startExperimentAction } from "@/app/empresas/experiment-actions";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
   const { userId, name, company } = await requireOwnedCompany(id);
   const experiment = await getExperiment(userId, id, experimentId);
   if (!experiment) redirect(`/empresas/${id}/experimentos`);
+  const memories = await getExperimentMemories(userId, id, experimentId);
+  const proposed = memories.filter((item) => item.status === "PROPOSED");
+  const approved = memories.filter((item) => item.status === "APPROVED" && item.validated);
 
   const variation = calculateAbsoluteVariation(experiment.baseline, experiment.finalValue ?? experiment.latestMeasurement);
   const variationPct = calculatePercentageVariation(experiment.baseline, experiment.finalValue ?? experiment.latestMeasurement);
@@ -116,8 +120,48 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
           <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
             <h2 className="text-[16px] font-black">Evidência rastreável</h2>
             {experiment.evidence.map((item) => (
-              <pre key={item.id} className="mt-3 whitespace-pre-wrap text-[12px] leading-6" style={{ color: "var(--text-2)" }}>{item.body}</pre>
+              <div key={item.id}>
+                <pre className="mt-3 whitespace-pre-wrap text-[12px] leading-6" style={{ color: "var(--text-2)" }}>{item.body}</pre>
+                {experiment.status === "COMPLETED" && !memories.some((memory) => memory.evidenceId === item.id) ? (
+                  <Link
+                    href={`/empresas/${id}/memoria/propor?evidenceId=${item.id}`}
+                    className="mt-3 inline-flex rounded-xl px-4 py-3 text-[12px] font-black"
+                    style={{ background: "var(--gold)", color: "#111" }}
+                  >
+                    Transformar em aprendizado
+                  </Link>
+                ) : null}
+              </div>
             ))}
+          </section>
+        ) : null}
+
+        {experiment.status === "COMPLETED" ? (
+          <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+            <h2 className="text-[16px] font-black">Memória estratégica</h2>
+            {memories.length === 0 ? (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+                Nenhuma memória criada. Evidência não vira aprendizado sozinha.
+              </p>
+            ) : approved.length > 0 ? (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>Memória validada após revisão humana.</p>
+            ) : proposed.length > 0 ? (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>Memória proposta — aguardando aprovação humana.</p>
+            ) : (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>Há registros de memória ligados a este experimento.</p>
+            )}
+            <div className="mt-3 space-y-2">
+              {memories.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/empresas/${id}/memoria/${item.id}`}
+                  className="block rounded-xl border p-3 text-[13px]"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  {item.title} · {item.status} · {item.validated ? "validada" : "não validada"}
+                </Link>
+              ))}
+            </div>
           </section>
         ) : null}
 

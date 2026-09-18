@@ -11,6 +11,7 @@ import { getOpportunitySummary, getTopOpportunities } from "@/services/opportuni
 import { getExecutionSummary } from "@/services/executionService";
 import { getFinancialMiniSummary } from "@/services/financialService";
 import { getExperimentSummary } from "@/services/experimentService";
+import { getMemorySummary } from "@/services/memoryService";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { userId, name, company } = await requireOwnedCompany(id);
 
-  const [onboarding, latest, history, summary, top, execution, finance, experimentSummary] = await Promise.all([
+  const [onboarding, latest, history, summary, top, execution, finance, experimentSummary, memorySummary] = await Promise.all([
     getOnboarding(userId, id),
     getLatestDiagnosis(userId, id),
     listDiagnoses(userId, id),
@@ -27,6 +28,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
     getExecutionSummary(userId, id),
     getFinancialMiniSummary(userId, id),
     getExperimentSummary(userId, id),
+    getMemorySummary(userId, id),
   ]);
   const financeSummary = finance
     ? {
@@ -55,6 +57,12 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
             completed: experimentSummary.completed,
             validated: experimentSummary.validated,
             inconclusive: experimentSummary.inconclusive,
+          }}
+          memory={{
+            validated: memorySummary.validated,
+            recent: memorySummary.recent.map((item) => ({ id: item.id, title: item.title })),
+            conflicting: memorySummary.conflicting,
+            transferableCount: memorySummary.transferableCount,
           }}
         />
         <OpportunityOverview companyId={company.id} summary={summary} top={top} />

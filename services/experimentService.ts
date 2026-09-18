@@ -463,16 +463,6 @@ export async function completeExperiment(ownerId: string, input: ExperimentResul
       },
     });
 
-    await tx.strategicMemory.create({
-      data: {
-        companyId: input.companyId,
-        authorId: ownerId,
-        title: `Aprendizado · ${existing.title}`,
-        lesson: evaluation.reason,
-        validated: evaluation.classification === "VALIDATED",
-      },
-    });
-
     const experiment = await tx.experiment.update({
       where: { id: existing.id },
       data: {

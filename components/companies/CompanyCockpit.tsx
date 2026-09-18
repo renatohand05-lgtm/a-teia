@@ -6,7 +6,7 @@ import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 
-const FUTURE = ["Memória estratégica"];
+const FUTURE: string[] = [];
 
 export function CompanyCockpit({
   company,
@@ -15,6 +15,7 @@ export function CompanyCockpit({
   historyCount,
   finance,
   experiments,
+  memory,
 }: {
   company: CompanyDTO;
   onboarding: OnboardingDTO | null;
@@ -33,6 +34,12 @@ export function CompanyCockpit({
     completed: number;
     validated: number;
     inconclusive: number;
+  } | null;
+  memory?: {
+    validated: number;
+    recent: Array<{ id: string; title: string }>;
+    conflicting: number;
+    transferableCount: number;
   } | null;
 }) {
   const onboardingLabel = !onboarding ? "Não iniciado" : onboarding.status === "COMPLETE" ? "Completo" : "Em andamento";
@@ -114,6 +121,7 @@ export function CompanyCockpit({
         <GhostLink href={`/empresas/${company.id}/execucao`}>Execução 30/60/90</GhostLink>
         <GoldLink href={`/empresas/${company.id}/financeiro`}>Ver financeiro</GoldLink>
         <GhostLink href={`/empresas/${company.id}/experimentos`}>Ver experimentos</GhostLink>
+        <GoldLink href={`/empresas/${company.id}/memoria`}>Ver memória</GoldLink>
       </section>
 
       {finance ? (
@@ -152,6 +160,36 @@ export function CompanyCockpit({
         </section>
       ) : null}
 
+      {memory ? (
+        <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Memória estratégica</div>
+              <h3 className="mt-1 text-[18px] font-black">O que já aprendemos</h3>
+            </div>
+            <Link href={`/empresas/${company.id}/memoria`} className="rounded-xl px-4 py-2.5 text-[13px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+              Ver memória
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Mini label="Aprendizados validados" value={String(memory.validated)} />
+            <Mini label="Aprendizados recentes" value={String(memory.recent.length)} />
+            <Mini label="Evidências divergentes" value={String(memory.conflicting)} />
+            <Mini label="Aprendizados transferíveis" value={String(memory.transferableCount)} />
+          </div>
+          {memory.recent.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+              {memory.recent.map((item) => (
+                <li key={item.id}>· {item.title}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-[13px]" style={{ color: "var(--text-3)" }}>Nenhum aprendizado registrado ainda.</p>
+          )}
+        </section>
+      ) : null}
+
+      {FUTURE.length > 0 ? (
       <section>
         <h3 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
           Próximos módulos
@@ -167,6 +205,7 @@ export function CompanyCockpit({
           ))}
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

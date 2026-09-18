@@ -35,6 +35,7 @@ function refresh(companyId: string, experimentId?: string, opportunityId?: strin
     revalidatePath(`/empresas/${companyId}/experimentos/${experimentId}/medicoes`);
     revalidatePath(`/empresas/${companyId}/experimentos/${experimentId}/resultado`);
   }
+  revalidatePath(`/empresas/${companyId}/memoria`);
   if (opportunityId) revalidatePath(`/empresas/${companyId}/oportunidades/${opportunityId}`);
 }
 
