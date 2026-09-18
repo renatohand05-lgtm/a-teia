@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { aiRequestSchema } from "@/lib/validations";
 import { askExecutiveAssistant } from "@/services/aiService";
-import { prepareResearch } from "@/services/researchService";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -25,24 +24,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const reply = await askExecutiveAssistant({
-    userId: session.user.id,
-    message: parsed.data.message,
-    conversationId: parsed.data.conversationId,
-    companyId: parsed.data.companyId,
-  });
-
-  const research = parsed.data.useWebSearch
-    ? await prepareResearch({
-        userId: session.user.id,
-        question: parsed.data.message,
-        companyId: parsed.data.companyId,
-        depth: parsed.data.researchDepth,
-      })
-    : null;
-
-  return NextResponse.json({
-    ...reply,
-    research,
-  });
+  try {
+    const reply = await askExecutiveAssistant({
+      userId: session.user.id,
+      message: parsed.data.message,
+      conversationId: parsed.data.conversationId,
+      companyId: parsed.data.companyId,
+    });
+    return NextResponse.json({
+      ...reply,
+      research: null,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Falha ao consultar a IA.";
+    const status = message.includes("não encontrada") ? 404 : 400;
+    return NextResponse.json({ error: message }, { status });
+  }
 }

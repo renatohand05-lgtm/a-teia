@@ -147,6 +147,18 @@ enum MemoryPolarity {
   INCONCLUSIVE
 }
 
+enum AIActionType {
+  CREATE_EXPERIMENT
+  CREATE_PLAN
+  CREATE_OPPORTUNITY
+}
+
+enum AIActionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -171,6 +183,7 @@ model User {
   opportunities     Opportunity[]
   experiments       Experiment[]
   experimentResults ExperimentResult[]
+  aiActionProposals AIActionProposal[]
 }
 
 model Company {
@@ -211,6 +224,7 @@ model Company {
   researchSessions   ResearchSession[]
   files              StoredFile[]
   onboarding         CompanyOnboarding?
+  aiActionProposals  AIActionProposal[]
 
   @@index([ownerId, status])
   @@index([name])
@@ -648,8 +662,10 @@ model AIConversation {
   updatedAt DateTime           @updatedAt
 
   messages AIMessage[]
+  proposals AIActionProposal[]
 
   @@index([userId, createdAt])
+  @@index([companyId, createdAt])
 }
 
 model AIMessage {
@@ -659,10 +675,14 @@ model AIMessage {
   role           MessageRole
   content        String
   knowledgeKind  KnowledgeKind?
+  provider       String?
+  model          String?
+  structured     Json?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  sources AISource[]
+  sources    AISource[]
+  proposals  AIActionProposal[]
 
   @@index([conversationId, createdAt])
 }
@@ -677,6 +697,31 @@ model AISource {
   snippet   String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+}
+
+model AIActionProposal {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  messageId      String?
+  message        AIMessage?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById    String
+  createdBy      User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  type           AIActionType
+  title          String
+  rationale      String
+  payload        Json
+  status         AIActionStatus @default(PENDING)
+  confirmedAt    DateTime?
+  resultEntity   String?
+  resultId       String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([companyId, status])
+  @@index([conversationId, createdAt])
 }
 
 model ResearchSession {

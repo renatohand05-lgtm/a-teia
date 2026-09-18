@@ -15,11 +15,11 @@ export const PRIMARY_NAV: NavItem[] = [
 
 export const INTELLIGENCE_NAV: NavItem[] = [
   { href: "/memoria", label: "Memória Estratégica", enabled: true, group: "Inteligência" },
+  { href: "/assistente", label: "Assistente IA", enabled: true, group: "Inteligência" },
 ];
 
 export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
-  { href: "#", label: "Assistente IA", enabled: false, group: "Em breve" },
   { href: "#", label: "Auditoria", enabled: false, group: "Em breve" },
 ];
