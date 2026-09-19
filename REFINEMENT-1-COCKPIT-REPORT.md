@@ -3,6 +3,7 @@
 **Escopo:** Cockpit, navegação e hierarquia visual  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 1 cockpit navigation and visual hierarchy`  
+**SHA:** `e1382e020757801feffd7bdd4efecaa628f98d75`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0** (microrefinamento, sem patch semântico)  
 **Bloco 2:** não iniciado
@@ -103,11 +104,14 @@ Suite completa: **256** testes, 34 arquivos, todos passando. Novos em `tests/ref
 ## 18. Commit
 
 Mensagem: `refactor: refinement 1 cockpit navigation and visual hierarchy`  
+**SHA:** `e1382e020757801feffd7bdd4efecaa628f98d75`  
 Push para `origin/main` após validação. Sem bump de versão.
 
 ## 19. Vercel
 
-Deploy Production após o push. Health deve permanecer `1.0` / `1.0.0`. Confirmado após o deploy.
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-gkg0dqjfw-renato16.vercel.app  
+`/api/health`: release `1.0`, version `1.0.0`, `openaiConfigured: true`, `webSearchConfigured: true`, `openaiExposed: false`, `automationEngine: ok`, `scheduler: configured`, `database: ok`. Sem secrets.
 
 ## 20. Novos itens de backlog
 
