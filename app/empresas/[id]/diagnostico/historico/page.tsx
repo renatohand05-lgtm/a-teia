@@ -48,11 +48,11 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
           </div>
         ) : (
           <EmptyState
-            title="Nenhum diagnóstico ainda"
-            body="Nenhum diagnóstico realizado. O histórico aparece quando você salvar o primeiro 360°."
+            title="Nenhum Diagnóstico 360° realizado."
+            body="Avalie as 10 dimensões para localizar o gargalo e decidir o próximo movimento."
             action={
               <Link href={`/empresas/${company.id}/diagnostico`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-                Realizar diagnóstico
+                Realizar Diagnóstico 360°
               </Link>
             }
           />

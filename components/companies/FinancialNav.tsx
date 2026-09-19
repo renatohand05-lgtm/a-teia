@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { periodHref, periodLabel, type YearMonth } from "@/lib/period";
+import { FinancialPeriodSelector } from "@/components/companies/FinancialPeriodSelector";
+import { periodHref, type YearMonth } from "@/lib/period";
 
 const LINKS = [
   ["", "Resultado"],
@@ -13,10 +14,12 @@ export function FinancialNav({
   companyId,
   period,
   current,
+  availablePeriods = [],
 }: {
   companyId: string;
   period: YearMonth;
   current: "resultado" | "dre" | "fluxo" | "cenarios" | "metas";
+  availablePeriods?: YearMonth[];
 }) {
   const keys = ["resultado", "dre", "fluxo", "cenarios", "metas"] as const;
   return (
@@ -40,49 +43,22 @@ export function FinancialNav({
           );
         })}
       </div>
-      <PeriodSwitch companyId={companyId} period={period} current={current} />
+      <FinancialPeriodSelector
+        companyId={companyId}
+        period={period}
+        available={availablePeriods}
+        suffix={current === "dre" ? "/dre" : current === "fluxo" ? "/fluxo-caixa" : current === "cenarios" ? "/cenarios" : current === "metas" ? "/metas" : ""}
+      />
     </div>
   );
 }
 
-function PeriodSwitch({
-  companyId,
-  period,
-  current,
-}: {
-  companyId: string;
-  period: YearMonth;
-  current: "resultado" | "dre" | "fluxo" | "cenarios" | "metas";
-}) {
-  const suffix =
-    current === "dre"
-      ? "/dre"
-      : current === "fluxo"
-        ? "/fluxo-caixa"
-        : current === "cenarios"
-          ? "/cenarios"
-          : current === "metas"
-            ? "/metas"
-            : "";
-  const action = `/empresas/${companyId}/financeiro${suffix}`;
-  return (
-    <form action={action} className="flex items-center gap-2 text-[12px]">
-      <span style={{ color: "var(--text-3)" }}>{periodLabel(period)}</span>
-      <input type="number" name="mes" min={1} max={12} defaultValue={period.periodMonth} className="w-14 rounded-lg border bg-transparent px-2 py-1" style={{ borderColor: "var(--border)" }} />
-      <input type="number" name="ano" min={2000} max={2100} defaultValue={period.periodYear} className="w-20 rounded-lg border bg-transparent px-2 py-1" style={{ borderColor: "var(--border)" }} />
-      <button type="submit" className="rounded-lg border px-2 py-1 font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
-        Ir
-      </button>
-    </form>
-  );
-}
-
 export function moneyOrMissing(value: number | null | undefined, informed = value != null): string {
-  if (!informed || value == null) return "Sem dado informado";
+  if (!informed || value == null) return "Sem dados";
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
 export function percentOrMissing(value: number | null | undefined): string {
-  if (value == null) return "Sem dado informado";
+  if (value == null) return "Sem dados";
   return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 }

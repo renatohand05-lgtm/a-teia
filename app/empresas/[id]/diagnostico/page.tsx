@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
+import { createDiagnosisAction } from "@/app/empresas/diagnostic-actions";
 import { DiagnosticForm } from "@/components/companies/DiagnosticForm";
 import { DiagnosticResult } from "@/components/companies/DiagnosticResult";
+import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState } from "@/components/ui/States";
-import { createDiagnosisAction } from "@/app/empresas/diagnostic-actions";
 import { requireOwnedCompany } from "@/lib/access";
-import { getDiagnosis, getLatestDiagnosis } from "@/services/diagnosisService";
+import { formatDateBR } from "@/lib/format";
+import { getDiagnosis, listDiagnoses } from "@/services/diagnosisService";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,14 @@ export default async function DiagnosticoPage({
   const { id } = await params;
   const query = await searchParams;
   const { userId, name, company } = await requireOwnedCompany(id);
-
+  const history = await listDiagnoses(userId, id);
   const saved = query.salvo
-    ? await getDiagnosis(userId, id, query.salvo)
-    : await getLatestDiagnosis(userId, id);
+    ? (history.find((item) => item.id === query.salvo) ?? (await getDiagnosis(userId, id, query.salvo)))
+    : (history[0] ?? null);
+  const chronological = history.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const previous = saved
+    ? chronological[chronological.findIndex((item) => item.id === saved.id) - 1] ?? null
+    : null;
   const bound = createDiagnosisAction.bind(null, company.id);
 
   return (
@@ -32,46 +37,50 @@ export default async function DiagnosticoPage({
           <Link href={`/empresas/${company.id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             ← Voltar à empresa
           </Link>
-          <Link
-            href={`/empresas/${company.id}/diagnostico/historico`}
-            className="text-[12px] font-bold"
-            style={{ color: "var(--text-2)" }}
-          >
-            Ver histórico
-          </Link>
+          {history.length > 1 ? (
+            <Link href={`/empresas/${company.id}/diagnostico/historico`} className="text-[12px] font-bold" style={{ color: "var(--text-2)" }}>
+              Ver histórico
+            </Link>
+          ) : null}
         </div>
 
-        {saved ? <DiagnosticResult diagnosis={saved} /> : (
-          <EmptyState
-            title="Nenhum diagnóstico realizado."
-            body="Preencha as dimensões abaixo para gerar o primeiro 360° desta empresa."
-          />
-        )}
+        {history.length > 1 ? (
+          <ol className="flex gap-2 overflow-x-auto pb-1" aria-label="Histórico de diagnósticos">
+            {history
+              .slice()
+              .reverse()
+              .map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={`/empresas/${company.id}/diagnostico?salvo=${item.id}`}
+                    className="block shrink-0 rounded-xl border px-3 py-2 text-[12px]"
+                    style={{ borderColor: item.id === saved?.id ? "rgba(232,191,122,.45)" : "var(--border)" }}
+                  >
+                    {formatDateBR(item.createdAt)} · {item.overallScore}
+                  </Link>
+                </li>
+              ))}
+          </ol>
+        ) : null}
 
         {saved ? (
-          <section className="surface-card flex flex-wrap items-center justify-between gap-3 p-5">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                Hipóteses de ação
-              </p>
-              <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
-                Gerar oportunidades a partir deste diagnóstico. Nada é criado sem a sua seleção.
-              </p>
-            </div>
-            <Link
-              href={`/empresas/${company.id}/oportunidades/gerar?diagnostico=${saved.id}`}
-              className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
-              style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-            >
-              Gerar oportunidades a partir deste diagnóstico
-            </Link>
-          </section>
-        ) : null}
+          <DiagnosticResult diagnosis={saved} previous={previous} companyId={company.id} />
+        ) : (
+          <EmptyState
+            title="Nenhum Diagnóstico 360° realizado."
+            body="Avalie as 10 dimensões para localizar o gargalo e decidir o próximo movimento."
+            action={
+              <a href="#realizar-diagnostico" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                Realizar Diagnóstico 360°
+              </a>
+            }
+          />
+        )}
 
         <section>
           <h2 className="mb-2 text-[18px] font-bold">{saved ? "Novo diagnóstico" : "Realizar diagnóstico"}</h2>
           <p className="mb-4 text-[13px]" style={{ color: "var(--text-2)" }}>
-            Cada salvamento cria um registro histórico. O anterior não é apagado.
+            Cada salvamento cria um registro. O anterior permanece.
           </p>
           <DiagnosticForm action={bound} />
         </section>

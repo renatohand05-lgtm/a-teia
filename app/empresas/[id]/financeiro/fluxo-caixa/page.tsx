@@ -31,12 +31,15 @@ export default async function FluxoCaixaPage({
         <Link href={`/empresas/${id}/financeiro`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
           ← Resultado financeiro
         </Link>
-        <FinancialNav companyId={id} period={period} current="fluxo" />
+        <FinancialNav companyId={id} period={period} current="fluxo" availablePeriods={dash.availablePeriods} />
+        <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+          EBITDA mede resultado operacional. Caixa mede movimentação financeira.
+        </p>
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Mini label="Entradas" value={formatBRL(dash.cashMonth.inflows)} />
-          <Mini label="Saídas" value={formatBRL(dash.cashMonth.outflows)} />
-          <Mini label="Saldo operacional" value={formatBRL(dash.cashMonth.operatingBalance)} />
-          <Mini label="Saldo acumulado" value={formatBRL(dash.cashMonth.accumulatedBalance)} />
+          <Mini label="Entradas" value={dash.cashMonth.hasMovements ? formatBRL(dash.cashMonth.inflows) : "Sem dados"} />
+          <Mini label="Saídas" value={dash.cashMonth.hasMovements ? formatBRL(dash.cashMonth.outflows) : "Sem dados"} />
+          <Mini label="Saldo" value={dash.cashMonth.hasMovements ? formatBRL(dash.cashMonth.operatingBalance) : "Sem dados"} />
+          <Mini label="Saldo acumulado" value={dash.cashMonth.hasMovements || dash.cashMonth.accumulatedBalance ? formatBRL(dash.cashMonth.accumulatedBalance) : "Sem dados"} />
         </section>
         <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <h2 className="mb-4 text-[16px] font-black">Novo lançamento</h2>
@@ -45,7 +48,7 @@ export default async function FluxoCaixaPage({
         <section className="space-y-3">
           <h2 className="text-[16px] font-black">Lançamentos do mês</h2>
           {entries.length === 0 ? (
-            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Nenhum lançamento nesta competência.</p>
+            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Nenhum lançamento nesta competência. Sem lançamento não há saldo — não usamos zero inventado.</p>
           ) : (
             entries.map((entry) => (
               <div key={entry.id} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>

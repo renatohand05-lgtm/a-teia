@@ -27,12 +27,22 @@ export default async function DrePage({
         <Link href={`/empresas/${id}/financeiro`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
           ← Resultado financeiro
         </Link>
-        <FinancialNav companyId={id} period={period} current="dre" />
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Mini label="Receita líquida" value={moneyOrMissing(dash.dre.netRevenue)} />
-          <Mini label="Margem bruta" value={moneyOrMissing(dash.dre.grossMargin)} />
-          <Mini label="EBITDA" value={moneyOrMissing(dash.dre.ebitda)} />
-          <Mini label="Custos fixos" value={moneyOrMissing(dash.dre.fixedCosts, true)} />
+        <FinancialNav companyId={id} period={period} current="dre" availablePeriods={dash.availablePeriods} />
+        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <p className="text-[13px] font-bold">DRE da competência</p>
+          <ul className="mt-3 space-y-1.5 text-[13px]">
+            <Line label="Faturamento bruto" value={moneyOrMissing(dash.dre.grossRevenue, dash.dre.informed.grossRevenue)} />
+            <Line label="(−) Deduções / impostos" value={moneyOrMissing(dash.dre.deductions, dash.dre.informed.deductions)} />
+            <Line label="= Receita líquida" value={moneyOrMissing(dash.dre.netRevenue)} strong />
+            <Line label="(−) CMV" value={moneyOrMissing(dash.dre.cogs, dash.dre.informed.cogs)} />
+            <Line label="= Margem bruta" value={moneyOrMissing(dash.dre.grossMargin)} strong />
+            <Line label="(−) Folha" value={moneyOrMissing(dash.dre.input.payroll, dash.dre.informed.payroll)} />
+            <Line label="(−) Despesas operacionais" value={moneyOrMissing(dash.dre.operatingCosts, true)} />
+            <Line label="= EBITDA" value={moneyOrMissing(dash.dre.ebitda)} strong />
+          </ul>
+          <p className="mt-3 text-[11px]" style={{ color: "var(--text-3)" }}>
+            EBITDA não é caixa. Campo vazio permanece sem dado; zero só entra se você registrar zero.
+          </p>
         </section>
         <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <DreForm companyId={id} period={period} values={dash.dre.input} notes={dash.notes} />
@@ -42,11 +52,11 @@ export default async function DrePage({
   );
 }
 
-function Mini({ label, value }: { label: string; value: string }) {
+function Line({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-      <div className="text-[10px] uppercase" style={{ color: "var(--text-3)" }}>{label}</div>
-      <div className="mt-1 font-black">{value}</div>
-    </div>
+    <li className="flex justify-between gap-3" style={{ fontWeight: strong ? 700 : 400 }}>
+      <span style={{ color: "var(--text-2)" }}>{label}</span>
+      <span>{value}</span>
+    </li>
   );
 }

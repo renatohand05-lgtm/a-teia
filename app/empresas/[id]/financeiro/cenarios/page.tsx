@@ -30,10 +30,9 @@ export default async function CenariosPage({
         <Link href={`/empresas/${id}/financeiro`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
           ← Resultado financeiro
         </Link>
-        <FinancialNav companyId={id} period={period} current="cenarios" />
+        <FinancialNav companyId={id} period={period} current="cenarios" availablePeriods={dash.availablePeriods} />
         <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
-          Conservador {SCENARIO_MULTIPLIERS.CONSERVATIVE * 100}%, base {SCENARIO_MULTIPLIERS.BASE * 100}% e agressivo{" "}
-          {SCENARIO_MULTIPLIERS.AGGRESSIVE * 100}% sobre a receita. Custos fixos não mudam. Variáveis acompanham a receita.
+          Simulação, não previsão. Conservador multiplica a receita por {SCENARIO_MULTIPLIERS.CONSERVATIVE}; base usa os dados persistidos (×{SCENARIO_MULTIPLIERS.BASE}); agressivo multiplica por {SCENARIO_MULTIPLIERS.AGGRESSIVE}. Custos fixos não mudam. Variáveis acompanham a receita.
         </p>
         <section className="grid gap-3 md:grid-cols-3">
           {dash.scenarios.map((scenario) => (
@@ -48,7 +47,7 @@ export default async function CenariosPage({
                 <Row label="Custos" value={moneyOrMissing(scenario.dre.operatingCosts, true)} />
                 <Row label="EBITDA" value={moneyOrMissing(scenario.dre.ebitda)} />
                 <Row label="EBITDA %" value={percentOrMissing(scenario.ratios.ebitdaPercent)} />
-                <Row label="Resultado final" value={moneyOrMissing(scenario.dre.ebitda)} />
+                <Row label="EBITDA simulado" value={moneyOrMissing(scenario.dre.ebitda)} />
               </div>
             </div>
           ))}

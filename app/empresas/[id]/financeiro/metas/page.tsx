@@ -38,7 +38,7 @@ export default async function MetasPage({
         <Link href={`/empresas/${id}/financeiro`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
           ← Resultado financeiro
         </Link>
-        <FinancialNav companyId={id} period={period} current="metas" />
+        <FinancialNav companyId={id} period={period} current="metas" availablePeriods={dash.availablePeriods} />
         <section className="space-y-3">
           {rows.map(([label, item, money]) => (
             <div key={label} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -74,6 +74,6 @@ export default async function MetasPage({
 }
 
 function fmt(value: number | null, money: boolean): string {
-  if (value == null) return "Sem dado informado";
+  if (value == null) return "Sem dados";
   return money ? moneyOrMissing(value, true) : percentOrMissing(value);
 }

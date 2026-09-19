@@ -143,3 +143,14 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Focus trap nos painéis de confirmação
 - Histórico de alterações do cadastro na própria ficha
 - Cards de módulo da empresa com densidade ainda menor em 768px
+
+## REFINAMENTO 1 — BLOCO 3 (pendências menores)
+
+- Gráfico fino de evolução do Score 360° (hoje só delta textual e lista)
+- Seletor de competência com mês por extenso no `<option>`
+- Máscara de moeda na digitação da DRE (já no Bloco 2)
+- “Como calculamos” em tooltip em vez de `<details>`
+- Destacar linha de EBITDA na DRE com peso tipográfico ainda mais claro
+- Comparação lado a lado de três competências
+- Empty state ilustrado do financeiro
+- Densidade do formulário 360° em 768px (10 fieldsets)

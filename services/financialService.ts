@@ -91,9 +91,11 @@ export type FinancialDashboard = {
     outflows: number;
     operatingBalance: number;
     accumulatedBalance: number;
+    hasMovements: boolean;
   };
   history: HistoryRow[];
   previous: HistoryRow | null;
+  availablePeriods: YearMonth[];
   insights: KnowledgeStep[];
   scenarios: ScenarioResult[];
 };
@@ -374,9 +376,22 @@ export async function getFinancialDashboard(
         occurredAt: new Date(row.periodYear, row.periodMonth - 1, 1),
       })),
   );
-  const cashMonth = cashMonths.find(
+  const foundCash = cashMonths.find(
     (item) => item.periodMonth === period.periodMonth && item.periodYear === period.periodYear,
-  ) ?? { inflows: 0, outflows: 0, operatingBalance: 0, accumulatedBalance: cashMonths.at(-1)?.accumulatedBalance ?? 0 };
+  );
+  const hasCashMovements = cashRows.some(
+    (row) =>
+      (row.kind === "INFLOW" || row.kind === "OUTFLOW") &&
+      row.periodMonth === period.periodMonth &&
+      row.periodYear === period.periodYear,
+  );
+  const cashMonth = {
+    inflows: foundCash?.inflows ?? 0,
+    outflows: foundCash?.outflows ?? 0,
+    operatingBalance: foundCash?.operatingBalance ?? 0,
+    accumulatedBalance: foundCash?.accumulatedBalance ?? cashMonths.at(-1)?.accumulatedBalance ?? 0,
+    hasMovements: hasCashMovements,
+  };
 
   const history: HistoryRow[] = historyRows.map((row) => {
     const item = calculateDRE(dreFromRow(row));
@@ -405,6 +420,7 @@ export async function getFinancialDashboard(
     cashMonth,
     history,
     previous,
+    availablePeriods: history.map((item) => ({ periodMonth: item.periodMonth, periodYear: item.periodYear })),
     insights: buildFinancialInsights({ ratios, dre, comparisons }),
     scenarios: calculateAllScenarios(dre.input),
   };

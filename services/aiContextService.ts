@@ -101,7 +101,7 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
           revenueTarget: finance.goals.revenueTarget,
           revenueGap: finance.comparisons.revenue.difference,
           cogsTarget: finance.goals.cogsPercentTarget,
-          cashBalance: finance.cashMonth.operatingBalance,
+          cashBalance: finance.cashMonth.hasMovements ? finance.cashMonth.operatingBalance : null,
           scenarios: finance.scenarios.map((item) => ({
             label: item.label,
             revenue: item.dre.grossRevenue,

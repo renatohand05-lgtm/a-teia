@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { DIAGNOSTIC_DIMENSIONS, type DiagnosticDimensionKey } from "@/lib/diagnostic";
+import { DIAGNOSTIC_SCALE, diagnosisCoverage } from "@/lib/diagnostic-ui";
 import type { FormActionState } from "@/app/empresas/diagnostic-actions";
 
 const initial: FormActionState = { ok: false, error: "" };
@@ -14,73 +15,68 @@ export function DiagnosticForm({
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [scores, setScores] = useState<Partial<Record<DiagnosticDimensionKey, number>>>({});
   const [state, formAction, pending] = useActionState(action, initial);
-  const filled = DIAGNOSTIC_DIMENSIONS.every((dimension) => typeof scores[dimension.key] === "number");
+  const coverage = diagnosisCoverage(
+    DIAGNOSTIC_DIMENSIONS.map((dimension) => ({ key: dimension.key, score: scores[dimension.key] })),
+  );
 
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID());
   }, []);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} id="realizar-diagnostico" className="space-y-4">
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
-      <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-        Cada nota é um <b style={{ color: "var(--text-1)" }}>DADO</b> informado por você (1 a 5). O gargalo será uma{" "}
-        <b style={{ color: "var(--text-1)" }}>INFERÊNCIA</b> matemática — não uma evidência validada.
+      <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+        Cada nota é um dado informado (1 a 5). O gargalo é uma inferência — não evidência.
       </p>
+      <ol className="flex flex-wrap gap-2 text-[11px]" style={{ color: "var(--text-3)" }}>
+        {DIAGNOSTIC_SCALE.map((item) => (
+          <li key={item.value}>
+            <b style={{ color: "var(--text-1)" }}>{item.value}</b> — {item.label}
+          </li>
+        ))}
+      </ol>
+      <p className="text-[12px] font-semibold">{coverage.label}</p>
       {DIAGNOSTIC_DIMENSIONS.map((dimension) => (
-        <div key={dimension.key} className="surface-card p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="max-w-2xl">
-              <h3 className="m-0 text-[15px] font-bold">{dimension.label}</h3>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-                {dimension.explanation}
-              </p>
-            </div>
-            <input type="hidden" name={`score-${dimension.key}`} value={scores[dimension.key] ?? ""} />
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map((value) => {
-                const active = scores[dimension.key] === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setScores((prev) => ({ ...prev, [dimension.key]: value }))}
-                    className="h-10 w-10 rounded-xl text-[13px] font-extrabold"
-                    style={
-                      active
-                        ? {
-                            background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))",
-                            color: "#241a08",
-                          }
-                        : {
-                            background: "rgba(255,255,255,0.04)",
-                            color: "var(--text-2)",
-                            border: "1px solid var(--border)",
-                          }
-                    }
-                  >
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
+        <fieldset key={dimension.key} className="surface-card p-4">
+          <legend className="px-1 text-[15px] font-bold">{dimension.label}</legend>
+          <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--text-2)" }}>
+            {dimension.explanation}
+          </p>
+          <input type="hidden" name={`score-${dimension.key}`} value={scores[dimension.key] ?? ""} />
+          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label={`Nota de ${dimension.label}`}>
+            {DIAGNOSTIC_SCALE.map((item) => {
+              const active = scores[dimension.key] === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setScores((prev) => ({ ...prev, [dimension.key]: item.value }))}
+                  aria-pressed={active}
+                  aria-label={`${item.value} — ${item.label}`}
+                  className="min-h-10 min-w-10 rounded-xl px-2 text-[13px] font-extrabold"
+                  style={
+                    active
+                      ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08" }
+                      : { background: "rgba(255,255,255,0.04)", color: "var(--text-2)", border: "1px solid var(--border)" }
+                  }
+                >
+                  {item.value}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </fieldset>
       ))}
       {state && !state.ok && state.error ? <p className="text-[12px] text-[#f09a93]">{state.error}</p> : null}
       <button
         type="submit"
-        disabled={pending || !filled || !idempotencyKey}
+        disabled={pending || !coverage.complete || !idempotencyKey}
         className="rounded-xl px-5 py-3 text-[13px] font-extrabold text-[#241a08] disabled:opacity-45"
         style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
       >
-        {pending ? "Salvando diagnóstico..." : "Salvar Diagnóstico 360°"}
+        {pending ? "Salvando..." : "Salvar Diagnóstico 360°"}
       </button>
-      {!filled ? (
-        <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-          Marque as 10 dimensões para habilitar o salvamento.
-        </p>
-      ) : null}
     </form>
   );
 }

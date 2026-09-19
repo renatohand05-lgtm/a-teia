@@ -29,6 +29,11 @@ export function previousPeriod({ periodMonth, periodYear }: YearMonth): YearMont
   return { periodMonth: periodMonth - 1, periodYear };
 }
 
+export function nextPeriod({ periodMonth, periodYear }: YearMonth): YearMonth {
+  if (periodMonth === 12) return { periodMonth: 1, periodYear: periodYear + 1 };
+  return { periodMonth: periodMonth + 1, periodYear };
+}
+
 export function periodHref(base: string, period: YearMonth): string {
   const separator = base.includes("?") ? "&" : "?";
   return `${base}${separator}mes=${period.periodMonth}&ano=${period.periodYear}`;
