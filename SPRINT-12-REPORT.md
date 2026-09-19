@@ -110,13 +110,14 @@ Política mínima: `docs/PRIVACY-AND-RETENTION.md`.
 
 ## 16. Deploy
 
-Produção: https://a-teia.vercel.app — status após o push.
+Vercel Production **Ready**: https://a-teia.vercel.app  
+`/api/health`: Sprint 12 / 0.12.0, `openaiConfigured: true`, `webSearchConfigured: true`, `openaiExposed: false`, `automationEngine: ok`, `scheduler: configured`, `database: ok`. Sem secrets. Rotas autenticadas redirecionam para `/login`. Cron sem secret responde 401.
 
 ## 17. Pendências reais
 
-- `CRON_SECRET` ainda precisa existir no ambiente da Vercel para `scheduler: configured`.
 - RBAC além de owner continua propositalmente fora de escopo.
 - Sem exclusão destrutiva automática (documentado).
+- CSP é compatível, mas permanece deliberadamente permissiva (`unsafe-inline` / `unsafe-eval`) para não quebrar Next.js.
 
 ## 18. Backlog pós-Sprint 13
 
