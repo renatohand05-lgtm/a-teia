@@ -22,13 +22,13 @@ export default async function ResultadoPage({ params }: { params: Promise<{ id: 
         <h1 className="text-xl font-black">{experiment.title}</h1>
         {experiment.status === "RUNNING" ? (
           <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-            <ExperimentResultForm companyId={id} experimentId={experiment.id} latestMeasurement={experiment.latestMeasurement} />
+            <ExperimentResultForm companyId={id} experimentId={experiment.id} unit={experiment.kpiUnit} />
           </section>
         ) : (
           <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
             {experiment.status === "COMPLETED"
-              ? experiment.classificationReason
-              : "O resultado final só é registrado ao encerrar um teste em andamento."}
+              ? "Resultado já registrado. A data de término sozinha não encerra o teste."
+              : "O resultado só é registrado quando você informa o valor medido."}
           </p>
         )}
       </div>

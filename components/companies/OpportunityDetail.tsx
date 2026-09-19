@@ -258,7 +258,13 @@ export function OpportunityDetail({
                   {item.matchKind === "EXACT" ? "memória exata" : "aprendizado potencialmente transferível"}
                 </p>
                 <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>
-                  {item.transferability.label} · {item.explanation}
+                  {item.matchKind === "EXACT"
+                    ? "Há aprendizado anterior relacionado."
+                    : "Possível estratégia transferível."}{" "}
+                  {item.transferability.warning}
+                </p>
+                <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>
+                  {item.explanation}
                 </p>
               </Link>
             ))}
@@ -305,8 +311,8 @@ export function OpportunityDetail({
                 </div>
               </div>
               <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-                KPI {item.kpi ?? "—"} · resultado {item.finalValue ?? item.latestMeasurement ?? "em aberto"}
-                {item.evidence.length ? " · evidência rastreável" : " · sem evidência ainda"}
+                KPI {item.kpi ?? "—"} · resultado {item.finalValue != null ? String(item.finalValue) : "ainda não medido"}
+                {item.evidence.length ? " · resultado disponível para avaliação" : " · sem evidência ainda"}
               </p>
             </Link>
           ))

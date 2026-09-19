@@ -165,3 +165,14 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Empty state ilustrado de oportunidades, decisões e execução
 - Histórico visual compacto de decisões na ficha da oportunidade
 - Comparar score vs prioridade operacional em um chip único no ranking
+
+## REFINAMENTO 1 — BLOCO 5 (pendências menores)
+
+- “Como calculamos” da comparação meta × resultado em tooltip
+- Densidade dos cards de experimento em 768px
+- Empty state ilustrado de experimentos e memória
+- Gráfico simples de medições do experimento
+- Histórico visual de evidências na ficha da oportunidade
+- Atalho de teclado para registrar resultado
+- Hover mais suave nos cards de memória
+- Filtro de período por mês, além do ano já disponível

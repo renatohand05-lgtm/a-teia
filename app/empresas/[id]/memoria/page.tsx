@@ -50,7 +50,7 @@ export default async function EmpresaMemoriaPage({
         </div>
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-          <Mini label="Validados" value={String(summary.validated)} />
+          <Mini label="Validados" value={summary.approved + summary.validated + summary.observations > 0 ? String(summary.validated) : "Sem dados"} />
           <Mini label="Observações" value={String(summary.observations)} />
           <Mini label="Funcionou" value={String(summary.positive)} />
           <Mini label="Não funcionou" value={String(summary.negative)} />
@@ -109,13 +109,17 @@ export default async function EmpresaMemoriaPage({
 
         {items.length === 0 ? (
           <div className="rounded-2xl border p-6" style={{ borderColor: "var(--border)" }}>
-            <p className="font-bold">Nenhuma memória neste filtro.</p>
+            <p className="font-bold">
+              {filters.origem || filters.familia || filters.kpi || filters.classificacao || filters.confianca || filters.resultado
+                ? "Nenhuma memória neste filtro."
+                : "Os aprendizados validados da sua operação aparecerão aqui."}
+            </p>
             <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-              Transforme uma evidência em aprendizado ou registre uma observação. Pesquisa externa não vira memória validada sozinha.
+              Transforme um resultado medido em aprendizado. Pesquisa externa não vira memória validada sozinha.
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
               <Link href={`/empresas/${id}/experimentos?status=COMPLETED`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-                Ver evidências →
+                Avaliar evidência →
               </Link>
               <Link href={`/empresas/${id}/memoria/nova`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
                 Registrar observação →

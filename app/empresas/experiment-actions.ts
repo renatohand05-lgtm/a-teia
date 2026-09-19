@@ -136,6 +136,7 @@ export async function completeExperimentAction(
     realizedInvestment: formData.get("realizedInvestment") || undefined,
     realizedReturn: formData.get("realizedReturn") || undefined,
     revenueBase: formData.get("revenueBase") || undefined,
+    recordedAt: formData.get("recordedAt") || undefined,
     notes: formData.get("notes") || undefined,
   });
   if (!parsed.success) {

@@ -331,6 +331,7 @@ export const experimentResultSchema = z.object({
   realizedInvestment: optionalMoney(),
   realizedReturn: optionalMoney(),
   revenueBase: optionalMoney(),
+  recordedAt: optionalDate(),
   notes: optionalText(4000),
 });
 

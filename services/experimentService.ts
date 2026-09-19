@@ -35,6 +35,7 @@ const experimentInclude = {
   opportunity: true,
   actionPlan: true,
   strategy: true,
+  createdBy: { select: { name: true } },
 } satisfies Prisma.ExperimentInclude;
 
 type ExperimentRow = Prisma.ExperimentGetPayload<{ include: typeof experimentInclude }>;
@@ -90,6 +91,7 @@ export type ExperimentDTO = {
   measurements: ExperimentMeasurementDTO[];
   latestMeasurement: number | null;
   evidence: ExperimentEvidenceDTO[];
+  createdByName: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -103,6 +105,7 @@ export type ExperimentFilters = {
 };
 
 export type ExperimentSummary = {
+  total: number;
   active: number;
   completed: number;
   validated: number;
@@ -113,6 +116,7 @@ export type ExperimentSummary = {
   realizedInvestment: number;
   realizedReturn: number;
   roi: number | null;
+  years: number[];
 };
 
 async function requireCompany(ownerId: string, companyId: string) {
@@ -178,6 +182,7 @@ function toDTO(row: ExperimentRow): ExperimentDTO {
       classification: item.classification,
       createdAt: item.createdAt.toISOString(),
     })),
+    createdByName: row.createdBy?.name ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -417,7 +422,7 @@ export async function completeExperiment(ownerId: string, input: ExperimentResul
       outcome: "FINAL",
       measuredValue: new Prisma.Decimal(input.finalValue),
       notes: input.notes ?? null,
-      recordedAt: new Date(),
+      recordedAt: input.recordedAt ?? new Date(),
     },
   });
 
@@ -526,6 +531,7 @@ export async function getExperimentSummary(ownerId: string, companyId: string): 
   const realizedInvestment = items.reduce((sum, item) => sum + (item.realizedInvestment ?? 0), 0);
   const realizedReturn = items.reduce((sum, item) => sum + (item.realizedReturn ?? 0), 0);
   return {
+    total: items.length,
     active: items.filter((item) => item.status === "RUNNING" || item.status === "READY").length,
     completed: items.filter((item) => item.status === "COMPLETED").length,
     validated: items.filter((item) => item.classification === "VALIDATED").length,
@@ -536,6 +542,7 @@ export async function getExperimentSummary(ownerId: string, companyId: string): 
     realizedInvestment,
     realizedReturn,
     roi: calculateExperimentROI(realizedReturn || null, realizedInvestment || null),
+    years: [...new Set(items.map((item) => new Date(item.startedAt ?? item.createdAt).getFullYear()))].sort((a, b) => b - a),
   };
 }
 

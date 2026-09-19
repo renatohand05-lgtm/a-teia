@@ -42,6 +42,7 @@ export function CompanyCockpit({
     overdueTasks: number;
   } | null;
   experiments?: {
+    total?: number;
     active: number;
     completed: number;
     validated: number;
@@ -199,12 +200,12 @@ export function CompanyCockpit({
             title="Experimentos e evidências"
             status={experimentStatus}
             body={
-              experiments
-                ? `${experiments.completed} concluídos · ${experiments.validated} validados.`
-                : "Teste hipóteses com baseline, meta e resultado medido."
+              experiments && (experiments.total ?? experiments.completed + experiments.active) > 0
+                ? `${experiments.completed} concluídos · ${experiments.validated} com meta atingida neste teste.`
+                : "Você ainda não está validando nenhuma hipótese."
             }
-            href={`/empresas/${company.id}/experimentos`}
-            cta="Ver experimentos"
+            href={(experiments?.total ?? 0) > 0 ? `/empresas/${company.id}/experimentos` : `/empresas/${company.id}/experimentos/novo`}
+            cta={(experiments?.total ?? 0) > 0 ? "Ver experimentos" : "Criar primeiro experimento"}
             extra={
               <GhostLink href={`/empresas/${company.id}/experimentos?status=COMPLETED`}>Ver evidências</GhostLink>
             }
@@ -266,10 +267,10 @@ export function CompanyCockpit({
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Mini label="Experimentos ativos" value={String(experiments.active)} />
-            <Mini label="Concluídos" value={String(experiments.completed)} />
-            <Mini label="Estratégias validadas" value={String(experiments.validated)} />
-            <Mini label="Testes inconclusivos" value={String(experiments.inconclusive)} />
+            <Mini label="Experimentos em andamento" value={(experiments.total ?? 0) > 0 ? String(experiments.active) : "Sem dados"} />
+            <Mini label="Concluídos" value={(experiments.total ?? 0) > 0 ? String(experiments.completed) : "Sem dados"} />
+            <Mini label="Meta atingida neste teste" value={(experiments.total ?? 0) > 0 ? String(experiments.validated) : "Sem dados"} />
+            <Mini label="Testes inconclusivos" value={(experiments.total ?? 0) > 0 ? String(experiments.inconclusive) : "Sem dados"} />
           </div>
         </section>
       ) : null}
@@ -286,10 +287,10 @@ export function CompanyCockpit({
             <GoldLink href={`/empresas/${company.id}/memoria`}>Ver memória</GoldLink>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Mini label="Aprendizados validados" value={String(memory.validated)} />
-            <Mini label="Aprendizados recentes" value={String(memory.recent.length)} />
-            <Mini label="Evidências divergentes" value={String(memory.conflicting)} />
-            <Mini label="Aprendizados transferíveis" value={String(memory.transferableCount)} />
+            <Mini label="Aprendizados validados" value={memory.validated + memory.recent.length > 0 ? String(memory.validated) : "Sem dados"} />
+            <Mini label="Novos aprendizados" value={memory.recent.length > 0 ? String(memory.recent.length) : "Sem dados"} />
+            <Mini label="Evidências divergentes" value={memory.validated + memory.recent.length > 0 ? String(memory.conflicting) : "Sem dados"} />
+            <Mini label="Possível transferência" value={memory.transferableCount > 0 ? String(memory.transferableCount) : "Sem dados"} />
           </div>
           {memory.recent.length > 0 ? (
             <ul className="mt-3 space-y-1 text-[13px]" style={{ color: "var(--text-2)" }}>

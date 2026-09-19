@@ -31,16 +31,32 @@ export function ExperimentForm({
       {actionPlanId ? <input type="hidden" name="actionPlanId" value={actionPlanId} /> : null}
       {strategyId ? <input type="hidden" name="strategyId" value={strategyId} /> : null}
       <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-        Este registro é uma <b style={{ color: "var(--text-1)" }}>HIPÓTESE</b> em teste. Evidência só nasce de resultado medido.
+        Criar o teste não prova a hipótese. Resultado só entra quando você registrar a medição — nunca automaticamente.
       </p>
       <label className="block text-[12px] font-bold">
         Título
         <input name="title" required defaultValue={defaultTitle ?? ""} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
       </label>
-      <label className="block text-[12px] font-bold">
-        Hipótese
-        <textarea name="hypothesis" required rows={3} defaultValue={defaultHypothesis ?? ""} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
-      </label>
+      <fieldset className="space-y-3">
+        <legend className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Hipótese
+        </legend>
+        <p className="text-[12px]" style={{ color: "var(--text-3)" }}>O que acreditamos que acontecerá?</p>
+        <label className="block text-[12px] font-bold">
+          Hipótese
+          <textarea name="hypothesis" required rows={3} defaultValue={defaultHypothesis ?? ""} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+        </label>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Teste
+        </legend>
+        <p className="text-[12px]" style={{ color: "var(--text-3)" }}>O que será feito para validar?</p>
+        <label className="block text-[12px] font-bold">
+          Como será testada
+          <textarea name="testDescription" rows={3} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+        </label>
+      </fieldset>
       <div className="grid gap-3 md:grid-cols-2">
         <label className="block text-[12px] font-bold">
           KPI principal
@@ -69,11 +85,11 @@ export function ExperimentForm({
           </select>
         </label>
         <label className="block text-[12px] font-bold">
-          Baseline
+          Valor atual (quando houver dado real)
           <input name="baseline" inputMode="decimal" className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
         </label>
         <label className="block text-[12px] font-bold">
-          Meta
+          Meta do experimento
           <input name="target" inputMode="decimal" className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
         </label>
         <label className="block text-[12px] font-bold">
@@ -90,12 +106,14 @@ export function ExperimentForm({
         </label>
       </div>
       <label className="block text-[12px] font-bold">
-        Descrição do teste
-        <textarea name="testDescription" rows={3} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
-      </label>
-      <label className="block text-[12px] font-bold">
         Critério de sucesso
-        <textarea name="successCriteria" rows={2} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+        <textarea
+          name="successCriteria"
+          rows={2}
+          placeholder="Ex.: taxa de retorno ≥ 20% em 30 dias."
+          className={`${field} mt-2`}
+          style={{ borderColor: "var(--border)" }}
+        />
       </label>
       <label className="block text-[12px] font-bold">
         Observações

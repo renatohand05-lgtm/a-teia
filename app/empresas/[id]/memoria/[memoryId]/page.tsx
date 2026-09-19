@@ -11,6 +11,7 @@ import {
 import { requireOwnedCompany } from "@/lib/access";
 import { formatBRL } from "@/lib/format";
 import { calculateTransferability, detectConflictingMemories, familyLabel } from "@/lib/memory-engine";
+import { displayMemoryConfidence, memoryValidationLabel, transferabilityCopy } from "@/lib/memory-ui";
 import { approveMemoryAction, rejectMemoryAction } from "@/app/empresas/memory-actions";
 import { getMemory, listOwnerMemories } from "@/services/memoryService";
 
@@ -73,7 +74,7 @@ export default async function MemoriaDetalhePage({
           </div>
           <h1 className="mt-4 text-2xl font-black">{memory.title}</h1>
           <p className="mt-2 text-[12px]" style={{ color: "var(--gold-soft)" }}>
-            {memory.validated ? "Aprendizado validado (aprovado)" : "Ainda não validado para influenciar recomendações"}
+            {memoryValidationLabel(memory.validated, memory.origin)}
           </p>
         </section>
 
@@ -91,7 +92,7 @@ export default async function MemoriaDetalhePage({
           <Mini label="Investimento" value={formatBRL(memory.investment)} />
           <Mini label="Segmento" value={memory.segment ?? "Não informado"} />
           <Mini label="Família" value={familyLabel(memory.family)} />
-          <Mini label="Confiança" value={memory.confidence} />
+          <Mini label="Confiança" value={displayMemoryConfidence(memory.confidence)} />
         </section>
 
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -135,7 +136,7 @@ export default async function MemoriaDetalhePage({
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <h2 className="text-[16px] font-black">Onde pode ser reutilizado</h2>
           <p className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
-            Compatibilidade estratégica, não chance de sucesso.
+            {transferabilityCopy(false).title} {transferabilityCopy(false).warning}
           </p>
           {reusable.length === 0 ? (
             <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>Nenhum contexto transversal evidente com os dados persistidos.</p>

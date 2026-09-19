@@ -15,6 +15,7 @@ import { formatBRL, formatDateBR } from "@/lib/format";
 import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
 import { calculatePaybackMonths } from "@/lib/opportunity-score";
 import { displayEvidence, displayPaybackMonths } from "@/lib/opportunity-ui";
+import { displayRecordCount } from "@/lib/experiment-ui";
 import { DECISION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { CockpitSnapshot } from "@/services/cockpitService";
 
@@ -194,10 +195,10 @@ export function GlobalCockpitPanels({
           )}
         </div>
         <SummaryCard title="Experimentos" rows={[
-          ["Ativos", String(bundle.experiments.active)],
-          ["Aguardando resultado", String(bundle.experiments.waitingResult)],
-          ["Com evidência", String(bundle.experiments.withEvidence)],
-        ]} href="/empresas?modulo=experimentos" />
+          ["Em andamento", displayRecordCount(bundle.experiments.withEvidence + bundle.experiments.withoutEvidence > 0, bundle.experiments.active)],
+          ["Resultados para avaliar", displayRecordCount(bundle.experiments.withEvidence + bundle.experiments.withoutEvidence > 0, bundle.experiments.waitingResult)],
+          ["Com evidência", displayRecordCount(bundle.experiments.withEvidence + bundle.experiments.withoutEvidence > 0, bundle.experiments.withEvidence)],
+        ]} href="/empresas" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">

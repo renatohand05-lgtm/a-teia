@@ -84,6 +84,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
             overdueTasks: execution.overdueTasks,
           }}
           experiments={{
+            total: experimentSummary.total,
             active: experimentSummary.active,
             completed: experimentSummary.completed,
             validated: experimentSummary.validated,

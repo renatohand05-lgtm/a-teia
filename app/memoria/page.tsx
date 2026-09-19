@@ -93,7 +93,9 @@ export default async function MemoriaGlobalPage({
         </form>
 
         {items.length === 0 ? (
-          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Nenhum aprendizado nas empresas deste usuário.</p>
+          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            Os aprendizados validados da sua operação aparecerão aqui.
+          </p>
         ) : (
           <div className="space-y-3">
             {items.map((item) => (
@@ -102,6 +104,7 @@ export default async function MemoriaGlobalPage({
                 href={item.companyId ? `/empresas/${item.companyId}/memoria/${item.id}` : "/memoria"}
                 item={item}
                 extra={item.segment ?? undefined}
+                sameCompany={false}
               />
             ))}
           </div>
