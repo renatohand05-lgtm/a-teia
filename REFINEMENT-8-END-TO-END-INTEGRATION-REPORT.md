@@ -73,7 +73,20 @@ Breadcrumb e tabs da empresa mantêm o nome no `subtitle`. Assistente recebe `co
 
 ## Produção
 
-Commit e push em `main`. Deploy Vercel Production a registrar após o push. Health esperado: release 1.0, version 1.0.0, openaiConfigured true, webSearchConfigured true, openaiExposed false, automationEngine ok, scheduler configured, database ok.
+**SHA principal:** `de07380535b4ae782ad5e3348aea3c7c6997a466`  
+**SHA docs:** `a000e7c`  
+Vercel Production **Ready**: https://a-teia.vercel.app (`dpl_EZVcuBhvPiLN7TkjvZ2JrFZGZh8X`)
+
+Health verificado em `/api/health`:
+
+- release 1.0
+- version 1.0.0
+- openaiConfigured true
+- webSearchConfigured true
+- openaiExposed false
+- automationEngine ok
+- scheduler configured
+- database ok
 
 ## Walkthrough
 
