@@ -2,7 +2,7 @@
 
 **Data:** 2026-09-18  
 **Commit:** `feat: Sprint 11 automation alerts and operational routines`  
-**SHA:** pendente  
+**SHA:** `6448e4b3fd431a4f058dc181347b8b4b731407e1`  
 **Branch:** `main`  
 **Sprint 12:** não iniciada.
 
@@ -108,11 +108,15 @@ TypeScript 0 · lint 0 · build aprovado (`/automacoes`, `/api/cron/automations`
 
 ## 34. Commit SHA
 
-Pendente nesta redação.
+`6448e4b3fd431a4f058dc181347b8b4b731407e1`
 
 ## 35. Vercel
 
-Pendente nesta redação. Health: Sprint 11 / 0.11.0 · `automationEngine: ok` · `scheduler: configured|not_configured`.
+**Ready** — `https://a-teia.vercel.app`  
+Deploy: `https://a-teia-oohdp6per-renato16.vercel.app` (50s)
+
+`/api/health`: ok, Sprint 11 / 0.11.0, `automationEngine: ok`, `openaiExposed: false`, `scheduler: not_configured` (CRON_SECRET ainda não está no ambiente da Vercel; o endpoint `/api/cron/automations` responde 401 sem secret).  
+`/api/integrations/status`: OpenAI `configured: true` · Tavily `configured: true`
 
 ## 36. Pendências bloqueantes
 
@@ -120,7 +124,8 @@ Nenhuma.
 
 ## 37. Pendências não bloqueantes
 
-Walkthrough autenticado (template CMV → ativar → executar → reconhecer → resolver).
+Walkthrough autenticado (template CMV → ativar → executar → reconhecer → resolver).  
+Definir `CRON_SECRET` na Vercel para o cron diário autenticar (`scheduler: configured`). Execução manual já cobre o fluxo.
 
 ## 38. Backlog pós-Sprint 13
 
