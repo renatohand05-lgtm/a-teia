@@ -3,7 +3,7 @@
 **Escopo:** Jornada end-to-end + integração entre módulos + consistência do produto  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 8 end-to-end journey and module integration`  
-**SHA:** pendente neste arquivo até o commit  
+**SHA:** `de07380535b4ae782ad5e3348aea3c7c6997a466`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 9:** não iniciado  
