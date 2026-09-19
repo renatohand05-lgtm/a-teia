@@ -117,3 +117,17 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 
 - Drag-and-drop para reordenar iniciativas na simulação
 - Atalhos globais de teclado
+
+## REFINAMENTO 1 — BLOCO 1 (pendências menores)
+
+- Filtro de período no Cockpit (Empresa/Segmento/Prioridade já existem; período ainda não tem recorte no motor)
+- Jornada do hero ainda usa as etapas funcionais atuais (Financeiro, Experimento, Evidência) em vez do recorte conceitual Decisão/Resultado
+- Login ainda exibe “Uso pessoal”
+- Copy técnica “PostgreSQL” em onboarding e histórico do 360°
+- Cards de classificação de fonte (Dado interno, Hipótese, Evidência…) no rodapé do Cockpit: densidade e utilidade executiva
+- Focus trap e retorno de foco no drawer mobile da sidebar
+- Tabela de empresas do Cockpit em cards empilhados no mobile (além do overflow-x atual)
+- Skeleton só do hero/KPIs do Cockpit, sem cobrir a página inteira
+- Contraste AA dos textos terciários (`--text-3`) em fundos escuros
+- Inbox dedicado de alertas; o header hoje leva a `/automacoes#notificacoes`
+- Microajuste de wrapping dos chips “Perguntar à A TEIA” em 768px

@@ -1,8 +1,8 @@
-import { CompanyModuleNav } from "@/components/layout/CompanyModuleNav";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
+import { auth } from "@/auth";
+import { AppFrame } from "@/components/layout/AppFrame";
+import { countOpenOwnerAlerts } from "@/services/automationService";
 
-export function AppShell({
+export async function AppShell({
   title,
   subtitle,
   userName,
@@ -13,14 +13,12 @@ export function AppShell({
   userName?: string | null;
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const alertCount = session?.user?.id ? await countOpenOwnerAlerts(session.user.id) : 0;
+
   return (
-    <div className="min-h-screen lg:flex">
-      <Sidebar />
-      <div className="min-w-0 flex-1">
-        <Topbar title={title} subtitle={subtitle} userName={userName} />
-        <CompanyModuleNav />
-        <main className="animate-fade px-4 py-6 lg:px-8 lg:py-8">{children}</main>
-      </div>
-    </div>
+    <AppFrame title={title} subtitle={subtitle} userName={userName} alertCount={alertCount}>
+      {children}
+    </AppFrame>
   );
 }

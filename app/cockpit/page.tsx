@@ -38,13 +38,13 @@ export default async function CockpitPage({
         subtitle="Central de decisão multiempresa"
         userName={session.user.name}
       >
-        <CockpitView snapshot={snapshot} userName={session.user.name?.split(" ")[0] || "Renato"} filters={filters} />
+        <CockpitView snapshot={snapshot} filters={filters} />
       </AppShell>
     );
   } catch {
     return (
       <AppShell title="Meu Cockpit" userName={session.user.name}>
-        <ErrorState message="Não foi possível carregar o Cockpit. Verifique a conexão com o PostgreSQL (DATABASE_URL)." />
+        <ErrorState message="Não foi possível carregar o Cockpit." />
       </AppShell>
     );
   }

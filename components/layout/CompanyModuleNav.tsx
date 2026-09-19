@@ -20,7 +20,7 @@ export function CompanyModuleNav() {
             <Link
               key={tab.key}
               href={href}
-              className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em]"
+              className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--gold-soft)]"
               style={
                 active
                   ? {

@@ -11,7 +11,9 @@ import {
 } from "@/app/cockpit/actions";
 import { EmptyState } from "@/components/ui/States";
 import { PORTFOLIO_SHORTCUTS } from "@/lib/global-priority-engine";
-import { formatBRL, formatPercent } from "@/lib/format";
+import { formatBRL } from "@/lib/format";
+import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
+import { DECISION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { CockpitSnapshot } from "@/services/cockpitService";
 
 const LEVEL_TONE: Record<string, string> = {
@@ -29,85 +31,29 @@ export function GlobalCockpitPanels({
   filters: { companyId?: string; segment?: string; level?: string; kind?: string };
 }) {
   const bundle = snapshot.portfolio;
-  const consolidation = bundle.consolidation;
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <Mini label="Empresas ativas" value={String(snapshot.counts.companiesActive)} hint={snapshot.counts.companiesActive ? "Carteira do owner" : "Cadastrar primeira empresa"} />
-        <Mini
-          label="Receita consolidada"
-          value={formatBRL(consolidation.revenue)}
-          hint={consolidation.label}
-        />
-        <Mini
-          label="EBITDA consolidado"
-          value={formatBRL(consolidation.ebitda)}
-          hint={`${consolidation.ebitdaUsed}/${consolidation.total} empresas com EBITDA`}
-        />
-        <Mini
-          label="Margem EBITDA"
-          value={formatPercent(consolidation.ebitdaMargin)}
-          hint={consolidation.ebitdaMargin == null ? "Cobertura incompleta" : "Somente empresas com receita e EBITDA"}
-        />
-        <Mini
-          label="Caixa"
-          value={formatBRL(consolidation.cash)}
-          hint={`${consolidation.cashUsed}/${consolidation.total} com fluxo persistido`}
-        />
-        <Mini label="Oportunidades ativas" value={String(snapshot.counts.opportunitiesActive)} hint="Abertas na carteira" />
-        <Mini label="Planos em execução" value={String(bundle.execution.activePlans)} hint={`${bundle.execution.overdueTasks} tarefas vencidas`} />
-        <Mini label="Experimentos ativos" value={String(bundle.experiments.active)} hint={`${bundle.experiments.waitingResult} aguardando resultado`} />
-        <Mini label="Alertas" value={String(bundle.alerts.length)} hint="Deduplicados" />
-        <Mini label="Evidências recentes" value={String(snapshot.counts.evidenceValidated)} hint="Validadas" />
-      </section>
-
-      <section className="rounded-2xl border p-4" style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.05)" }}>
-        <Header title="Alocação de recursos" subtitle="Quanto alocar, em qual empresa e com qual risco. A IA não aprova sozinha." />
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <Mini label="Capital disponível" value={formatBRL(snapshot.allocation.capitalAvailable)} hint={snapshot.allocation.capitalAvailable == null ? "Não informado" : "Persistido pelo owner"} />
-          <Mini label="Capital proposto" value={formatBRL(snapshot.allocation.capitalProposed)} hint={snapshot.allocation.status ?? "Sem simulação"} />
-          <Mini label="Capital preservado" value={formatBRL(snapshot.allocation.capitalPreserved)} hint="Não força 100%" />
-          <Mini label="Horas / capacidade" value={snapshot.allocation.hoursProposed == null ? "Não informado" : `${snapshot.allocation.hoursProposed}h`} hint={`Capacidade ${snapshot.allocation.capacityUsed ?? "—"}/${snapshot.allocation.capacityLimit ?? "não definida"} · ${snapshot.allocation.pendingDecisions} decisões`} />
-        </div>
-        <Link href="/alocacao" className="mt-3 inline-block text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
-          Simular alocação
-        </Link>
-      </section>
-
-      <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
-        <Header title="Automações e alertas" subtitle="Detecção determinística. A IA só explica." />
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <Mini label="Alertas hoje" value={String(snapshot.automation.alertsToday)} hint="Novos no dia" />
-          <Mini label="Automações ativas" value={String(snapshot.automation.activeAutomations)} hint="Ligadas pelo owner" />
-          <Mini label="Falhas" value={String(snapshot.automation.failedRuns)} hint="Sem stack trace" />
-          <Mini label="Próxima rotina" value={snapshot.automation.nextRunAt ? snapshot.automation.nextRunAt.slice(11, 16) : "Não agendada"} hint="Timezone America/São Paulo" />
-        </div>
-        <Link href="/automacoes" className="mt-3 inline-block text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
-          Abrir Central de Automações
-        </Link>
-      </section>
-
+    <div className="space-y-6">
       <FilterBar filters={filters} companies={snapshot.companies} />
 
       <section id="cockpit-prioridades">
-        <Header title="Central de Decisão" subtitle="Onde agir primeiro? Ranking determinístico, sem caixa-preta." />
+        <Header title="Prioridades" subtitle="Onde agir primeiro, com o dado que já existe." />
         {bundle.priorities.length ? (
-          <div className="space-y-3">
+          <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)" }}>
             {bundle.priorities.map((item, index) => (
-              <PriorityCard key={item.id} item={item} rank={index + 1} />
+              <PriorityRow key={item.id} item={item} rank={index + 1} />
             ))}
           </div>
         ) : (
           <EmptyState
-            title={snapshot.counts.companiesActive ? "Nenhuma prioridade crítica identificada com os dados atuais." : "Cadastrar primeira empresa"}
+            title={snapshot.counts.companiesActive ? "Nenhuma prioridade com os dados atuais" : "Nenhuma empresa cadastrada"}
             body={
               snapshot.counts.companiesActive
-                ? "Complete os dados necessários para gerar prioridades."
-                : "O centro de decisão começa com um negócio real na carteira."
+                ? "Complete diagnóstico ou financeiro para gerar a fila."
+                : "Cadastre a primeira empresa para montar a carteira."
             }
             action={
-              <Link href={snapshot.counts.companiesActive ? "/empresas" : "/empresas/nova"} className="text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
+              <Link href={snapshot.counts.companiesActive ? "/empresas" : "/empresas/nova"} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
                 {snapshot.counts.companiesActive ? "Abrir empresas" : "Cadastrar empresa"}
               </Link>
             }
@@ -115,15 +61,46 @@ export function GlobalCockpitPanels({
         )}
       </section>
 
+      <section className="grid gap-4 xl:grid-cols-2">
+        <div>
+          <Header title="Alertas" subtitle="Falta de dado não vira alarme financeiro." />
+          {bundle.alerts.length ? (
+            <ul className="space-y-2">
+              {bundle.alerts.map((alert) => (
+                <li key={alert.id} className="rounded-xl border px-3 py-2.5 transition hover:bg-white/[0.03]" style={{ borderColor: "var(--border)" }}>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {signalKindLabel(alert.kind)} · {alert.companyName}
+                  </p>
+                  <Link href={alert.href} className="mt-0.5 block text-[13px] font-bold">
+                    {alert.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              title="Nenhum alerta"
+              body="Nenhum sinal aberto com os dados atuais."
+              action={
+                <Link href="/automacoes" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Ver automações
+                </Link>
+              }
+            />
+          )}
+        </div>
+        <DecisionCenter decisions={bundle.decisions} />
+      </section>
+
       <section>
-        <Header title="Portfólio" subtitle="Saúde dos dados mede completude, não se a empresa é boa ou ruim." />
+        <Header title="Empresas" subtitle="Completude dos dados, não se a empresa é boa ou ruim." />
         {bundle.portfolio.length ? (
           <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)" }}>
             <table className="min-w-full text-left text-[12px]">
               <thead style={{ color: "var(--text-3)" }}>
                 <tr>
-                  {["Empresa", "Segmento", "Dados", "360°", "Financeiro", "Oport.", "Execução", "Exp.", "Prioridade"].map((col) => (
-                    <th key={col} className="px-3 py-2 font-extrabold uppercase tracking-[0.06em]">
+                  {["Empresa", "Segmento", "Dados", "360°", "Receita", "Oport.", "Execução", "Exp.", "Prioridade"].map((col) => (
+                    <th key={col} className="px-3 py-2 font-semibold">
                       {col}
                     </th>
                   ))}
@@ -131,7 +108,7 @@ export function GlobalCockpitPanels({
               </thead>
               <tbody>
                 {bundle.portfolio.map((row) => (
-                  <tr key={row.company.id} className="border-t" style={{ borderColor: "var(--border)" }}>
+                  <tr key={row.company.id} className="border-t transition hover:bg-white/[0.03]" style={{ borderColor: "var(--border)" }}>
                     <td className="px-3 py-2.5 font-bold">
                       <Link href={`/empresas/${row.company.id}`}>{row.company.name}</Link>
                     </td>
@@ -143,7 +120,7 @@ export function GlobalCockpitPanels({
                     <td className="px-3 py-2.5">{row.planCount}</td>
                     <td className="px-3 py-2.5">{row.experimentCount}</td>
                     <td className="px-3 py-2.5" style={{ color: LEVEL_TONE[row.topPriority?.level ?? "BAIXA"] }}>
-                      {row.topPriority?.level ?? "—"}
+                      {priorityLevelLabel(row.topPriority?.level)}
                     </td>
                   </tr>
                 ))}
@@ -151,81 +128,74 @@ export function GlobalCockpitPanels({
             </table>
           </div>
         ) : (
-          <EmptyState title="Portfólio vazio" body="Cadastre a primeira empresa para montar a carteira." />
+          <EmptyState
+            title="Carteira vazia"
+            body="Cadastre a primeira empresa para montar o portfólio."
+            action={
+              <Link href="/empresas/nova" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                Cadastrar empresa
+              </Link>
+            }
+          />
         )}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        <div>
-          <Header title="Alertas executivos" subtitle="Agrupados. Falta de dado não vira alarme financeiro." />
-          {bundle.alerts.length ? (
-            <ul className="space-y-2">
-              {bundle.alerts.map((alert) => (
-                <li key={alert.id} className="rounded-2xl border px-3 py-2.5" style={{ borderColor: "var(--border)" }}>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                    {alert.kind} · {alert.companyName}
-                  </p>
-                  <Link href={alert.href} className="mt-1 block text-[13px] font-bold">{alert.title}</Link>
-                  <p className="text-[12px]" style={{ color: "var(--text-2)" }}>{alert.detail}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState title="Sem alertas" body="Nenhum alerta derivado dos dados atuais." />
-          )}
-        </div>
-        <DecisionCenter decisions={bundle.decisions} />
-      </section>
-
       <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Execução global" rows={[
+        <SummaryCard title="Execução" rows={[
           ["Planos ativos", String(bundle.execution.activePlans)],
           ["Tarefas pendentes", String(bundle.execution.pendingTasks)],
           ["Tarefas vencidas", String(bundle.execution.overdueTasks)],
-          ["Tarefas concluídas", String(bundle.execution.doneTasks)],
         ]} href="/empresas?modulo=execucao" />
-        <SummaryCard title="Experimentos globais" rows={[
-          ["Ativos", String(bundle.experiments.active)],
-          ["Aguardando resultado", String(bundle.experiments.waitingResult)],
-          ["Concluídos", String(bundle.experiments.completed)],
-          ["Com evidência", String(bundle.experiments.withEvidence)],
-        ]} href="/empresas?modulo=experimentos" />
-        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>Oportunidades globais</p>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <p className="text-[13px] font-bold">Oportunidades</p>
           {bundle.opportunities.length ? (
             <ul className="mt-2 space-y-2">
               {bundle.opportunities.map((item) => (
                 <li key={item.id}>
-                  <Link href={item.href} className="text-[13px] font-bold">{item.title}</Link>
-                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {item.companyName} · score {item.score ?? "—"} · {item.hasPlan ? "com plano" : "sem plano"}
+                  <Link href={item.href} className="text-[13px] font-semibold">{item.title}</Link>
+                  <p className="truncate text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {item.companyName} · {item.hasPlan ? "com plano" : "sem plano"}
                   </p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>Nenhuma oportunidade persistida.</p>
+            <EmptyState
+              title="Nenhuma oportunidade"
+              body="Gere hipóteses a partir do diagnóstico."
+              action={
+                <Link href="/empresas" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Ver empresas
+                </Link>
+              }
+            />
           )}
         </div>
+        <SummaryCard title="Experimentos" rows={[
+          ["Ativos", String(bundle.experiments.active)],
+          ["Aguardando resultado", String(bundle.experiments.waitingResult)],
+          ["Com evidência", String(bundle.experiments.withEvidence)],
+        ]} href="/empresas?modulo=experimentos" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div>
-          <Header title="Memória" subtitle="Aprendizado da empresa separado do transversal. Sem transferência automática de segmento." />
-          <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
-            Empresa: {bundle.memories.company.length || "nenhuma"} · Transversal: {bundle.memories.transversal.length || "nenhuma"}
-          </p>
-          <ul className="mt-2 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-            {bundle.memories.company.slice(0, 5).map((item) => (
-              <li key={`${item.companyId}-${item.title}`}>Memória da empresa · {item.title}</li>
-            ))}
-            {bundle.memories.transversal.slice(0, 3).map((item) => (
-              <li key={item.title}>Aprendizado transversal · {item.title} — não promove entre segmentos.</li>
-            ))}
-          </ul>
+          <Header title="Memória" subtitle="Aprendizado da empresa separado do transversal." />
+          {bundle.memories.company.length || bundle.memories.transversal.length ? (
+            <ul className="space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+              {bundle.memories.company.slice(0, 5).map((item) => (
+                <li key={`${item.companyId}-${item.title}`}>Empresa · {item.title}</li>
+              ))}
+              {bundle.memories.transversal.slice(0, 3).map((item) => (
+                <li key={item.title}>Transversal · {item.title}</li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState title="Nenhuma memória" body="Transforme evidência em aprendizado." action={<Link href="/memoria" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>Ver memória</Link>} />
+          )}
         </div>
         <div>
-          <Header title="O que mudou?" subtitle="Trilha de auditoria existente. Sem inventar evento." />
+          <Header title="O que mudou" subtitle="Somente eventos registrados." />
           {bundle.changes.length ? (
             <ul className="space-y-1.5 text-[12px]" style={{ color: "var(--text-2)" }}>
               {bundle.changes.map((item) => (
@@ -236,36 +206,60 @@ export function GlobalCockpitPanels({
               ))}
             </ul>
           ) : (
-            <EmptyState title="Sem mudanças recentes" body="Ainda não há eventos de auditoria nesta sessão." />
-          )}
-          {bundle.trends.length ? (
-            <ul className="mt-3 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-              {bundle.trends.map((item) => (
-                <li key={`${item.companyId}-${item.metric}`}>
-                  {item.companyName}: {item.metric} {item.direction === "up" ? "↑ melhorando" : item.direction === "down" ? "↓ piorando" : "→ estável"} ({item.period})
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 text-[12px]" style={{ color: "var(--text-3)" }}>Tendência só aparece com dois ou mais períodos persistidos.</p>
+            <EmptyState
+              title="Sem mudanças recentes"
+              body="Ainda não há eventos nesta sessão."
+              action={
+                <Link href="/auditoria" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Ver auditoria
+                </Link>
+              }
+            />
           )}
         </div>
       </section>
 
-      <section className="rounded-2xl border p-4" style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.06)" }}>
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-          Perguntar à A TEIA
-        </p>
-        <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
-          A IA sugere e explica. Não aprova investimento, não valida evidência e não executa ação crítica.
-        </p>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
+          <Header title="Alocação" subtitle="Simulação não é dinheiro comprometido." />
+          <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+            <p>Disponível · {formatBRL(snapshot.allocation.capitalAvailable)}</p>
+            <p>Proposto · {formatBRL(snapshot.allocation.capitalProposed)}</p>
+          </div>
+          <Link href="/alocacao" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Abrir alocação
+          </Link>
+        </div>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
+          <Header title="Automações" subtitle="Detecção determinística." />
+          <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+            <p>Ativas · {snapshot.automation.activeAutomations}</p>
+            <p>Alertas hoje · {snapshot.automation.alertsToday}</p>
+          </div>
+          <Link href="/automacoes" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Abrir automações
+          </Link>
+        </div>
+      </section>
+
+      {snapshot.marketIntel.recentResearchCount > 0 ? (
+        <section className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--border)" }}>
+          <p className="text-[13px] font-bold">Inteligência de mercado</p>
+          <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+            {snapshot.marketIntel.recentResearchCount} pesquisas · {snapshot.marketIntel.recentSourceCount} fontes. Fonte externa não é evidência.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="rounded-2xl border p-4" style={{ borderColor: "rgba(232,191,122,.22)" }}>
+        <p className="text-[13px] font-bold">Perguntar à A TEIA</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {PORTFOLIO_SHORTCUTS.map((item) => (
             <Link
               key={item.prompt}
               href={`/assistente?pergunta=${encodeURIComponent(item.prompt)}`}
-              className="rounded-full border px-3 py-1.5 text-[11px] font-bold"
-              style={{ borderColor: "rgba(232,191,122,.3)", color: "var(--gold-soft)" }}
+              className="rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:bg-white/[0.04]"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
             >
               {item.label}
             </Link>
@@ -276,73 +270,76 @@ export function GlobalCockpitPanels({
   );
 }
 
-function PriorityCard({ item, rank }: { item: CockpitSnapshot["portfolio"]["priorities"][number]; rank: number }) {
+function PriorityRow({ item, rank }: { item: CockpitSnapshot["portfolio"]["priorities"][number]; rank: number }) {
   const [, start] = useTransition();
   return (
-    <article className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: LEVEL_TONE[item.level] }}>
-            {rank}. {item.companyName} · {item.level} · {item.category}
+    <article className="border-b px-3 py-3 last:border-0" style={{ borderColor: "var(--border)" }}>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="w-7 text-[12px] font-bold" style={{ color: "var(--text-3)" }}>#{rank}</span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-bold">{item.companyName}</p>
+          <p className="truncate text-[12px]" style={{ color: "var(--text-2)" }}>
+            {signalKindLabel(item.category)} · {item.reason}
           </p>
-          <h3 className="mt-1 text-[16px] font-bold">{item.situation}</h3>
-          <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>{item.reason}</p>
-          <p className="mt-2 text-[12px] font-semibold">Próxima ação: {item.nextAction}</p>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/empresas/${item.companyId}`} className="rounded-xl border px-3 py-2 text-[11px] font-extrabold" style={{ borderColor: "var(--border)" }}>
-            Ver empresa
-          </Link>
-          <Link href={`/empresas/${item.companyId}/assistente?pergunta=${encodeURIComponent(item.situation)}`} className="rounded-xl px-3 py-2 text-[11px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
-            Analisar com IA
-          </Link>
-        </div>
+        <span className="text-[11px] font-semibold" style={{ color: LEVEL_TONE[item.level] }}>
+          {priorityLevelLabel(item.level)}
+        </span>
+        <Link
+          href={`/empresas/${item.companyId}`}
+          className="rounded-xl border px-3 py-1.5 text-[11px] font-bold"
+          style={{ borderColor: "var(--border)", color: "var(--text-1)" }}
+        >
+          Ver
+        </Link>
       </div>
-      <details className="mt-3" onToggle={(event) => {
-        if ((event.target as HTMLDetailsElement).open) start(() => openPriorityAction(item.id));
-      }}>
-        <summary className="cursor-pointer text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
-          Por que isso é prioridade?
+      <details
+        className="mt-2"
+        onToggle={(event) => {
+          if ((event.target as HTMLDetailsElement).open) start(() => openPriorityAction(item.id));
+        }}
+      >
+        <summary className="cursor-pointer text-[11px]" style={{ color: "var(--gold-soft)" }}>
+          Por que esta empresa é prioridade?
         </summary>
-        <ul className="mt-2 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-          <li>Dados utilizados: {item.reason}</li>
-          <li>Regras: {item.factors.join(", ")}</li>
-          <li>Impacto: {item.impact}</li>
-          <li>Urgência: {item.urgency}</li>
-          <li>Evidência: {item.evidenceAvailable}</li>
-          <li>Limitações: {item.limitations.join(" ") || "—"}</li>
-          <li>Dados ausentes: {item.missingData.join(", ") || "nenhum neste sinal"}</li>
-        </ul>
+        <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+          {item.nextAction}. {item.limitations.join(" ") || "Com os dados disponíveis."}
+        </p>
       </details>
     </article>
   );
 }
 
 function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]["decisions"] }) {
-  const [, start] = useTransition();
+  const [pending, start] = useTransition();
   return (
     <div id="cockpit-decisoes">
-      <Header title="Decisões pendentes" subtitle="Human-in-the-loop. A IA não executa sozinha." />
+      <Header title="Decisões pendentes" subtitle="A IA propõe. Você decide." />
       {decisions.length ? (
         <ul className="space-y-2">
           {decisions.map((item) => (
-            <li key={item.id} className="rounded-2xl border px-3 py-2.5" style={{ borderColor: "var(--border)" }}>
+            <li key={item.id} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)" }}>
               <p className="text-[13px] font-bold">{item.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                {item.companyName ?? "Sem empresa"} · {item.origin} · {item.status} · {item.createdAt.slice(0, 10)}
+                {item.companyName ?? "Sem empresa"} · {statusLabel(item.status, DECISION_STATUS_LABELS)}
               </p>
-              {item.rationale ? <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>{item.rationale}</p> : null}
               <div className="mt-2 flex flex-wrap gap-2">
-                <button type="button" className="text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }} onClick={() => start(() => reviewDecisionAction(item.id))}>
+                <button
+                  type="button"
+                  disabled={pending}
+                  className="rounded-lg px-2.5 py-1 text-[11px] font-extrabold text-[#241a08] disabled:opacity-50"
+                  style={{ background: "var(--gold-soft)" }}
+                  onClick={() => start(() => approveDecisionAction(item.id))}
+                >
+                  {pending ? "Salvando..." : "Aprovar"}
+                </button>
+                <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => reviewDecisionAction(item.id))}>
                   Revisar
                 </button>
-                <button type="button" className="text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }} onClick={() => start(() => approveDecisionAction(item.id))}>
-                  Aprovar
-                </button>
-                <button type="button" className="text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }} onClick={() => start(() => rejectDecisionAction(item.id))}>
+                <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => rejectDecisionAction(item.id))}>
                   Rejeitar
                 </button>
-                <button type="button" className="text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }} onClick={() => start(() => deferDecisionAction(item.id))}>
+                <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => deferDecisionAction(item.id))}>
                   Adiar
                 </button>
               </div>
@@ -350,7 +347,15 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
           ))}
         </ul>
       ) : (
-        <EmptyState title="Nenhuma decisão pendente" body="Propostas da IA e decisões críticas aparecem aqui para aprovação humana." />
+        <EmptyState
+          title="Nenhuma decisão pendente"
+          body="Propostas da IA aparecem aqui para aprovação humana."
+          action={
+            <Link href="/assistente" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+              Abrir Assistente IA
+            </Link>
+          }
+        />
       )}
     </div>
   );
@@ -365,32 +370,33 @@ function FilterBar({
 }) {
   const segments = [...new Set(companies.map((item) => item.segment).filter(Boolean))] as string[];
   return (
-    <form className="flex flex-wrap gap-2" action="/cockpit">
-      <select name="empresa" defaultValue={filters.companyId ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
-        <option value="">Todas as empresas</option>
+    <form className="flex flex-wrap gap-2" action="/cockpit" aria-label="Filtros do Cockpit">
+      <select name="empresa" defaultValue={filters.companyId ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Empresa">
+        <option value="">Empresa</option>
         {companies.map((item) => (
           <option key={item.id} value={item.id}>{item.name}</option>
         ))}
       </select>
-      <select name="segmento" defaultValue={filters.segment ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
-        <option value="">Todos os segmentos</option>
+      <select name="segmento" defaultValue={filters.segment ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Segmento">
+        <option value="">Segmento</option>
         {segments.map((item) => (
           <option key={item} value={item}>{item}</option>
         ))}
       </select>
-      <select name="prioridade" defaultValue={filters.level ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
-        <option value="">Todas as prioridades</option>
-        {["CRITICA", "ALTA", "MEDIA", "BAIXA"].map((item) => (
-          <option key={item} value={item}>{item}</option>
-        ))}
+      <select name="prioridade" defaultValue={filters.level ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Prioridade">
+        <option value="">Prioridade</option>
+        <option value="CRITICA">Crítica</option>
+        <option value="ALTA">Alta</option>
+        <option value="MEDIA">Média</option>
+        <option value="BAIXA">Baixa</option>
       </select>
-      <select name="tipo" defaultValue={filters.kind ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
-        <option value="">Todos os sinais</option>
+      <select name="tipo" defaultValue={filters.kind ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Tipo">
+        <option value="">Tipo</option>
         {["RISK", "OPPORTUNITY", "EXECUTION", "FINANCIAL", "DIAGNOSIS", "EXPERIMENT", "EVIDENCE", "DATA_GAP"].map((item) => (
-          <option key={item} value={item}>{item}</option>
+          <option key={item} value={item}>{signalKindLabel(item)}</option>
         ))}
       </select>
-      <button type="submit" className="rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
+      <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
         Filtrar
       </button>
     </form>
@@ -400,29 +406,16 @@ function FilterBar({
 function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="mb-3">
-      <h2 className="m-0 flex items-center gap-2 text-[20px] font-bold">
-        <span className="inline-block h-5 w-1 rounded" style={{ background: "linear-gradient(180deg,var(--gold),var(--silver))" }} />
-        {title}
-      </h2>
+      <h2 className="m-0 text-[18px] font-bold">{title}</h2>
       <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>{subtitle}</p>
-    </div>
-  );
-}
-
-function Mini({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-2xl border p-3.5" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
-      <p className="text-[9px] font-extrabold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>{label}</p>
-      <p className="mt-1 text-[18px] font-black">{value}</p>
-      <p className="mt-1 text-[11px]" style={{ color: "var(--text-2)" }}>{hint}</p>
     </div>
   );
 }
 
 function SummaryCard({ title, rows, href }: { title: string; rows: Array<[string, string]>; href: string }) {
   return (
-    <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>{title}</p>
+    <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+      <p className="text-[13px] font-bold">{title}</p>
       <ul className="mt-2 space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
         {rows.map(([label, value]) => (
           <li key={label} className="flex justify-between gap-2">
@@ -431,8 +424,8 @@ function SummaryCard({ title, rows, href }: { title: string; rows: Array<[string
           </li>
         ))}
       </ul>
-      <Link href={href} className="mt-3 inline-block text-[11px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
-        Abrir →
+      <Link href={href} className="mt-3 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
+        Abrir
       </Link>
     </div>
   );

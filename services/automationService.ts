@@ -665,6 +665,12 @@ export async function getAutomationWorkspace(ownerId: string, companyId?: string
   };
 }
 
+export async function countOpenOwnerAlerts(ownerId: string): Promise<number> {
+  return prisma.automationAlert.count({
+    where: { ownerId, status: { in: [AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED] } },
+  });
+}
+
 export async function getAutomationCockpitSummary(ownerId: string): Promise<AutomationCockpitSummary> {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
