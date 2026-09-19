@@ -123,7 +123,11 @@ Queries em lote por owner (sem N+1 por empresa). Listas limitadas (prioridades 5
 
 ## 29. Vercel
 
-Aguardando Production Ready após o push.
+**Ready** — `https://a-teia.vercel.app`  
+Deploy: `https://a-teia-qzlp734jf-renato16.vercel.app` (48s)
+
+`/api/health`: ok, `openaiExposed: false`  
+`/api/integrations/status`: OpenAI `configured: true` · Tavily `configured: true`
 
 ## 30. Pendências
 
