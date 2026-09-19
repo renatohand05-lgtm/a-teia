@@ -3,7 +3,7 @@
 **Escopo:** Experimentos + Resultados + Evidências + Memória estratégica  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 5 experiment evidence and memory UX`  
-**SHA:** pendente  
+**SHA:** `c0c3af57b296f6633ad530415b568179b0f097fa`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 6:** não iniciado  
@@ -31,7 +31,10 @@ Listagem responde o que se testa, KPI, meta, período, investimento, responsáve
 
 ## Commit / Vercel / health
 
-Pendente no commit desta entrega. Production: https://a-teia.vercel.app
+**SHA:** `c0c3af57b296f6633ad530415b568179b0f097fa`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-4odgp4i8n-renato16.vercel.app  
+Health: `1.0` / `1.0.0`.
 
 ## Pendências
 
