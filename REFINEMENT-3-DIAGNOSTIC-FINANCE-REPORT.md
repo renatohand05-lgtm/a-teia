@@ -3,6 +3,7 @@
 **Escopo:** Diagnóstico 360° + Financeiro + qualidade dos dados  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 3 diagnostic and financial UX`  
+**SHA:** `4ecb315ad11367015cfb943a3b31cd693c491e19`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 4:** não iniciado
@@ -33,7 +34,10 @@ Cards no 360° e no financeiro. Fieldsets, aria-label na escala, foco visível d
 
 ## Commit / Vercel
 
-Registrados após o push.
+**SHA:** `4ecb315ad11367015cfb943a3b31cd693c491e19`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-nhqjxvy7i-renato16.vercel.app  
+Health: `1.0` / `1.0.0`.
 
 ## Pendências
 
