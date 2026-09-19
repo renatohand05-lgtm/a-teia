@@ -24,6 +24,7 @@ import { getExecutiveContext } from "@/services/aiContextService";
 import { persistProposedActions } from "@/services/aiActionService";
 import { writeAudit } from "@/services/auditService";
 import { runExternalResearch } from "@/services/researchService";
+import { loadPortfolioBundle } from "@/services/portfolioService";
 
 export type AIChatMessage = {
   id: string;
@@ -168,6 +169,17 @@ export async function askExecutiveAssistant(input: {
 
   const context = conversation.companyId ? await getExecutiveContext(input.userId, conversation.companyId) : null;
   const sliced = context ? sliceExecutiveContext(context, detectQuestionIntent(input.message)) : null;
+  const portfolio = conversation.companyId ? null : await loadPortfolioBundle(input.userId);
+  if (portfolio) {
+    await writeAudit({
+      actorId: input.userId,
+      action: "ai.portfolio_question",
+      entity: "AIConversation",
+      entityId: conversation.id,
+      newValue: { companies: portfolio.aiContext.companyIds.length },
+      origin: AuditSource.AI,
+    });
+  }
   let answer = buildExecutiveBriefing(
     context ?? {
       company: null,
@@ -181,6 +193,23 @@ export async function askExecutiveAssistant(input: {
     },
     input.message,
   );
+  if (portfolio) {
+    answer = {
+      ...answer,
+      summary: portfolio.aiSummary,
+      data: portfolio.priorities.slice(0, 4).map((item) => ({
+        kind: "DADO" as const,
+        text: `${item.companyName}: ${item.reason}`,
+        source: "Cadastro" as const,
+      })),
+      inferences: portfolio.priorities.slice(0, 2).map((item) => ({
+        kind: "INFERENCIA" as const,
+        text: item.limitations[0] ?? "Leitura a partir dos dados persistidos.",
+        source: "Cadastro" as const,
+      })),
+      nextActions: portfolio.priorities.slice(0, 3).map((item) => item.nextAction),
+    };
+  }
 
   const research = await runExternalResearch({
     userId: input.userId,
@@ -210,7 +239,7 @@ export async function askExecutiveAssistant(input: {
   const configured = Boolean(apiKey);
   const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
 
-  if (configured && sliced && context?.company) {
+  if (configured && ((sliced && context?.company) || portfolio)) {
     try {
       const externalBlock =
         research.used && research.sources.length
@@ -232,14 +261,28 @@ export async function askExecutiveAssistant(input: {
             : null;
       const narrative = await callOpenAIChat(
         buildOpenAIMessages({
-          context: sliced,
+          context: sliced ?? { portfolio: portfolio?.aiContext.payload ?? null },
           question: input.message,
           deterministic: answer,
           externalResearch: externalBlock,
         }),
       );
       const parsed = parseOpenAISummary(narrative);
-      const known = new Set([...extractKnownNumbers(sliced), ...extractResearchNumbers(research.sources)]);
+      const known = new Set([
+        ...extractKnownNumbers(
+          sliced ?? {
+            company: null,
+            diagnosis: null,
+            opportunities: [],
+            plans: [],
+            finance: null,
+            experiments: [],
+            evidence: [],
+            memories: [],
+          },
+        ),
+        ...extractResearchNumbers(research.sources),
+      ]);
       const blockedNational =
         research.researchKind === "benchmark" &&
         parsed &&
@@ -248,7 +291,7 @@ export async function askExecutiveAssistant(input: {
       const tooLong = Boolean(parsed && parsed.length > (research.researchKind === "benchmark" ? 560 : 720));
       if (parsed && !narrativeIntroducesUnknownNumbers(parsed, known) && !blockedNational && !tooLong) {
         answer =
-          research.researchKind === "benchmark"
+          research.researchKind === "benchmark" || portfolio
             ? { ...answer, provider: "openai", model, unavailableReason: null }
             : mergeOpenAINarrative(answer, parsed, model);
       } else {
@@ -345,6 +388,16 @@ export async function askExecutiveAssistant(input: {
     },
     origin: AuditSource.AI,
   });
+  if (portfolio) {
+    await writeAudit({
+      actorId: input.userId,
+      action: "ai.portfolio_answer",
+      entity: "AIMessage",
+      entityId: assistant.id,
+      newValue: { priorities: portfolio.priorities.length },
+      origin: AuditSource.AI,
+    });
+  }
 
   return {
     configured,

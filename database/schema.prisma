@@ -30,6 +30,7 @@ enum DecisionStatus {
   PENDING_HUMAN_APPROVAL
   APPROVED
   REJECTED
+  DEFERRED
   EXECUTED
   CANCELLED
 }
@@ -474,6 +475,7 @@ model Decision {
   requiresHumanApproval Boolean @default(true)
   approvedAt     DateTime?
   rejectedAt     DateTime?
+  deferredAt     DateTime?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 

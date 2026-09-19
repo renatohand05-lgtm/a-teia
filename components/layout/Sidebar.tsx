@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { COMPANY_NAV, GESTAO_NAV, companyIdFromPath, gestaoHref } from "@/lib/company-nav";
-import { FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types";
+import { CENTRAL_NAV, FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -88,6 +88,11 @@ export function Sidebar() {
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return <NavLink key={`intel-${item.href}`} href={href} active={active} label={item.label} />;
         })}
+
+        <GroupLabel>Central</GroupLabel>
+        {CENTRAL_NAV.map((item) => (
+          <NavLink key={item.href} href={item.href} active={false} label={item.label} />
+        ))}
 
         <GroupLabel>Em breve</GroupLabel>
         {FUTURE_NAV.map((item) => (

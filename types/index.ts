@@ -10,7 +10,11 @@ export type NavItem = {
 export const PRIMARY_NAV: NavItem[] = [
   { href: "/cockpit", label: "Meu Cockpit", enabled: true, group: "Núcleo" },
   { href: "/empresas", label: "Empresas", enabled: true, group: "Núcleo" },
-  { href: "/memoria", label: "Memória", enabled: true, group: "Núcleo" },
+];
+
+export const CENTRAL_NAV: NavItem[] = [
+  { href: "/cockpit#cockpit-prioridades", label: "Prioridades", enabled: true, group: "Central" },
+  { href: "/cockpit#cockpit-decisoes", label: "Decisões", enabled: true, group: "Central" },
 ];
 
 export const INTELLIGENCE_NAV: NavItem[] = [

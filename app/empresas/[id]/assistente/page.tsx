@@ -7,8 +7,15 @@ import { listCompanies } from "@/services/companyService";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmpresaAssistentePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EmpresaAssistentePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ pergunta?: string }>;
+}) {
   const { id } = await params;
+  const pergunta = (await searchParams)?.pergunta;
   const { userId, name, company } = await requireOwnedCompany(id);
   const [companies, conversations] = await Promise.all([
     listCompanies(userId),
@@ -27,6 +34,7 @@ export default async function EmpresaAssistentePage({ params }: { params: Promis
         initialMessages={history?.messages}
         providerReady={isOpenAIConfigured()}
         webSearchReady={isWebSearchConfigured()}
+        initialPrompt={pergunta}
       />
     </AppShell>
   );

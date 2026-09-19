@@ -18,6 +18,7 @@ import { cockpitPriorityFromCompany } from "@/lib/priority";
 import { prisma } from "@/lib/prisma";
 import { listCompanies, type CompanyDTO } from "@/services/companyService";
 import { getRecentMarketIntel, type MarketIntelSummary } from "@/services/researchService";
+import { loadPortfolioBundle, type PortfolioBundle, type PortfolioFilters } from "@/services/portfolioService";
 
 export type CockpitCounts = {
   companiesActive: number;
@@ -59,6 +60,7 @@ export type CockpitSnapshot = {
   journey: JourneyStage[];
   briefing: CockpitBriefing;
   marketIntel: MarketIntelSummary;
+  portfolio: PortfolioBundle;
 };
 
 const emptyCounts = (): CockpitCounts => ({
@@ -222,7 +224,7 @@ function progressFromCounts(
   };
 }
 
-export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapshot> {
+export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilters = {}): Promise<CockpitSnapshot> {
   const companies = await listCompanies(ownerId, true);
   const active = companies.filter((company) => company.status === "ACTIVE");
   const ranked = [...active]
@@ -232,7 +234,7 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
 
   if (!focus) {
     const progress = emptyCompanyProgress();
-    const marketIntel = await getRecentMarketIntel(ownerId);
+    const [marketIntel, portfolioBundle] = await Promise.all([getRecentMarketIntel(ownerId), loadPortfolioBundle(ownerId, filters)]);
     return {
       companies,
       ranked,
@@ -242,14 +244,16 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
       journey: buildJourney(progress),
       briefing: emptyBriefing(),
       marketIntel,
+      portfolio: portfolioBundle,
     };
   }
 
-  const [portfolio, focusCounts, briefing, marketIntel] = await Promise.all([
+  const [portfolio, focusCounts, briefing, marketIntel, portfolioBundle] = await Promise.all([
     countPortfolio(ownerId),
     countPortfolio(ownerId, focus.id),
     loadBriefing(ownerId, focus),
     getRecentMarketIntel(ownerId),
+    loadPortfolioBundle(ownerId, filters),
   ]);
 
   const progress = progressFromCounts(focus, focusCounts, ranked[0]?.zone === "critical");
@@ -262,5 +266,6 @@ export async function getCockpitSnapshot(ownerId: string): Promise<CockpitSnapsh
     journey: buildJourney(progress),
     briefing,
     marketIntel,
+    portfolio: portfolioBundle,
   };
 }

@@ -12,13 +12,16 @@ import { SourceCard } from "@/components/ui/SourceCard";
 import { MODULE_STATUS_LABEL } from "@/lib/cockpit";
 import { formatBRL } from "@/lib/format";
 import type { CockpitSnapshot } from "@/services/cockpitService";
+import { GlobalCockpitPanels } from "@/components/cockpit/GlobalCockpitPanels";
 
 export function CockpitView({
   snapshot,
   userName,
+  filters,
 }: {
   snapshot: CockpitSnapshot;
   userName: string;
+  filters?: { companyId?: string; segment?: string; level?: string; kind?: string };
 }) {
   const { companies, ranked, counts, action, journey, briefing } = snapshot;
   const active = companies.filter((company) => company.status === "ACTIVE");
@@ -106,6 +109,8 @@ export function CockpitView({
           </div>
         </div>
       </section>
+
+      <GlobalCockpitPanels snapshot={snapshot} filters={filters ?? {}} />
 
       <section className="grid gap-4 xl:grid-cols-[1.35fr_.65fr]">
         <div

@@ -22,6 +22,7 @@ export function AssistantView({
   conversationId,
   providerReady,
   webSearchReady,
+  initialPrompt,
 }: {
   companies: CompanyOption[];
   companyId?: string;
@@ -30,10 +31,11 @@ export function AssistantView({
   conversationId?: string;
   providerReady: boolean;
   webSearchReady: boolean;
+  initialPrompt?: string;
 }) {
   const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
   const [activeConversation, setActiveConversation] = useState(conversationId ?? "");
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
@@ -49,8 +51,8 @@ export function AssistantView({
   async function send(text: string) {
     const message = text.trim();
     if (!message || busy) return;
-    if (!companyId && companies.length !== 1) {
-      setError("Selecione uma empresa para a IA usar dados reais.");
+    if (!companyId && companies.length !== 1 && !/onde|portf[oó]lio|empresas|aten[cç]|paradas|atrasad|fora da meta|faltam dados|mudou/i.test(message)) {
+      setError("Selecione uma empresa ou pergunte sobre o portfólio.");
       return;
     }
     setError(null);
@@ -64,7 +66,7 @@ export function AssistantView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
-          companyId: companyId ?? companies[0]?.id,
+          companyId: companyId ?? (companies.length === 1 ? companies[0]?.id : undefined),
           conversationId: activeConversation || undefined,
           useWebSearch,
         }),

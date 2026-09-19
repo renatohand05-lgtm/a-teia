@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { COMPANY_NAV, GESTAO_NAV, companyIdFromPath, gestaoHref } from "@/lib/company-nav";
 import { APP_NAME, APP_RELEASE, APP_VERSION, buildHealthPayload } from "@/lib/release";
-import { FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types";
+import { FUTURE_NAV, INTELLIGENCE_NAV } from "@/types";
 
 describe("release e health", () => {
   it("expõe versão e release sem sprint hardcoded", () => {
@@ -41,7 +41,7 @@ describe("navegação da empresa", () => {
     const future = FUTURE_NAV.map((item) => item.label);
     expect(future).not.toContain("Execução");
     expect(future).not.toContain("Financeiro & Cenários");
-    expect(PRIMARY_NAV.map((item) => item.label)).toContain("Memória");
+    expect(INTELLIGENCE_NAV.map((item) => item.label)).toContain("Memória Estratégica");
     expect(INTELLIGENCE_NAV.map((item) => item.href)).toContain("/memoria");
     expect(GESTAO_NAV.map((item) => item.key)).toEqual(
       expect.arrayContaining(["diagnostico", "oportunidades", "execucao", "financeiro", "experimentos"]),

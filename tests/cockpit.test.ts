@@ -7,7 +7,7 @@ import {
   type CompanyProgress,
 } from "@/lib/cockpit";
 import { COMPANY_MODULE_TABS, GESTAO_NAV, gestaoHref, pathForModuleQuery } from "@/lib/company-nav";
-import { FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types";
+import { CENTRAL_NAV, FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types";
 
 function progress(overrides: Partial<CompanyProgress> = {}): CompanyProgress {
   return {
@@ -144,7 +144,7 @@ describe("jornada e links reais", () => {
 
 describe("menu do produto publicado", () => {
   it("núcleo, gestão e inteligência usam rotas reais", () => {
-    expect(PRIMARY_NAV.map((item) => item.label)).toEqual(["Meu Cockpit", "Empresas", "Memória"]);
+    expect(PRIMARY_NAV.map((item) => item.label)).toEqual(["Meu Cockpit", "Empresas"]);
     expect(GESTAO_NAV.map((item) => item.label)).toEqual([
       "Diagnóstico 360°",
       "Oportunidades",
@@ -153,6 +153,7 @@ describe("menu do produto publicado", () => {
       "Experimentos",
     ]);
     expect(INTELLIGENCE_NAV.map((item) => item.label)).toEqual(expect.arrayContaining(["Memória Estratégica", "Assistente IA"]));
+    expect(CENTRAL_NAV.map((item) => item.label)).toEqual(["Prioridades", "Decisões"]);
     expect(FUTURE_NAV.map((item) => item.label)).not.toContain("Assistente IA");
     expect(COMPANY_MODULE_TABS.map((item) => item.label)).toEqual(
       expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Execução", "Financeiro", "Experimentos", "Memória"]),
