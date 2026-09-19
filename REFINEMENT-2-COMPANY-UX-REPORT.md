@@ -3,6 +3,7 @@
 **Escopo:** Empresas, cadastro, formulários e experiência operacional  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 2 company forms and operational UX`  
+**SHA:** `7ce95fde79d2a1aad54bb1a2a17e1c9ff736bb40`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 3:** não iniciado
@@ -91,7 +92,10 @@ Labels associadas, `aria-describedby` em erro/helper, `aria-invalid`, campos obr
 
 ## Commit / Vercel
 
-Mensagem pedida. SHA e Ready registrados após o push.
+**SHA:** `7ce95fde79d2a1aad54bb1a2a17e1c9ff736bb40`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-6r11lz5ul-renato16.vercel.app  
+Health: `1.0` / `1.0.0`, scheduler configured, database ok.
 
 ## Pendências
 
