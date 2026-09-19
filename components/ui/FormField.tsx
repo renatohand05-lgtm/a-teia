@@ -1,3 +1,5 @@
+import { MoneyInput } from "@/components/ui/MoneyInput";
+
 export function FormField({
   name,
   label,
@@ -11,6 +13,7 @@ export function FormField({
   maxLength,
   autoFocus,
   disabled,
+  mask,
 }: {
   name: string;
   label: string;
@@ -24,6 +27,7 @@ export function FormField({
   maxLength?: number;
   autoFocus?: boolean;
   disabled?: boolean;
+  mask?: "money" | "percent";
 }) {
   const errorId = error ? `${name}-error` : undefined;
   const helperId = helper ? `${name}-helper` : undefined;
@@ -37,33 +41,40 @@ export function FormField({
           </span>
         ) : null}
       </span>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        required={required}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        maxLength={maxLength}
-        autoFocus={autoFocus}
-        disabled={disabled}
-        aria-invalid={Boolean(error)}
-        aria-describedby={[errorId, helperId].filter(Boolean).join(" ") || undefined}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none disabled:opacity-50"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          borderColor: error ? "rgba(224,86,76,.55)" : "var(--border)",
-          color: "var(--text-1)",
-        }}
-      />
+      {mask ? (
+        <MoneyInput
+          name={name}
+          defaultValue={defaultValue}
+          required={required}
+          placeholder={placeholder}
+          kind={mask}
+          ariaLabel={label}
+        />
+      ) : (
+        <input
+          id={name}
+          name={name}
+          type={type}
+          required={required}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          autoFocus={autoFocus}
+          disabled={disabled}
+          aria-invalid={Boolean(error)}
+          aria-describedby={[errorId, helperId].filter(Boolean).join(" ") || undefined}
+          className="teia-input"
+          style={{ borderColor: error ? "rgba(224,86,76,.55)" : undefined }}
+        />
+      )}
       {helper ? (
         <span id={helperId} className="mt-1 block text-[11px]" style={{ color: "var(--text-3)" }}>
           {helper}
         </span>
       ) : null}
       {error ? (
-        <span id={errorId} className="mt-1 block text-[11px] text-[#f09a93]">
+        <span id={errorId} className="mt-1 block text-[11px]" style={{ color: "var(--danger)" }}>
           {error}
         </span>
       ) : null}
@@ -87,13 +98,7 @@ export function FormArea({
       <span className="mb-1.5 block text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>
         {label}
       </span>
-      <textarea
-        name={name}
-        defaultValue={defaultValue}
-        rows={3}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-        style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--border)", color: "var(--text-1)" }}
-      />
+      <textarea name={name} defaultValue={defaultValue} rows={3} className="teia-textarea" />
       {helper ? (
         <span className="mt-1 block text-[11px]" style={{ color: "var(--text-3)" }}>
           {helper}
@@ -110,7 +115,7 @@ export function FormMessage({
   error?: string;
   success?: string;
 }) {
-  if (error) return <p className="text-[12px] text-[#f09a93]">{error}</p>;
-  if (success) return <p className="text-[12px]" style={{ color: "var(--gold-soft)" }}>{success}</p>;
+  if (error) return <p className="text-[12px]" style={{ color: "var(--danger)" }}>{error}</p>;
+  if (success) return <p className="text-[12px]" style={{ color: "var(--success)" }}>{success}</p>;
   return null;
 }

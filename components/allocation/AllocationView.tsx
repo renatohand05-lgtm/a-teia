@@ -22,6 +22,7 @@ import {
 } from "@/lib/allocation-ui";
 import { assistantHref } from "@/lib/assistant-ui";
 import { contextualAssistantPrompt } from "@/lib/journey-ui";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { ALLOCATION_SHORTCUTS } from "@/lib/resource-allocation-engine";
 import type { AllocationWorkspace } from "@/services/allocationService";
 
@@ -62,13 +63,13 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
       <form action={simulateAllocationAction} className="rounded-2xl border p-4 space-y-4" style={{ borderColor: "var(--border)" }}>
         <p className="text-[13px] font-bold">1. Definir recursos → 2. Escolher cenário → 3. Simular → 4. Revisar → 5. Enviar para decisão</p>
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-          <Field name="capitalAvailable" label="Capital disponível (R$)" defaultValue={workspace.budget.capitalAvailable} />
+          <Field name="capitalAvailable" label="Capital disponível (R$)" defaultValue={workspace.budget.capitalAvailable} money />
           <Field name="hoursAvailable" label="Horas disponíveis" defaultValue={workspace.budget.hoursAvailable} />
           <Field name="capacityLimit" label="Capacidade simultânea" defaultValue={workspace.budget.capacityLimit} />
-          <Field name="reserveMinimum" label="Reserva mínima (R$)" defaultValue={workspace.budget.reserveMinimum} />
-          <Field name="maxPerCompany" label="Máximo por empresa (R$)" defaultValue={workspace.budget.maxPerCompany} />
-          <Field name="maxPerInitiative" label="Máximo por iniciativa (R$)" defaultValue={workspace.budget.maxPerInitiative} />
-          <Field name="maxPercentPerInitiative" label="Máximo % por iniciativa" defaultValue={workspace.budget.maxPercentPerInitiative} />
+          <Field name="reserveMinimum" label="Reserva mínima (R$)" defaultValue={workspace.budget.reserveMinimum} money />
+          <Field name="maxPerCompany" label="Máximo por empresa (R$)" defaultValue={workspace.budget.maxPerCompany} money />
+          <Field name="maxPerInitiative" label="Máximo por iniciativa (R$)" defaultValue={workspace.budget.maxPerInitiative} money />
+          <Field name="maxPercentPerInitiative" label="Máximo % por iniciativa" defaultValue={workspace.budget.maxPercentPerInitiative} percent />
           <label className="block text-[11px] font-extrabold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
             Horizonte
             <select name="horizon" defaultValue={workspace.budget.horizon ?? "DAYS_90"} className="mt-1 w-full rounded-xl border bg-transparent px-3 py-2 text-[13px] font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
@@ -274,22 +275,29 @@ function Field({
   name,
   label,
   defaultValue,
+  money = false,
+  percent = false,
 }: {
   name: string;
   label: string;
   defaultValue?: number | null;
+  money?: boolean;
+  percent?: boolean;
 }) {
   return (
     <label className="block text-[11px] font-extrabold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
       {label}
-      <input
-        name={name}
-        type="number"
-        step="0.01"
-        defaultValue={defaultValue ?? ""}
-        className="mt-1 w-full rounded-xl border bg-transparent px-3 py-2 text-[13px] font-semibold"
-        style={{ borderColor: "var(--border)", color: "var(--text-1)" }}
-      />
+      {money || percent ? (
+        <MoneyInput
+          name={name}
+          defaultValue={defaultValue}
+          kind={percent ? "percent" : "money"}
+          className="teia-input mt-1"
+          ariaLabel={label}
+        />
+      ) : (
+        <input name={name} type="number" step="0.01" defaultValue={defaultValue ?? ""} className="teia-input mt-1" />
+      )}
     </label>
   );
 }

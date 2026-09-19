@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { AllocationHorizon, AllocationScenarioKind } from "@prisma/client";
 import { auth } from "@/auth";
+import { parseBrazilianNumber } from "@/lib/format";
 import {
   createPlanFromApprovedAllocation,
   reviewAllocationProposal,
@@ -19,10 +20,7 @@ async function actor() {
 }
 
 function optionalNumber(form: FormData, key: string): number | null {
-  const raw = String(form.get(key) ?? "").trim();
-  if (!raw) return null;
-  const n = Number(raw.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
+  return parseBrazilianNumber(form.get(key));
 }
 
 function optionalInt(form: FormData, key: string): number | null {

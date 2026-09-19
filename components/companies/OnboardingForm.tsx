@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import type { CompanyDTO } from "@/services/companyService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 import type { FormActionState } from "@/app/empresas/diagnostic-actions";
@@ -27,18 +28,18 @@ export function OnboardingForm({
       <Field name="segment" label="Segmento" defaultValue={company.segment ?? ""} placeholder="Ex.: Oficina mecânica" />
       <Field name="city" label="Cidade" defaultValue={onboarding?.city ?? ""} placeholder="Ex.: Curitiba" />
       <Field name="state" label="UF" defaultValue={onboarding?.state ?? ""} placeholder="PR" maxLength={2} />
-      <Field
-        name="revenueMonthly"
-        label="Faturamento mensal (R$)"
-        defaultValue={company.revenueMonthly ?? ""}
-        placeholder="Ex.: 600.000,00"
-      />
-      <Field
-        name="averageTicket"
-        label="Ticket médio (R$)"
-        defaultValue={onboarding?.averageTicket ?? ""}
-        placeholder="Ex.: 45,00"
-      />
+      <label className="block">
+        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
+          Faturamento mensal (R$)
+        </span>
+        <MoneyInput name="revenueMonthly" defaultValue={company.revenueMonthly} placeholder="600.000,00" ariaLabel="Faturamento mensal" />
+      </label>
+      <label className="block">
+        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
+          Ticket médio (R$)
+        </span>
+        <MoneyInput name="averageTicket" defaultValue={onboarding?.averageTicket} placeholder="45,00" ariaLabel="Ticket médio" />
+      </label>
       <Field
         name="clientsPerMonth"
         label="Clientes / mês (aprox.)"
@@ -83,8 +84,7 @@ export function OnboardingForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl px-4 py-3 text-[13px] font-extrabold text-[#241a08] disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+          className="btn btn-primary"
         >
           {pending ? "Salvando..." : "Salvar onboarding"}
         </button>
@@ -129,8 +129,7 @@ function Field({
         maxLength={maxLength}
         min={type === "number" ? 0 : undefined}
         step={step}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-        style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--border)", color: "var(--text-1)" }}
+        className="teia-input"
       />
     </label>
   );
@@ -146,8 +145,7 @@ function Area({ name, label, defaultValue }: { name: string; label: string; defa
         name={name}
         defaultValue={defaultValue}
         rows={3}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-        style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--border)", color: "var(--text-1)" }}
+        className="teia-input"
       />
     </label>
   );

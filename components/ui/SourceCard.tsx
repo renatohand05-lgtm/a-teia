@@ -13,24 +13,19 @@ export function SourceCard({
   url?: string | null;
 }) {
   return (
-    <div
-      className="rounded-[14px] border px-3.5 py-3 text-[11.5px]"
-      style={{ background: "rgba(255,255,255,.03)", borderColor: "var(--border)", color: "var(--text-2)" }}
-    >
-      <b className="mb-1 block" style={{ color: "var(--text-1)" }}>
-        {title}
-      </b>
+    <article className="surface-card px-3.5 py-3 text-[12px]" style={{ color: "var(--text-2)" }}>
       {kind ? (
-        <span className="mb-1.5 inline-block text-[9px] font-extrabold tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-          {KNOWLEDGE_LABELS[kind]}
-        </span>
+        <p className="teia-eyebrow mb-1">{KNOWLEDGE_LABELS[kind]}</p>
       ) : null}
-      <p className="m-0 leading-relaxed">{body}</p>
+      <p className="font-semibold" style={{ color: "var(--text-1)" }}>
+        {title}
+      </p>
+      <p className="mt-1 leading-relaxed">{body}</p>
       {url ? (
-        <a href={url} className="mt-1 block break-all text-[10px]" style={{ color: "var(--blue-soft)" }}>
-          {url}
+        <a href={url} className="mt-2 inline-block text-[11px] font-semibold" style={{ color: "var(--text-2)" }} rel="noreferrer" target="_blank">
+          Abrir fonte
         </a>
       ) : null}
-    </div>
+    </article>
   );
 }

@@ -41,7 +41,7 @@ export function BrandHeader({ compact = false }: { compact?: boolean }) {
             />
             <div
               className="flex flex-wrap justify-center gap-x-[18px] gap-y-2.5 text-[10.5px] font-bold uppercase tracking-[0.18em]"
-              style={{ color: "var(--gold-soft)" }}
+              style={{ color: "var(--text-3)" }}
             >
               {["Ideias", "Estratégia", "Execução", "Resultados"].map((item, index, arr) => (
                 <span key={item} className="inline-flex items-center gap-[18px]">

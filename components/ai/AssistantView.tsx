@@ -305,9 +305,9 @@ export function AssistantView({
         </details>
       </aside>
 
-      <section className="min-w-0 rounded-[24px] border p-4 sm:p-6" style={{ borderColor: "rgba(232,191,122,.18)", background: "linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02))" }}>
+      <section className="min-w-0 rounded-[20px] border p-4 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
         <div className="mb-4">
-          <h1 className="m-0 text-[24px] font-bold">Perguntar à A TEIA</h1>
+          <h1 className="teia-page-title m-0">Perguntar à A TEIA</h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
             {companyName
               ? `O que está acontecendo em ${companyName}, por quê e o que analisar agora.`
@@ -335,7 +335,7 @@ export function AssistantView({
             />
           ))}
           {busy ? (
-            <p className="text-[12px]" style={{ color: "var(--gold-soft)" }}>
+            <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
               {phase ?? loadingLabel(useWebSearch)}
             </p>
           ) : null}
@@ -352,16 +352,10 @@ export function AssistantView({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ex.: Onde devo agir primeiro?"
-            className="min-h-[78px] min-w-0 resize-y rounded-[14px] border px-3.5 py-3 text-[13px] outline-none"
-            style={{ background: "rgba(255,255,255,.045)", borderColor: "var(--border)", color: "var(--text-1)" }}
+            className="teia-textarea min-h-[78px] min-w-0 resize-y"
+            aria-label="Pergunta para a A TEIA"
           />
-          <button
-            type="button"
-            onClick={() => void send(input)}
-            disabled={busy}
-            className="min-w-[120px] rounded-[14px] px-4 font-extrabold text-[#241a08] disabled:opacity-45"
-            style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-          >
+          <button type="button" onClick={() => void send(input)} disabled={busy} className="btn btn-primary min-w-[120px]">
             {busy ? "Aguarde" : "Perguntar"}
           </button>
         </div>

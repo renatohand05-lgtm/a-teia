@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CompanyBreadcrumb } from "@/components/layout/CompanyBreadcrumb";
 import { CompanyModuleNav } from "@/components/layout/CompanyModuleNav";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -20,6 +20,19 @@ export function AppFrame({
   children: React.ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="min-h-screen lg:flex">

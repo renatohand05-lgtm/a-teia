@@ -2,11 +2,12 @@
 
 import { useActionState } from "react";
 import { saveGoalAction, type FormActionState } from "@/app/empresas/financial-actions";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import type { FinancialGoalDTO } from "@/services/financialService";
 import type { YearMonth } from "@/lib/period";
 
 const initial: FormActionState = { ok: false, error: "" };
-const field = "w-full rounded-xl border bg-transparent px-3 py-3 text-[13px] outline-none";
+const field = "teia-input";
 
 export function GoalForm({
   companyId,
@@ -24,26 +25,36 @@ export function GoalForm({
       <input type="hidden" name="periodMonth" value={period.periodMonth} />
       <input type="hidden" name="periodYear" value={period.periodYear} />
       <div className="grid gap-3 md:grid-cols-2">
-        <Field name="revenueTarget" label="Meta de faturamento (R$)" defaultValue={goals.revenueTarget} />
-        <Field name="ebitdaTarget" label="Meta de EBITDA (R$)" defaultValue={goals.ebitdaTarget} />
-        <Field name="ebitdaPercentTarget" label="Meta de EBITDA %" defaultValue={goals.ebitdaPercentTarget} />
-        <Field name="cogsPercentTarget" label="Meta de CMV %" defaultValue={goals.cogsPercentTarget} />
-        <Field name="payrollPercentTarget" label="Meta de folha %" defaultValue={goals.payrollPercentTarget} />
+        <Field name="revenueTarget" label="Meta de faturamento (R$)" defaultValue={goals.revenueTarget} kind="money" />
+        <Field name="ebitdaTarget" label="Meta de EBITDA (R$)" defaultValue={goals.ebitdaTarget} kind="money" />
+        <Field name="ebitdaPercentTarget" label="Meta de EBITDA %" defaultValue={goals.ebitdaPercentTarget} kind="percent" />
+        <Field name="cogsPercentTarget" label="Meta de CMV %" defaultValue={goals.cogsPercentTarget} kind="percent" />
+        <Field name="payrollPercentTarget" label="Meta de folha %" defaultValue={goals.payrollPercentTarget} kind="percent" />
       </div>
-      {state && !state.ok && state.error ? <p className="text-[12px] text-[#f09a93]">{state.error}</p> : null}
-      {state?.ok ? <p className="text-[12px]" style={{ color: "var(--gold-soft)" }}>Metas salvas.</p> : null}
-      <button type="submit" disabled={pending} className="rounded-xl px-5 py-3 text-[13px] font-black disabled:opacity-50" style={{ background: "var(--gold)", color: "#111" }}>
+      {state && !state.ok && state.error ? <p className="text-[12px]" style={{ color: "var(--danger)" }}>{state.error}</p> : null}
+      {state?.ok ? <p className="text-[12px]" style={{ color: "var(--success)" }}>Metas salvas.</p> : null}
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "Salvando..." : "Salvar metas"}
       </button>
     </form>
   );
 }
 
-function Field({ name, label, defaultValue }: { name: string; label: string; defaultValue: number | null }) {
+function Field({
+  name,
+  label,
+  defaultValue,
+  kind,
+}: {
+  name: string;
+  label: string;
+  defaultValue: number | null;
+  kind: "money" | "percent";
+}) {
   return (
     <label className="block text-[12px] font-bold">
       {label}
-      <input name={name} inputMode="decimal" defaultValue={defaultValue ?? ""} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+      <MoneyInput name={name} defaultValue={defaultValue} kind={kind} className={`${field} mt-2`} ariaLabel={label} />
     </label>
   );
 }

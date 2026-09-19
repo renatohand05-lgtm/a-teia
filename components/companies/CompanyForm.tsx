@@ -55,14 +55,16 @@ export function CompanyForm({
             name="revenueMonthly"
             label="Faturamento mensal"
             defaultValue={company?.revenueMonthly ?? ""}
-            inputMode="decimal"
+            mask="money"
+            placeholder="600.000,00"
             helper="Ex.: R$ 600.000,00"
           />
           <FormField
             name="marginPercent"
             label="Margem"
             defaultValue={company?.marginPercent ?? ""}
-            inputMode="decimal"
+            mask="percent"
+            placeholder="30"
             helper="Informe 30 para 30%."
           />
           <FormField name="teamSize" label="Equipe" defaultValue={company?.teamSize ?? ""} inputMode="numeric" />
@@ -91,8 +93,7 @@ export function CompanyForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl px-4 py-3 text-[13px] font-extrabold text-[#241a08] disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+          className="btn btn-primary"
         >
           {pending ? "Salvando..." : submitLabel}
         </button>

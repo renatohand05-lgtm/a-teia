@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { DIAGNOSTIC_DIMENSIONS } from "@/lib/diagnostic";
 import type { FormActionState } from "@/app/empresas/opportunity-actions";
 import type { OpportunityDTO } from "@/services/opportunityService";
@@ -59,20 +60,18 @@ export function OpportunityForm({
       <div className="md:col-span-2">
         <Area name="hypothesis" label="Hipótese" defaultValue={opportunity?.hypothesis ?? ""} required />
       </div>
-      <Field
-        name="estimatedInvestment"
-        label="Investimento estimado (R$)"
-        type="number"
-        step="any"
-        defaultValue={opportunity?.estimatedInvestment ?? ""}
-      />
-      <Field
-        name="expectedMonthlyReturn"
-        label="Retorno mensal esperado (R$)"
-        type="number"
-        step="any"
-        defaultValue={opportunity?.expectedMonthlyReturn ?? ""}
-      />
+      <label className="block">
+        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
+          Investimento estimado (R$)
+        </span>
+        <MoneyInput name="estimatedInvestment" defaultValue={opportunity?.estimatedInvestment} ariaLabel="Investimento estimado" />
+      </label>
+      <label className="block">
+        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
+          Retorno mensal esperado (R$)
+        </span>
+        <MoneyInput name="expectedMonthlyReturn" defaultValue={opportunity?.expectedMonthlyReturn} ariaLabel="Retorno mensal esperado" />
+      </label>
       <Field
         name="estimatedHours"
         label="Horas estimadas"
@@ -84,17 +83,16 @@ export function OpportunityForm({
         <Area name="description" label="Observações" defaultValue={opportunity?.description ?? ""} />
       </div>
       {state && !state.ok && state.error ? (
-        <p className="md:col-span-2 text-[12px] text-[#f09a93]">{state.error}</p>
+        <p className="md:col-span-2 text-[12px]" style={{ color: "var(--danger)" }}>{state.error}</p>
       ) : null}
       {state?.ok ? (
-        <p className="md:col-span-2 text-[12px] text-[#7bd99a]">Oportunidade salva. Score recalculado.</p>
+        <p className="md:col-span-2 text-[12px]" style={{ color: "var(--success)" }}>Oportunidade salva. Score recalculado.</p>
       ) : null}
       <div className="md:col-span-2">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl px-4 py-3 text-[13px] font-extrabold text-[#241a08] disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+          className="btn btn-primary"
         >
           {pending ? "Salvando..." : submitLabel}
         </button>

@@ -107,7 +107,7 @@ export function AuditView({
       ) : (
         <div className="grid gap-5 xl:grid-cols-[1.4fr_0.8fr]">
           <div className="hidden overflow-hidden rounded-2xl border md:block" style={{ borderColor: "var(--border)" }}>
-            <table className="w-full text-left text-[12.5px]">
+            <table className="teia-table">
               <thead style={{ color: "var(--text-3)" }}>
                 <tr className="border-b text-[10px] uppercase tracking-[0.08em]" style={{ borderColor: "var(--border)" }}>
                   <th className="px-4 py-3">Data/hora</th>

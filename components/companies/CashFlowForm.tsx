@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 import { saveCashEntryAction, type FormActionState } from "@/app/empresas/financial-actions";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 
 const initial: FormActionState = { ok: false, error: "" };
-const field = "w-full rounded-xl border bg-transparent px-3 py-3 text-[13px] outline-none";
+const field = "teia-input";
 
 export function CashFlowForm({ companyId }: { companyId: string }) {
   const [state, formAction, pending] = useActionState(saveCashEntryAction, initial);
@@ -14,31 +15,31 @@ export function CashFlowForm({ companyId }: { companyId: string }) {
       <div className="grid gap-3 md:grid-cols-2">
         <label className="block text-[12px] font-bold">
           Tipo
-          <select name="direction" className={`${field} mt-2`} style={{ borderColor: "var(--border)", background: "#0b0b0e" }}>
+          <select name="direction" className={`teia-select mt-2`}>
             <option value="INFLOW">Entrada</option>
             <option value="OUTFLOW">Saída</option>
           </select>
         </label>
         <label className="block text-[12px] font-bold">
           Categoria
-          <input name="category" required className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} placeholder="Vendas, aluguel, folha..." />
+          <input name="category" required className={`${field} mt-2`} placeholder="Vendas, aluguel, folha..." />
         </label>
         <label className="block text-[12px] font-bold">
           Valor
-          <input name="amount" required inputMode="decimal" className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+          <MoneyInput name="amount" required className={`${field} mt-2`} ariaLabel="Valor" />
         </label>
         <label className="block text-[12px] font-bold">
           Data
-          <input name="occurredAt" type="date" required className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+          <input name="occurredAt" type="date" required className={`${field} mt-2`} />
         </label>
       </div>
       <label className="block text-[12px] font-bold">
         Descrição
-        <textarea name="description" rows={2} className={`${field} mt-2`} style={{ borderColor: "var(--border)" }} />
+        <textarea name="description" rows={2} className="teia-textarea mt-2" />
       </label>
-      {state && !state.ok && state.error ? <p className="text-[12px] text-[#f09a93]">{state.error}</p> : null}
-      {state?.ok ? <p className="text-[12px]" style={{ color: "var(--gold-soft)" }}>Lançamento registrado.</p> : null}
-      <button type="submit" disabled={pending} className="rounded-xl px-5 py-3 text-[13px] font-black disabled:opacity-50" style={{ background: "var(--gold)", color: "#111" }}>
+      {state && !state.ok && state.error ? <p className="text-[12px]" style={{ color: "var(--danger)" }}>{state.error}</p> : null}
+      {state?.ok ? <p className="text-[12px]" style={{ color: "var(--success)" }}>Lançamento registrado.</p> : null}
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "Registrando..." : "Registrar lançamento"}
       </button>
     </form>

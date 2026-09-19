@@ -36,7 +36,7 @@ export function Topbar({
           </button>
         ) : null}
         <div className="min-w-0">
-          <h1 className="m-0 truncate text-[20px] font-bold tracking-[-0.02em]">{title}</h1>
+          <h1 className="teia-page-title m-0 truncate">{title}</h1>
           {subtitle ? (
             <p className="m-0 truncate text-[12px]" style={{ color: "var(--text-2)" }}>
               {subtitle}
@@ -48,7 +48,7 @@ export function Topbar({
         <a
           href="/automacoes#alertas"
           className="relative rounded-xl border px-3 py-2 text-[12px] font-bold transition hover:bg-white/[0.04]"
-          style={{ borderColor: "var(--border)", color: "var(--gold-soft)" }}
+          style={{ borderColor: "var(--border)", color: "var(--text-1)" }}
         >
           Alertas
           {showCountBadge(alertCount) ? (

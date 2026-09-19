@@ -35,7 +35,7 @@ export function CockpitView({
       >
         <div
           className="rounded-2xl border px-5 py-5"
-          style={{ background: "linear-gradient(145deg,#111216,#08090b)", borderColor: "rgba(232,191,122,.2)" }}
+          style={{ background: "linear-gradient(145deg,#111216,#08090b)", borderColor: "var(--border)" }}
         >
           <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
             Centro de Decisão Empresarial
@@ -96,7 +96,7 @@ export function CockpitView({
               <li key={stage.key} className="shrink-0">
                 <Link
                   href={stage.href}
-                  className="block min-w-[88px] rounded-xl border px-2 py-2 text-center transition hover:bg-white/[0.03]"
+                  className="surface-card-interactive block min-w-[88px] rounded-xl border px-2 py-2 text-center"
                   style={{ borderColor: "var(--border)" }}
                 >
                   <span className="block text-[11px] font-semibold">{stage.label}</span>

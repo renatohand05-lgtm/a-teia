@@ -11,7 +11,7 @@ export function LoginForm() {
   return (
     <form action={action} className="mx-auto mt-8 w-full max-w-md space-y-4">
       <label className="block">
-        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+        <span className="mb-1.5 block text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>
           E-mail
         </span>
         <input
@@ -19,12 +19,11 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="username"
-          className="w-full rounded-xl border px-3 py-3 text-[14px] outline-none"
-          style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--border)", color: "var(--text-1)" }}
+          className="teia-input"
         />
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+        <span className="mb-1.5 block text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>
           Senha
         </span>
         <input
@@ -33,18 +32,12 @@ export function LoginForm() {
           required
           minLength={8}
           autoComplete="current-password"
-          className="w-full rounded-xl border px-3 py-3 text-[14px] outline-none"
-          style={{ background: "rgba(255,255,255,0.04)", borderColor: "var(--border)", color: "var(--text-1)" }}
+          className="teia-input"
         />
       </label>
-      {state && !state.ok ? <p className="text-[13px] text-[#f09a93]">{state.error}</p> : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl py-3 text-[14px] font-extrabold text-[#241a08] disabled:opacity-50"
-        style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-      >
-        {pending ? "Entrando..." : "Entrar no Cockpit"}
+      {state && !state.ok ? <p className="text-[13px]" style={{ color: "var(--danger)" }}>{state.error}</p> : null}
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
+        {pending ? "Entrando..." : "Entrar"}
       </button>
     </form>
   );

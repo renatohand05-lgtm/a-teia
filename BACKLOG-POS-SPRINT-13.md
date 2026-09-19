@@ -6,7 +6,50 @@ Não usar este arquivo para esconder bug, falha de segurança, cálculo incorret
 
 Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 
+## RESOLVIDO NO BLOCO 9
+
+- Tokens de radius, borda, superfície, tipografia, botão, input, tabela e chip em `globals.css`
+- Dourado restrito a CTA primário, ativo e marca; textos e bordas neutros
+- Contraste de `--text-3` e selects de filtro no tema preto
+- Espaço e discrição de “Em breve” na sidebar
+- Header/título padronizado; Alertas sem texto dourado
+- Hover discreto em cards clicáveis e linhas de auditoria
+- Máscara de moeda/percentual na digitação (cadastro, DRE, metas, caixa, onboarding, oportunidade, alocação)
+- Parse de alocação passou a usar `parseBrazilianNumber` (máscara não quebra o valor)
+- Skeleton em Cockpit, Empresas, Financeiro, Assistente e Alertas
+- Tooltip curto em “Como calculamos”
+- Empty state com título, explicação e CTA
+- Chips de status um pouco maiores e legíveis
+- Login premium sem “Uso pessoal”; onboarding/histórico sem copy de PostgreSQL
+- ESC e lock de scroll no drawer mobile
+- Feedback de sucesso em verde (não dourado) e erro próximo ao campo
+- Tabela de auditoria com densidade e hover
+- Input/botão do Assistente alinhados ao design system
+
+## PENDENTE
+
+- Focus trap completo no drawer (ESC e overlay já existem)
+- Inbox dedicado de alertas além de `/automacoes#alertas`
+- Filtro de período no Cockpit (o motor ainda não recorta por competência)
+- Select fechado de segmento
+- Rota `/empresas/[id]/editar`
+- Undo de arquivamento
+- Justificativa textual na aprovação (schema sem reason)
+- Filtros persistidos na URL da auditoria
+- Drawer de detalhe da auditoria
+
+## FUTURO
+
+- Conexões e Estratégia
+- Drag-and-drop, heatmap, gráficos decorativos, sons
+- Builder visual de automações
+- Virtualização de tabelas grandes
+- Atalhos globais de teclado
+- Personalização de KPIs e briefing
+- Empty states ilustrados e templates visuais
+
 ## VISUAL
+
 
 - Alinhar paddings dos cards do Cockpit Global com o Company Cockpit
 - Tipografia dos labels de KPI consolidado (tamanho e tracking)

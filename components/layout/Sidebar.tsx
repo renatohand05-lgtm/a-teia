@@ -36,7 +36,7 @@ export function Sidebar({
         </div>
         <div>
           <p className="gold-text text-[17px] font-extrabold tracking-[0.06em]">A TEIA</p>
-          <p className="text-[10px]" style={{ color: "var(--gold-soft)" }}>
+          <p className="text-[10px]" style={{ color: "var(--text-3)" }}>
             Centro de Decisão Empresarial
           </p>
         </div>
@@ -107,17 +107,19 @@ export function Sidebar({
           />
         ))}
 
-        <GroupLabel>Em breve</GroupLabel>
-        {FUTURE_NAV.map((item) => (
-          <span
-            key={item.label}
-            className="mb-0.5 block cursor-not-allowed rounded-xl px-3 py-2 text-[12px] font-medium opacity-45"
-            style={{ color: "var(--text-3)" }}
-            title="Ainda não disponível"
-          >
-            {item.label}
-          </span>
-        ))}
+        <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--border-soft)" }}>
+          <GroupLabel>Em breve</GroupLabel>
+          {FUTURE_NAV.map((item) => (
+            <span
+              key={item.label}
+              className="mb-0.5 block cursor-not-allowed rounded-xl px-3 py-1.5 text-[11px] font-medium opacity-35"
+              style={{ color: "var(--text-3)" }}
+              title="Ainda não disponível"
+            >
+              {item.label}
+            </span>
+          ))}
+        </div>
       </nav>
     </aside>
   );

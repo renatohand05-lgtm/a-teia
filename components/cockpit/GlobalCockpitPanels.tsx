@@ -449,26 +449,26 @@ function FilterBar({
   const segments = [...new Set(companies.map((item) => item.segment).filter(Boolean))] as string[];
   return (
     <form className="flex flex-wrap gap-2" action="/cockpit" aria-label="Filtros do Cockpit">
-      <select name="empresa" defaultValue={filters.companyId ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Empresa">
+      <select name="empresa" defaultValue={filters.companyId ?? ""} className="teia-select max-w-[180px]" aria-label="Empresa">
         <option value="">Empresa</option>
         {companies.map((item) => (
           <option key={item.id} value={item.id}>{item.name}</option>
         ))}
       </select>
-      <select name="segmento" defaultValue={filters.segment ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Segmento">
+      <select name="segmento" defaultValue={filters.segment ?? ""} className="teia-select max-w-[180px]" aria-label="Segmento">
         <option value="">Segmento</option>
         {segments.map((item) => (
           <option key={item} value={item}>{item}</option>
         ))}
       </select>
-      <select name="prioridade" defaultValue={filters.level ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Prioridade">
+      <select name="prioridade" defaultValue={filters.level ?? ""} className="teia-select max-w-[180px]" aria-label="Prioridade">
         <option value="">Prioridade</option>
         <option value="CRITICA">Crítica</option>
         <option value="ALTA">Alta</option>
         <option value="MEDIA">Média</option>
         <option value="BAIXA">Baixa</option>
       </select>
-      <select name="tipo" defaultValue={filters.kind ?? ""} className="rounded-xl border bg-transparent px-3 py-2 text-[12px]" style={{ borderColor: "var(--border)", color: "var(--text-1)" }} aria-label="Tipo">
+      <select name="tipo" defaultValue={filters.kind ?? ""} className="teia-select max-w-[180px]" aria-label="Tipo">
         <option value="">Tipo</option>
         {["RISK", "OPPORTUNITY", "EXECUTION", "FINANCIAL", "DIAGNOSIS", "EXPERIMENT", "EVIDENCE", "DATA_GAP"].map((item) => (
           <option key={item} value={item}>{signalKindLabel(item)}</option>

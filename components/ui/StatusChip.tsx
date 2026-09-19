@@ -33,7 +33,7 @@ export function StatusChip({ status }: { status: ModuleStatus }) {
   const tone = TONE[status];
   return (
     <span
-      className="inline-flex rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em]"
+      className="inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]"
       style={{ color: tone.color, borderColor: tone.border, background: tone.background }}
     >
       {MODULE_STATUS_LABEL[status]}
