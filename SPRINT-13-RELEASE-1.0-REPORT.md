@@ -2,7 +2,7 @@
 
 **Data:** 2026-09-19  
 **Commit:** `feat: Release 1.0 product closure`  
-**SHA:** _registrado após o commit_  
+**SHA:** `1413cee96b0affb4372db931e5478876bc43ff69`  
 **Branch:** `main`  
 **Refinamento 1.0:** não iniciado.
 
