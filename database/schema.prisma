@@ -205,6 +205,60 @@ enum AllocationReadiness {
   INSUFICIENTE
 }
 
+enum AutomationKind {
+  ALERTA
+  LEMBRETE
+  FOLLOW_UP
+  CHECK
+  RESUMO
+  REVISAO
+}
+
+enum AutomationFrequency {
+  MANUAL
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum AlertPriority {
+  CRITICO
+  ALTO
+  MEDIO
+  BAIXO
+}
+
+enum AutomationRunStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+  SKIPPED
+}
+
+enum AutomationFailureKind {
+  CONFIGURATION
+  VALIDATION
+  PROVIDER
+  DATABASE
+  RATE_LIMIT
+  TIMEOUT
+  UNKNOWN
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  SLACK
+}
+
 enum AIActionType {
   CREATE_EXPERIMENT
   CREATE_PLAN
@@ -244,6 +298,10 @@ model User {
   aiActionProposals   AIActionProposal[]
   resourceBudget      ResourceBudget?
   allocationProposals AllocationProposal[]
+  automations         Automation[]
+  automationRuns      AutomationExecution[]
+  automationAlerts    AutomationAlert[]
+  notifications       AppNotification[]
 }
 
 model Company {
@@ -286,6 +344,8 @@ model Company {
   onboarding         CompanyOnboarding?
   aiActionProposals  AIActionProposal[]
   allocationItems    AllocationItem[]
+  automations        Automation[]
+  automationAlerts   AutomationAlert[]
 
   @@index([ownerId, status])
   @@index([name])
@@ -971,4 +1031,103 @@ model AllocationItem {
 
   @@index([proposalId, allocated])
   @@index([companyId])
+}
+
+/// Automação do owner. companyId nulo = portfólio. Condição em JSON, avaliação determinística.
+model Automation {
+  id            String               @id @default(cuid())
+  ownerId       String
+  owner         User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  companyId     String?
+  company       Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  kind          AutomationKind       @default(ALERTA)
+  templateKey   String
+  title         String
+  description   String?
+  enabled       Boolean              @default(false)
+  frequency     AutomationFrequency  @default(DAILY)
+  condition     Json
+  cooldownHours Int                  @default(24)
+  priority      AlertPriority        @default(MEDIO)
+  timezone      String               @default("America/Sao_Paulo")
+  nextRunAt     DateTime?
+  lastRunAt     DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  executions AutomationExecution[]
+  alerts     AutomationAlert[]
+
+  @@index([ownerId, enabled, nextRunAt])
+  @@index([companyId])
+}
+
+model AutomationExecution {
+  id             String                @id @default(cuid())
+  ownerId        String
+  owner          User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  automationId   String?
+  automation     Automation?           @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  idempotencyKey String                @unique
+  startedAt      DateTime              @default(now())
+  finishedAt     DateTime?
+  status         AutomationRunStatus   @default(SUCCESS)
+  failureKind    AutomationFailureKind?
+  summary        String?
+  itemsProcessed Int                   @default(0)
+  alertsCreated  Int                   @default(0)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([ownerId, startedAt])
+  @@index([automationId, startedAt])
+}
+
+model AutomationAlert {
+  id             String        @id @default(cuid())
+  ownerId        String
+  owner          User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  automationId   String?
+  automation     Automation?   @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  companyId      String?
+  company        Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  kind           AutomationKind @default(ALERTA)
+  title          String
+  message        String
+  priority       AlertPriority @default(MEDIO)
+  status         AlertStatus   @default(OPEN)
+  ruleKey        String
+  idempotencyKey String        @unique
+  facts          Json
+  href           String?
+  detectedAt     DateTime      @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  dismissedAt    DateTime?
+  resolvedBy     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  notifications AppNotification[]
+
+  @@index([ownerId, status, detectedAt])
+  @@index([ownerId, ruleKey, companyId])
+  @@index([automationId])
+}
+
+model AppNotification {
+  id         String              @id @default(cuid())
+  ownerId    String
+  owner      User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  alertId    String?
+  alert      AutomationAlert?    @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  channel    NotificationChannel @default(IN_APP)
+  title      String
+  body       String
+  href       String?
+  readAt     DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([ownerId, readAt, createdAt])
 }

@@ -1,6 +1,6 @@
 # Backlog pós-Sprint 13 — acabamento não bloqueante
 
-Itens abaixo **não bloqueiam** os Sprints 9 e 10. São microajustes visuais e de acabamento.
+Itens abaixo **não bloqueiam** os Sprints 9, 10 e 11. São microajustes visuais e de acabamento.
 
 Não usar este arquivo para esconder bug, falha de segurança, cálculo incorreto, vazamento, erro de banco, quebra de owner isolation ou falha de deploy.
 
@@ -37,3 +37,14 @@ Não usar este arquivo para esconder bug, falha de segurança, cálculo incorret
 - Personalização da ordem dos mapas de capital e tempo
 - Skeleton da simulação
 - Microinteração do “Por que esta alocação?”
+- Animação do sino de notificações
+- Microinterações ao reconhecer/resolver alerta
+- Filtros avançados da Central de Automações
+- Mobile fino da lista de execuções
+- Snooze avançado de alerta
+- Drag-and-drop de regras
+- Builder visual de condições
+- Histórico visual de execuções
+- Heatmap de alertas
+- Personalização de sons
+- Templates visuais ilustrados

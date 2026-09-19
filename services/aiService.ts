@@ -25,6 +25,9 @@ import { persistProposedActions } from "@/services/aiActionService";
 import { writeAudit } from "@/services/auditService";
 import { runExternalResearch } from "@/services/researchService";
 import { getAllocationAIBundle } from "@/services/allocationService";
+import { getAutomationWorkspace, proposeAutomationFromQuestion } from "@/services/automationService";
+import { aiMayCreateAutomationSilently, aiMayEnableAutomation } from "@/lib/automation-config";
+import { isAutomationQuestion } from "@/lib/automation-rules-engine";
 import { isAllocationQuestion } from "@/lib/resource-allocation-engine";
 import { loadPortfolioBundle } from "@/services/portfolioService";
 
@@ -175,6 +178,11 @@ export async function askExecutiveAssistant(input: {
   const allocation = !conversation.companyId && isAllocationQuestion(input.message)
     ? await getAllocationAIBundle(input.userId)
     : null;
+  const automation =
+    isAutomationQuestion(input.message) || detectQuestionIntent(input.message) === "AUTOMATION"
+      ? await getAutomationWorkspace(input.userId)
+      : null;
+  const proposedRule = proposeAutomationFromQuestion(input.userId, input.message);
   if (portfolio) {
     await writeAudit({
       actorId: input.userId,
@@ -198,7 +206,32 @@ export async function askExecutiveAssistant(input: {
     },
     input.message,
   );
-  if (allocation) {
+  if (automation) {
+    const proposal = await proposedRule;
+    answer = {
+      ...answer,
+      summary: proposal
+        ? `Proposta de automação: ${proposal.title}. Revisar e ativar em /automacoes. A IA não liga a regra sozinha.`
+        : automation.alerts[0]
+          ? `ALERTAS: ${automation.alerts.slice(0, 3).map((item) => item.title).join(" · ")}`
+          : "Nenhum alerta ativo com os dados atuais.",
+      data: automation.alerts.slice(0, 3).map((item) => ({
+        kind: "DADO" as const,
+        text: item.message,
+        source: "Cadastro" as const,
+      })),
+      inferences: [
+        {
+          kind: "INFERENCIA" as const,
+          text: `IA não cria nem ativa automação (${aiMayCreateAutomationSilently()} / ${aiMayEnableAutomation()}).`,
+          source: "Cadastro" as const,
+        },
+      ],
+      nextActions: proposal
+        ? ["Revisar automação em /automacoes e ativar se fizer sentido."]
+        : ["Abrir a Central de Automações."],
+    };
+  } else if (allocation) {
     answer = {
       ...answer,
       summary: allocation.summary,

@@ -1,7 +1,8 @@
+import { isSchedulerConfigured } from "@/lib/cron-auth";
 import packageJson from "../package.json";
 
 export const APP_NAME = "A TEIA";
-export const APP_RELEASE = "Sprint 10";
+export const APP_RELEASE = "Sprint 11";
 export const APP_VERSION = packageJson.version;
 
 export function appEnvironment(): string {
@@ -17,5 +18,7 @@ export function buildHealthPayload() {
     version: APP_VERSION,
     environment: appEnvironment(),
     openaiExposed: false,
+    automationEngine: "ok" as const,
+    scheduler: isSchedulerConfigured() ? ("configured" as const) : ("not_configured" as const),
   };
 }

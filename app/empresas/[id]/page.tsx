@@ -72,6 +72,20 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
           }}
         />
         <OpportunityOverview companyId={company.id} summary={summary} top={top} />
+        <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Automações</p>
+              <h2 className="mt-1 text-[18px] font-black">Alertas e rotinas desta empresa</h2>
+              <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+                Regras determinísticas. A IA não ativa nada sozinha.
+              </p>
+            </div>
+            <Link href={`/automacoes?empresa=${company.id}`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+              Criar automação
+            </Link>
+          </div>
+        </section>
 
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <div className="flex flex-wrap items-center justify-between gap-4">

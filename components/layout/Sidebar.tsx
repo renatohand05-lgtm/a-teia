@@ -94,7 +94,7 @@ export function Sidebar() {
           <NavLink
             key={item.href}
             href={item.href}
-            active={item.href === "/alocacao" ? pathname === "/alocacao" : false}
+            active={item.href.startsWith("/") && !item.href.includes("#") ? pathname === item.href : false}
             label={item.label}
           />
         ))}

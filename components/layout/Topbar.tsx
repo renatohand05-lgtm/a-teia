@@ -30,6 +30,9 @@ export function Topbar({
         ) : null}
       </div>
       <div className="flex items-center gap-3">
+        <a href="/automacoes#notificacoes" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--gold-soft)" }}>
+          Alertas
+        </a>
         <div className="text-right">
           <p className="text-[11px] font-semibold">{userName ?? "Usuário principal"}</p>
           <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>

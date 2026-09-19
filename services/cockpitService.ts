@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { listCompanies, type CompanyDTO } from "@/services/companyService";
 import { getRecentMarketIntel, type MarketIntelSummary } from "@/services/researchService";
 import { getAllocationCockpitSummary, type AllocationCockpitSummary } from "@/services/allocationService";
+import { getAutomationCockpitSummary, type AutomationCockpitSummary } from "@/services/automationService";
 import { loadPortfolioBundle, type PortfolioBundle, type PortfolioFilters } from "@/services/portfolioService";
 
 export type CockpitCounts = {
@@ -63,6 +64,7 @@ export type CockpitSnapshot = {
   marketIntel: MarketIntelSummary;
   portfolio: PortfolioBundle;
   allocation: AllocationCockpitSummary;
+  automation: AutomationCockpitSummary;
 };
 
 const emptyCounts = (): CockpitCounts => ({
@@ -236,10 +238,11 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
 
   if (!focus) {
     const progress = emptyCompanyProgress();
-    const [marketIntel, portfolioBundle, allocation] = await Promise.all([
+    const [marketIntel, portfolioBundle, allocation, automation] = await Promise.all([
       getRecentMarketIntel(ownerId),
       loadPortfolioBundle(ownerId, filters),
       getAllocationCockpitSummary(ownerId),
+      getAutomationCockpitSummary(ownerId),
     ]);
     return {
       companies,
@@ -252,16 +255,18 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
       marketIntel,
       portfolio: portfolioBundle,
       allocation,
+      automation,
     };
   }
 
-  const [portfolio, focusCounts, briefing, marketIntel, portfolioBundle, allocation] = await Promise.all([
+  const [portfolio, focusCounts, briefing, marketIntel, portfolioBundle, allocation, automation] = await Promise.all([
     countPortfolio(ownerId),
     countPortfolio(ownerId, focus.id),
     loadBriefing(ownerId, focus),
     getRecentMarketIntel(ownerId),
     loadPortfolioBundle(ownerId, filters),
     getAllocationCockpitSummary(ownerId),
+    getAutomationCockpitSummary(ownerId),
   ]);
 
   const progress = progressFromCounts(focus, focusCounts, ranked[0]?.zone === "critical");
@@ -276,5 +281,6 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
     marketIntel,
     portfolio: portfolioBundle,
     allocation,
+    automation,
   };
 }

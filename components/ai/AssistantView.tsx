@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { confirmAiProposalAction, rejectAiProposalAction } from "@/app/empresas/ai-actions";
 import { EXECUTIVE_SHORTCUTS, EXTERNAL_SHORTCUTS, type ExecutiveAnswer, type ProposedAction } from "@/lib/ai-executive-engine";
+import { AUTOMATION_SHORTCUTS, isAutomationQuestion } from "@/lib/automation-rules-engine";
 import { ALLOCATION_SHORTCUTS, isAllocationQuestion } from "@/lib/resource-allocation-engine";
 
 type CompanyOption = { id: string; name: string };
@@ -52,7 +53,7 @@ export function AssistantView({
   async function send(text: string) {
     const message = text.trim();
     if (!message || busy) return;
-    if (!companyId && companies.length !== 1 && !isAllocationQuestion(message) && !/onde|portf[oó]lio|empresas|aten[cç]|paradas|atrasad|fora da meta|faltam dados|mudou/i.test(message)) {
+    if (!companyId && companies.length !== 1 && !isAllocationQuestion(message) && !isAutomationQuestion(message) && !/onde|portf[oó]lio|empresas|aten[cç]|paradas|atrasad|fora da meta|faltam dados|mudou/i.test(message)) {
       setError("Selecione uma empresa ou pergunte sobre o portfólio.");
       return;
     }
@@ -133,6 +134,24 @@ export function AssistantView({
               ? "Pesquisa web disponível quando a pergunta exigir fonte externa."
               : "Pesquisa externa indisponível — credencial Tavily não configurada. Dados internos seguem ativos."}
           </p>
+        </section>
+        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--text-3)" }}>
+            Automações e alertas
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {AUTOMATION_SHORTCUTS.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => void send(item.prompt)}
+                className="rounded-xl border px-3 py-2 text-left text-[12px] font-bold"
+                style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </section>
         <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--text-3)" }}>

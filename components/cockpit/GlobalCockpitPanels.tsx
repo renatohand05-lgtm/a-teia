@@ -75,6 +75,19 @@ export function GlobalCockpitPanels({
         </Link>
       </section>
 
+      <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
+        <Header title="Automações e alertas" subtitle="Detecção determinística. A IA só explica." />
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Mini label="Alertas hoje" value={String(snapshot.automation.alertsToday)} hint="Novos no dia" />
+          <Mini label="Automações ativas" value={String(snapshot.automation.activeAutomations)} hint="Ligadas pelo owner" />
+          <Mini label="Falhas" value={String(snapshot.automation.failedRuns)} hint="Sem stack trace" />
+          <Mini label="Próxima rotina" value={snapshot.automation.nextRunAt ? snapshot.automation.nextRunAt.slice(11, 16) : "Não agendada"} hint="Timezone America/São Paulo" />
+        </div>
+        <Link href="/automacoes" className="mt-3 inline-block text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
+          Abrir Central de Automações
+        </Link>
+      </section>
+
       <FilterBar filters={filters} companies={snapshot.companies} />
 
       <section id="cockpit-prioridades">
