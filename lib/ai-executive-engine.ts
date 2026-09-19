@@ -312,7 +312,7 @@ export function detectQuestionIntent(question: string): QuestionIntent {
   if (/concorr/.test(q)) return "COMPETITION";
   if (/tend[eê]nc|setorial|boa[s]? pr[aá]tica|regula[cç]|dados do mercado|meu segmento/.test(q)) return "MARKET";
   if (/oportun.*extern|extern.*oportun|oportunidades externas/.test(q)) return "EXTERNAL_OPPORTUNITY";
-  if (/alocar|aloca[cç][aã]o de recurso|capital demais|menos capital|adiar na aloca/.test(q)) return "ALLOCATION";
+  if (/alocar|aloca[cç][aã]o|distribu|decis[aã]o de investimento|capital demais|menos capital|adiar na aloca/.test(q)) return "ALLOCATION";
   if (/alerta|automa[cç]|briefing di[aá]rio|resumo semanal|me avise se/.test(q)) return "AUTOMATION";
   if (/financeir|faturamento|receita|cmv|ebitda|caixa|meta|cenário|cenario|folha|margem/.test(q)) return "FINANCIAL";
   if (/oportun/.test(q)) return "OPPORTUNITIES";

@@ -21,7 +21,7 @@ export default async function AutomationsPage({
     return (
       <AppShell
         title="Central de Automações"
-        subtitle="Transforme sinais, prazos e rotinas em acompanhamento contínuo."
+        subtitle="O que a A TEIA acompanha sozinha — e o que ainda depende de você."
         userName={session.user.name}
       >
         <AutomationView workspace={workspace} companyId={params.empresa} />

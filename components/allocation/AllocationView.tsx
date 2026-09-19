@@ -9,16 +9,28 @@ import {
   simulateAllocationAction,
 } from "@/app/alocacao/actions";
 import { EmptyState } from "@/components/ui/States";
-import { formatBRL } from "@/lib/format";
-import { fromCents, fromHourHundredths } from "@/lib/money";
+import {
+  allocationStatusLabel,
+  displayHours,
+  displayHoursFromHundredths,
+  displayMoney,
+  displayMoneyFromCents,
+  emptyAllocationCopy,
+  evidenceLabel,
+  riskLabel,
+  scenarioLabel,
+} from "@/lib/allocation-ui";
 import { ALLOCATION_SHORTCUTS } from "@/lib/resource-allocation-engine";
-import { ALLOCATION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { AllocationWorkspace } from "@/services/allocationService";
 
 export function AllocationView({ workspace }: { workspace: AllocationWorkspace }) {
   const [, start] = useTransition();
   const result = workspace.result;
   const latest = workspace.latest;
+  const empty = emptyAllocationCopy(workspace.companies.length > 0);
+  const eligible = result
+    ? [...result.allocated, ...result.unallocated].filter((item) => item.eligibility === "ELEGIVEL" || item.eligibility === "ELEGIVEL_COM_RESSALVAS").length
+    : null;
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-8">
@@ -27,11 +39,11 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
         style={{ borderColor: "rgba(232,191,122,.22)", background: "linear-gradient(145deg,#111216,#08090b)" }}
       >
         <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--gold-soft)" }}>
-          Alocação de recursos
+          Central de alocação
         </p>
-        <h1 className="mt-2 text-[26px] font-bold">Onde colocar capital, tempo e capacidade?</h1>
+        <h1 className="mt-2 text-[26px] font-bold">Tenho recursos limitados. Onde faz mais sentido investir?</h1>
         <p className="mt-2 max-w-3xl text-[14px]" style={{ color: "var(--text-2)" }}>
-          A A TEIA recomenda. O humano decide. Sem números inventados, sem ROI mágico e sem movimentar dinheiro.
+          O motor recomenda. Você decide. Simulação não compromete orçamento e não move dinheiro.
         </p>
         <p className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
           {workspace.coverage}
@@ -39,6 +51,7 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
       </section>
 
       <form action={simulateAllocationAction} className="rounded-2xl border p-4 space-y-4" style={{ borderColor: "var(--border)" }}>
+        <p className="text-[13px] font-bold">1. Definir recursos → 2. Escolher cenário → 3. Simular → 4. Revisar → 5. Enviar para decisão</p>
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
           <Field name="capitalAvailable" label="Capital disponível (R$)" defaultValue={workspace.budget.capitalAvailable} />
           <Field name="hoursAvailable" label="Horas disponíveis" defaultValue={workspace.budget.hoursAvailable} />
@@ -61,30 +74,35 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
             Cenário
             <select name="scenario" defaultValue={workspace.budget.scenario ?? "BALANCEADO"} className="mt-1 w-full rounded-xl border bg-transparent px-3 py-2 text-[13px] font-semibold" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>
               <option value="CONSERVADOR">Conservador</option>
-              <option value="BALANCEADO">Balanceado</option>
+              <option value="BALANCEADO">Base</option>
               <option value="EXPANSAO">Expansão</option>
             </select>
           </label>
         </div>
         <button type="submit" className="rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
-          Simular alocação
+          Simular
         </button>
       </form>
 
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Mini label="Capital disponível" value={displayMoney(workspace.summary.capitalAvailable)} hint="Informado por você" />
+        <Mini label="Horas disponíveis" value={displayHours(workspace.summary.hoursAvailable)} hint="Informadas por você" />
+        <Mini label="Empresas analisadas" value={workspace.companies.length ? String(workspace.companies.length) : "Sem dados"} hint="Carteira ativa" />
+        <Mini label="Oportunidades elegíveis" value={eligible == null ? "Sem dados" : String(eligible)} hint="Com dado suficiente" />
+        <Mini label="Capital sugerido" value={displayMoney(workspace.summary.capitalProposed)} hint="Recomendação, não compromisso" />
+        <Mini label="Horas sugeridas" value={displayHours(workspace.summary.hoursProposed)} hint="Tempo proposto" />
+        <Mini label="Saldo não alocado" value={displayMoney(workspace.summary.capitalPreserved)} hint="Não é obrigatório usar 100%" />
+        <Mini label="Status" value={allocationStatusLabel(workspace.summary.status)} hint="Simulação ≠ decisão" />
+      </section>
+
       {!result ? (
         <EmptyState
-          title={workspace.companies.length ? "Informe os recursos disponíveis para iniciar uma simulação." : "Cadastrar primeira empresa"}
-          body={workspace.companies.length ? "Capital, horas ou capacidade precisam ser informados. A A TEIA não inventa disponibilidade." : "Sem empresas na carteira não há o que alocar."}
-          action={<Link href={workspace.companies.length ? "/empresas" : "/empresas/nova"} className="text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>{workspace.companies.length ? "Abrir empresas" : "Cadastrar empresa"}</Link>}
+          title={empty.title}
+          body={empty.body}
+          action={<Link href={empty.href} className="text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>{empty.cta}</Link>}
         />
       ) : (
         <>
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Mini label="Capital disponível" value={formatBRL(fromCents(result.capitalAvailableCents))} hint="Informado pelo usuário" />
-            <Mini label="Capital proposto" value={formatBRL(fromCents(result.capitalAllocatedCents))} hint={`${result.allocated.length} iniciativas`} />
-            <Mini label="Capital preservado" value={formatBRL(fromCents(result.capitalPreservedCents))} hint="Não é obrigatório alocar 100%" />
-            <Mini label="Horas propostas" value={hoursLabel(result.hoursAllocatedHundredths)} hint={`Disponíveis: ${hoursLabel(result.hoursAvailableHundredths)}`} />
-          </section>
           <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
             {result.reserveLabel} · Capacidade usada: {result.capacityUsed}
             {result.capacityLimit != null ? `/${result.capacityLimit}` : " · capacidade não definida"} · Prontidão: {result.readiness}
@@ -95,24 +113,21 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
           {result.emptyReason ? <EmptyState title={result.emptyReason} body="A engine não inventa iniciativa nem consome orçamento sem dado." /> : null}
 
           <section>
-            <Header title="Proposta de alocação" subtitle={`Cenário ${result.scenario} · horizonte ${result.horizonMonths} meses. Estimativa, não garantia.`} />
+            <Header title="Proposta de alocação" subtitle={`Cenário ${scenarioLabel(result.scenario)} · horizonte ${result.horizonMonths} meses. Estimativa, não garantia.`} />
             {result.allocated.length ? (
               <div className="space-y-3">
                 {result.allocated.map((item) => (
                   <article key={item.candidateId} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,.03)" }}>
                     <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                      {item.companyName} · {item.risk} · {item.evidenceClass}
-                      {item.concentration ? " · CONCENTRAÇÃO ELEVADA" : ""}
+                      {item.companyName} · {riskLabel(item.risk)} · {evidenceLabel(item.evidenceClass)}
+                      {item.concentration ? " · concentração elevada" : ""}
                     </p>
                     <h3 className="mt-1 text-[16px] font-bold">{item.title}</h3>
                     <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-                      Capital {formatBRL(fromCents(item.capitalCents))} · Tempo {hoursLabel(item.hoursHundredths)} · Payback {item.paybackMonthsHundredths != null ? `${(item.paybackMonthsHundredths / 100).toFixed(1)} meses` : "não informado"}
+                      Capital sugerido {displayMoneyFromCents(item.capitalCents)} · Horas sugeridas {displayHoursFromHundredths(item.hoursHundredths)}
                     </p>
                     <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-                      {item.expectedMonthlyReturnCents != null
-                        ? `Retorno estimado informado/modelado: ${formatBRL(fromCents(item.expectedMonthlyReturnCents))}/mês`
-                        : "Retorno estimado não informado."}
-                      {item.roiBps != null ? ` · ROI estimado no horizonte: ${(item.roiBps / 100).toFixed(1)}% (estimativa)` : ""}
+                      {item.rationale}
                     </p>
                     <p className="mt-2 text-[12px] font-semibold">Próxima ação: {item.nextAction}</p>
                     <details className="mt-2">
@@ -156,109 +171,22 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
             )}
           </section>
 
-          {result.opportunityCosts.length ? (
-            <section>
-              <Header title="Custo de oportunidade" subtitle="O ranking explica os fatores. O usuário decide o vencedor." />
-              <ul className="space-y-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-                {result.opportunityCosts.map((item) => (
-                  <li key={`${item.chosenTitle}-${item.skippedTitle}`} className="rounded-2xl border px-3 py-2.5" style={{ borderColor: "var(--border)" }}>
-                    <b>Opção A</b> {item.chosenTitle}: {item.chosenSummary}<br />
-                    <b>Opção B</b> {item.skippedTitle}: {item.skippedSummary}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          <section className="grid gap-4 xl:grid-cols-2">
-            <div>
-              <Header title="Mapa de capital" subtitle="Valores persistidos da proposta. Sem gráfico sofisticado neste sprint." />
-              <ul className="space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-                {workspace.result ? companyRows(workspace.result).map((row) => (
-                  <li key={row.companyId} className="flex justify-between gap-2">
-                    <span>{row.companyName}</span>
-                    <b>{formatBRL(fromCents(row.capitalCents))}</b>
-                  </li>
-                )) : null}
-                <li className="flex justify-between gap-2">
-                  <span>Preservado</span>
-                  <b>{formatBRL(fromCents(result.capitalPreservedCents))}</b>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <Header title="Mapa de tempo" subtitle="Horas planejadas por empresa e capacidade livre." />
-              <ul className="space-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
-                {workspace.result ? companyRows(workspace.result).map((row) => (
-                  <li key={`h-${row.companyId}`} className="flex justify-between gap-2">
-                    <span>{row.companyName}</span>
-                    <b>{hoursLabel(row.hoursHundredths)}</b>
-                  </li>
-                )) : null}
-                <li className="flex justify-between gap-2">
-                  <span>Horas livres</span>
-                  <b>{hoursLabel(result.hoursPreservedHundredths)}</b>
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          <section>
-            <Header title="Portfólio de recursos" subtitle="Capital, horas, risco e evidência por empresa alocada." />
-            <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)" }}>
-              <table className="min-w-full text-left text-[12px]">
-                <thead style={{ color: "var(--text-3)" }}>
-                  <tr>
-                    {["Empresa", "Capital", "Horas", "Iniciativas", "Risco", "Evidência", "Status"].map((col) => (
-                      <th key={col} className="px-3 py-2 font-extrabold uppercase tracking-[0.06em]">{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {companyRows(result).map((row) => (
-                    <tr key={row.companyId} className="border-t" style={{ borderColor: "var(--border)" }}>
-                      <td className="px-3 py-2.5 font-bold">{row.companyName}</td>
-                      <td className="px-3 py-2.5">{formatBRL(fromCents(row.capitalCents))}</td>
-                      <td className="px-3 py-2.5">{hoursLabel(row.hoursHundredths)}</td>
-                      <td className="px-3 py-2.5">{row.count}</td>
-                      <td className="px-3 py-2.5">{row.risk}</td>
-                      <td className="px-3 py-2.5">{row.evidence}</td>
-                      <td className="px-3 py-2.5">{statusLabel(latest?.status, ALLOCATION_STATUS_LABELS, "Simulação")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
           {workspace.comparison ? (
             <section>
-              <Header title="Comparação de cenários" subtitle="Não existe melhor cenário automático. Você escolhe." />
+              <Header title="Comparar cenários" subtitle="Conservador, Base e Expansão. Não existe melhor cenário automático." />
               <div className="grid gap-3 md:grid-cols-3">
                 {workspace.comparison.map((item) => (
                   <div key={item.scenario} className="rounded-2xl border p-3" style={{ borderColor: "var(--border)" }}>
-                    <p className="text-[10px] font-extrabold" style={{ color: "var(--gold-soft)" }}>{item.scenario}</p>
+                    <p className="text-[10px] font-extrabold" style={{ color: "var(--gold-soft)" }}>{scenarioLabel(item.scenario)}</p>
                     <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-                      Capital alocado {formatBRL(fromCents(item.capitalAllocatedCents))}<br />
-                      Preservado {formatBRL(fromCents(item.capitalPreservedCents))}<br />
-                      Horas {hoursLabel(item.hoursAllocatedHundredths)}<br />
-                      Iniciativas {item.initiatives} · Risco alto {item.highRisk} · Evidência validada {item.validatedEvidence}
+                      Capital sugerido {displayMoneyFromCents(item.capitalAllocatedCents)}<br />
+                      Saldo {displayMoneyFromCents(item.capitalPreservedCents)}<br />
+                      Horas {displayHoursFromHundredths(item.hoursAllocatedHundredths)}<br />
+                      Iniciativas {item.initiatives}
                     </p>
                   </div>
                 ))}
               </div>
-            </section>
-          ) : null}
-
-          {workspace.sensitivity ? (
-            <section>
-              <Header title="Sensibilidade" subtitle="Variações simples. Sem Monte Carlo e sem probabilidade inventada." />
-              <ul className="grid gap-2 md:grid-cols-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-                <li>Capital -20%: {formatBRL(fromCents(workspace.sensitivity.capitalMinus20.capitalAllocatedCents))} alocados</li>
-                <li>Capital +20%: {formatBRL(fromCents(workspace.sensitivity.capitalPlus20.capitalAllocatedCents))} alocados</li>
-                <li>Horas -20%: {hoursLabel(workspace.sensitivity.hoursMinus20.hoursAllocatedHundredths)}</li>
-                <li>Horizonte 12 meses: {workspace.sensitivity.horizon12.allocated.length} iniciativas</li>
-              </ul>
             </section>
           ) : null}
 
@@ -294,7 +222,7 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
                   </button>
                 ) : null}
                 <Link href="/cockpit#cockpit-decisoes" className="rounded-xl border px-3 py-2 text-[11px] font-extrabold" style={{ borderColor: "var(--border)" }}>
-                  Abrir Decision Center
+                  Abrir Central de Decisão
                 </Link>
               </div>
             ) : (
@@ -303,7 +231,7 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
             {workspace.proposals.length ? (
               <ul className="mt-3 space-y-1 text-[12px]" style={{ color: "var(--text-3)" }}>
                 {workspace.proposals.map((item) => (
-                  <li key={item.id}>Simulação #{item.version} · {item.status} · {item.scenario} · {item.updatedAt.slice(0, 16)}</li>
+                  <li key={item.id}>#{item.version} · {allocationStatusLabel(item.status)} · {scenarioLabel(item.scenario)} · {item.updatedAt.slice(0, 10)}</li>
                 ))}
               </ul>
             ) : null}
@@ -331,31 +259,6 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
       </section>
     </div>
   );
-}
-
-function companyRows(result: NonNullable<AllocationWorkspace["result"]>) {
-  const map = new Map<string, { companyId: string; companyName: string; capitalCents: number; hoursHundredths: number; count: number; risk: string; evidence: string }>();
-  for (const item of result.allocated) {
-    const current = map.get(item.companyId) ?? {
-      companyId: item.companyId,
-      companyName: item.companyName,
-      capitalCents: 0,
-      hoursHundredths: 0,
-      count: 0,
-      risk: item.risk,
-      evidence: item.evidenceClass,
-    };
-    current.capitalCents += item.capitalCents ?? 0;
-    current.hoursHundredths += item.hoursHundredths ?? 0;
-    current.count += 1;
-    map.set(item.companyId, current);
-  }
-  return [...map.values()];
-}
-
-function hoursLabel(value: number | null | undefined) {
-  const hours = fromHourHundredths(value ?? null);
-  return hours == null ? "Não informado" : `${hours}h`;
 }
 
 function Field({

@@ -20,7 +20,7 @@ export default async function AuditoriaPage() {
     return (
       <AppShell
         title="Auditoria"
-        subtitle="Rastro das ações críticas, acessos e execuções da conta."
+        subtitle="Quem fez o quê, quando e em qual recurso."
         userName={session.user.name}
       >
         <AuditView

@@ -486,7 +486,7 @@ export function parseAutomationPrompt(question: string): {
 
 export function isAutomationQuestion(question: string): boolean {
   const q = question.toLowerCase();
-  return /alerta|automa[cç]|rotina|briefing di[aá]rio|resumo semanal|o que mudou esta semana|revisar amanh|sem dados atualiz|automações falharam|me avise se/.test(
+  return /alerta|automa[cç]|rotina|briefing di[aá]rio|resumo semanal|o que mudou esta semana|revisar amanh|sem dados atualiz|automações falharam|me avise se|por que recebi/.test(
     q,
   );
 }
@@ -536,10 +536,10 @@ function defaultHref(template: AutomationTemplate, companyId: string) {
 }
 
 export const AUTOMATION_SHORTCUTS = [
-  { label: "Quais alertas tenho hoje?", prompt: "Quais alertas tenho hoje?" },
+  { label: "Quais alertas precisam da minha atenção?", prompt: "Quais alertas precisam da minha atenção?" },
+  { label: "Por que recebi este alerta?", prompt: "Por que recebi este alerta?" },
+  { label: "Quais automações estão ativas?", prompt: "Quais automações estão ativas?" },
   { label: "O que está atrasado?", prompt: "O que está atrasado nas automações e execução?" },
   { label: "O que mudou esta semana?", prompt: "O que mudou esta semana?" },
   { label: "Automações que falharam", prompt: "Quais automações falharam?" },
-  { label: "Revisar amanhã", prompt: "O que devo revisar amanhã?" },
-  { label: "Empresas sem dados", prompt: "Quais empresas estão sem dados atualizados?" },
 ] as const;

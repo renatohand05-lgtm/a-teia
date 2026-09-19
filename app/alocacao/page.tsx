@@ -16,7 +16,7 @@ export default async function AllocationPage() {
     return (
       <AppShell
         title="Alocação de recursos"
-        subtitle="Decida onde capital, tempo e capacidade podem gerar mais impacto."
+        subtitle="Onde investir dinheiro e tempo com os dados que você já tem."
         userName={session.user.name}
       >
         <AllocationView workspace={workspace} />

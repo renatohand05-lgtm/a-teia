@@ -190,3 +190,18 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Animação mínima da troca “Analisando…” → “Organizando análise…”
 - Detalhe visual de data nas fontes sem publishedAt
 - Chips de cobertura com ícone além de ✓ / —
+
+## REFINAMENTO 1 — BLOCO 7 (pendências menores)
+
+- Justificativa textual na aprovação/rejeição da alocação (schema atual não tem reason)
+- Sino de alerta com som e snooze
+- Heatmap de alertas e gráfico de mapa de capital/tempo
+- Comparação visual lado a lado Conservador/Base/Expansão
+- Builder visual e drag-and-drop de condições
+- Score da oportunidade no card de alocação (hoje o ranking fica no motor)
+- Tooltips, hover, spacing e densidade das tabelas de auditoria
+- Mobile avançado da simulação e da lista de execuções
+- Animações e atalhos de teclado para simular/enviar
+- Contraste AA dos textos terciários nos cards de alerta
+- Inbox dedicado além do atalho do header
+- Filtros persistidos na URL da auditoria

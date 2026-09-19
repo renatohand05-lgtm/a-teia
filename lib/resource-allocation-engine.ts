@@ -148,7 +148,8 @@ export const HORIZON_MONTHS: Record<AllocationHorizon, number> = {
 };
 
 export const ALLOCATION_SHORTCUTS = [
-  { label: "Onde alocar R$ 100 mil?", prompt: "Tenho R$ 100 mil. Onde alocar?" },
+  { label: "Como eu distribuiria R$ 50 mil?", prompt: "Como eu distribuiria R$ 50 mil?" },
+  { label: "Tenho alguma decisão de investimento pendente?", prompt: "Tenho alguma decisão de investimento pendente?" },
   { label: "Onde concentro capital demais?", prompt: "Onde estou concentrando capital demais?" },
   { label: "Qual exige menos capital?", prompt: "Qual oportunidade exige menos capital?" },
   { label: "Onde o tempo é consumido?", prompt: "Onde meu tempo está sendo consumido?" },
@@ -167,7 +168,7 @@ export function aiMayMoveMoney(): false {
 
 export function isAllocationQuestion(question: string): boolean {
   const q = question.toLowerCase();
-  return /alocar|aloca[cç][aã]o|capital demais|menos capital|tempo est[aá] sendo consum|investimentos ainda n[aã]o|adiar na aloca|concentra/.test(q);
+  return /alocar|aloca[cç][aã]o|distribu|decis[aã]o de investimento|capital demais|menos capital|tempo est[aá] sendo consum|investimentos ainda n[aã]o|adiar na aloca|concentra/.test(q);
 }
 
 export function horizonMonths(horizon: AllocationHorizon): number {

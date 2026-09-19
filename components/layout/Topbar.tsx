@@ -46,7 +46,7 @@ export function Topbar({
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <a
-          href="/automacoes#notificacoes"
+          href="/automacoes#alertas"
           className="relative rounded-xl border px-3 py-2 text-[12px] font-bold transition hover:bg-white/[0.04]"
           style={{ borderColor: "var(--border)", color: "var(--gold-soft)" }}
         >

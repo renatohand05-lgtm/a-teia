@@ -23,7 +23,6 @@ export function CockpitView({
   const motive = topPriority?.reason ?? ranked[0]?.reason ?? null;
   const nextStep = topPriority?.nextAction ?? action.title;
   const pendingDecisions = snapshot.portfolio.decisions.length;
-  const openAlerts = snapshot.portfolio.alerts.length;
   const score = displayPriorityScore(ranked[0]?.score, active.length > 0);
   const consolidation = snapshot.portfolio.consolidation;
 
@@ -112,10 +111,10 @@ export function CockpitView({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
           <Signal href="/empresas" label="Carteira" value={`${counts.companiesActive} empresa${counts.companiesActive === 1 ? "" : "s"}`} hint="Monitoradas" />
           <Signal
-            href="/automacoes#notificacoes"
+            href="/automacoes#alertas"
             label="Alertas"
-            value={openAlerts ? String(openAlerts) : "Nenhum"}
-            hint={showCountBadge(openAlerts) ? "Requer atenção" : "Nada aberto"}
+            value={String(snapshot.automation.openAlerts)}
+            hint={showCountBadge(snapshot.automation.openAlerts) ? "Abertos agora" : "Nada aberto"}
           />
           <Signal
             href="/cockpit#cockpit-decisoes"
@@ -147,7 +146,7 @@ export function CockpitView({
           hint={`${consolidation.ebitdaUsed}/${consolidation.total} empresas com dados`}
         />
         <Kpi href={stageLink(snapshot, "execucao")} label="Planos ativos" value={String(snapshot.portfolio.execution.activePlans)} hint="Em execução" />
-        <Kpi href="/automacoes" label="Alertas" value={String(openAlerts)} hint="Sinais abertos" />
+        <Kpi href="/automacoes#alertas" label="Alertas" value={String(snapshot.automation.openAlerts)} hint="Abertos agora" />
         <Kpi href="/cockpit#cockpit-decisoes" label="Decisões" value={String(pendingDecisions)} hint="Aguardando humano" />
       </section>
 

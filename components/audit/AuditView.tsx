@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/States";
+import { EMPTY_AUDIT, auditActionLabel, auditCategoryLabel } from "@/lib/audit-ui";
 
 export type AuditEventView = {
   id: string;
@@ -27,20 +28,20 @@ export function AuditView({
   const [companyId, setCompanyId] = useState("");
   const [category, setCategory] = useState("");
   const [action, setAction] = useState("");
-  const [result, setResult] = useState("");
+  const [actor, setActor] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const categories = useMemo(() => Array.from(new Set(events.map((item) => item.category))).sort(), [events]);
   const actions = useMemo(() => Array.from(new Set(events.map((item) => item.action))).sort(), [events]);
+  const actors = useMemo(() => Array.from(new Set(events.map((item) => item.actorName))).sort(), [events]);
 
   const filtered = events.filter((item) => {
     if (companyId && item.companyName !== companies.find((company) => company.id === companyId)?.name) return false;
     if (category && item.category !== category) return false;
     if (action && item.action !== action) return false;
-    if (result === "ok" && !item.success) return false;
-    if (result === "fail" && item.success) return false;
+    if (actor && item.actorName !== actor) return false;
     if (from && new Date(item.createdAt) < new Date(from)) return false;
     if (to && new Date(item.createdAt) > new Date(`${to}T23:59:59`)) return false;
     return true;
@@ -50,6 +51,13 @@ export function AuditView({
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
+      <section className="rounded-[24px] border p-6" style={{ borderColor: "rgba(232,191,122,.22)", background: "linear-gradient(145deg,#111216,#08090b)" }}>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: "var(--gold-soft)" }}>
+          Auditoria
+        </p>
+        <h1 className="mt-2 text-[26px] font-bold">Quem fez o quê, quando e em qual recurso?</h1>
+      </section>
+
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Filter label="Período inicial">
           <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="w-full bg-transparent text-[13px]" />
@@ -61,9 +69,15 @@ export function AuditView({
           <select value={companyId} onChange={(event) => setCompanyId(event.target.value)} className="w-full bg-transparent text-[13px]">
             <option value="">Todas</option>
             {companies.map((company) => (
-              <option key={company.id} value={company.id}>
-                {company.name}
-              </option>
+              <option key={company.id} value={company.id}>{company.name}</option>
+            ))}
+          </select>
+        </Filter>
+        <Filter label="Usuário">
+          <select value={actor} onChange={(event) => setActor(event.target.value)} className="w-full bg-transparent text-[13px]">
+            <option value="">Todos</option>
+            {actors.map((item) => (
+              <option key={item} value={item}>{item}</option>
             ))}
           </select>
         </Filter>
@@ -71,48 +85,33 @@ export function AuditView({
           <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full bg-transparent text-[13px]">
             <option value="">Todas</option>
             {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+              <option key={item} value={item}>{auditCategoryLabel(item)}</option>
             ))}
           </select>
         </Filter>
-        <Filter label="Evento">
+        <Filter label="Ação">
           <select value={action} onChange={(event) => setAction(event.target.value)} className="w-full bg-transparent text-[13px]">
-            <option value="">Todos</option>
+            <option value="">Todas</option>
             {actions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+              <option key={item} value={item}>{auditActionLabel(item)}</option>
             ))}
-          </select>
-        </Filter>
-        <Filter label="Resultado">
-          <select value={result} onChange={(event) => setResult(event.target.value)} className="w-full bg-transparent text-[13px]">
-            <option value="">Todos</option>
-            <option value="ok">Sucesso</option>
-            <option value="fail">Falha</option>
           </select>
         </Filter>
       </section>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          title="Nenhum evento de auditoria"
-          body="Quando houver logins, decisões, alocações, automações ou consultas da IA, o histórico aparece aqui."
-        />
+        <EmptyState title={EMPTY_AUDIT.title} body={EMPTY_AUDIT.body} />
       ) : (
         <div className="grid gap-5 xl:grid-cols-[1.4fr_0.8fr]">
-          <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)" }}>
+          <div className="hidden overflow-hidden rounded-2xl border md:block" style={{ borderColor: "var(--border)" }}>
             <table className="w-full text-left text-[12.5px]">
               <thead style={{ color: "var(--text-3)" }}>
                 <tr className="border-b text-[10px] uppercase tracking-[0.08em]" style={{ borderColor: "var(--border)" }}>
                   <th className="px-4 py-3">Data/hora</th>
                   <th className="px-4 py-3">Usuário</th>
-                  <th className="px-4 py-3">Empresa</th>
-                  <th className="px-4 py-3">Categoria</th>
-                  <th className="px-4 py-3">Evento</th>
+                  <th className="px-4 py-3">Ação</th>
                   <th className="px-4 py-3">Recurso</th>
+                  <th className="px-4 py-3">Empresa</th>
                   <th className="px-4 py-3">Resultado</th>
                 </tr>
               </thead>
@@ -129,10 +128,9 @@ export function AuditView({
                   >
                     <td className="px-4 py-3 whitespace-nowrap">{new Date(item.createdAt).toLocaleString("pt-BR")}</td>
                     <td className="px-4 py-3">{item.actorName}</td>
-                    <td className="px-4 py-3">{item.companyName ?? "—"}</td>
-                    <td className="px-4 py-3">{item.category}</td>
-                    <td className="px-4 py-3">{item.action}</td>
+                    <td className="px-4 py-3">{auditActionLabel(item.action)}</td>
                     <td className="px-4 py-3">{item.entity}</td>
+                    <td className="px-4 py-3">{item.companyName ?? "—"}</td>
                     <td className="px-4 py-3">{item.success ? "Sucesso" : "Falha"}</td>
                   </tr>
                 ))}
@@ -140,16 +138,35 @@ export function AuditView({
             </table>
           </div>
 
+          <div className="grid gap-3 md:hidden">
+            {filtered.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedId(item.id)}
+                className="rounded-2xl border px-3 py-3 text-left"
+                style={{ borderColor: selected?.id === item.id ? "rgba(232,191,122,.35)" : "var(--border)" }}
+              >
+                <p className="text-[13px] font-bold">{auditActionLabel(item.action)}</p>
+                <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
+                  {item.actorName} · {item.companyName ?? "Sem empresa"} · {item.success ? "Sucesso" : "Falha"}
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
+              </button>
+            ))}
+          </div>
+
           {selected ? (
             <aside className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "var(--border)" }}>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                Detalhe do evento
+                Detalhe
               </p>
-              <Detail label="Actor" value={selected.actorName} />
-              <Detail label="Action" value={selected.action} />
-              <Detail label="Resource" value={`${selected.entity}${selected.entityId ? ` · ${selected.entityId}` : ""}`} />
-              <Detail label="Company" value={selected.companyName ?? "—"} />
-              <Detail label="Timestamp" value={new Date(selected.createdAt).toLocaleString("pt-BR")} />
+              <Detail label="Usuário" value={selected.actorName} />
+              <Detail label="Ação" value={auditActionLabel(selected.action)} />
+              <Detail label="Técnico" value={selected.action} />
+              <Detail label="Recurso" value={`${selected.entity}${selected.entityId ? ` · ${selected.entityId}` : ""}`} />
+              <Detail label="Empresa" value={selected.companyName ?? "—"} />
+              <Detail label="Quando" value={new Date(selected.createdAt).toLocaleString("pt-BR")} />
               <div>
                 <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
                   Metadata

@@ -96,6 +96,7 @@ export type ExecutionDTO = {
   summary: string | null;
   failureKind: string | null;
   alertsCreated: number;
+  itemsProcessed: number;
   startedAt: string;
 };
 
@@ -104,6 +105,9 @@ export type AutomationCockpitSummary = {
   activeAutomations: number;
   failedRuns: number;
   nextRunAt: string | null;
+  openAlerts: number;
+  criticalAlerts: number;
+  attentionAlerts: number;
 };
 
 function ageDays(iso: string | null, now = Date.now()): number | null {
@@ -654,6 +658,7 @@ export async function getAutomationWorkspace(ownerId: string, companyId?: string
       summary: item.summary,
       failureKind: item.failureKind,
       alertsCreated: item.alertsCreated,
+      itemsProcessed: item.itemsProcessed,
       startedAt: item.startedAt.toISOString(),
     })),
     templates: AUTOMATION_TEMPLATES,
@@ -667,14 +672,14 @@ export async function getAutomationWorkspace(ownerId: string, companyId?: string
 
 export async function countOpenOwnerAlerts(ownerId: string): Promise<number> {
   return prisma.automationAlert.count({
-    where: { ownerId, status: { in: [AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED] } },
+    where: { ownerId, status: AlertStatus.OPEN },
   });
 }
 
 export async function getAutomationCockpitSummary(ownerId: string): Promise<AutomationCockpitSummary> {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
-  const [alertsToday, activeAutomations, failedRuns, next] = await Promise.all([
+  const [alertsToday, activeAutomations, failedRuns, next, openAlerts, criticalAlerts, attentionAlerts] = await Promise.all([
     prisma.automationAlert.count({ where: { ownerId, detectedAt: { gte: start } } }),
     prisma.automation.count({ where: { ownerId, enabled: true } }),
     prisma.automationExecution.count({ where: { ownerId, status: AutomationRunStatus.FAILED } }),
@@ -683,12 +688,18 @@ export async function getAutomationCockpitSummary(ownerId: string): Promise<Auto
       orderBy: { nextRunAt: "asc" },
       select: { nextRunAt: true },
     }),
+    prisma.automationAlert.count({ where: { ownerId, status: AlertStatus.OPEN } }),
+    prisma.automationAlert.count({ where: { ownerId, status: AlertStatus.OPEN, priority: "CRITICO" } }),
+    prisma.automationAlert.count({ where: { ownerId, status: AlertStatus.OPEN, priority: { in: ["ALTO", "MEDIO"] } } }),
   ]);
   return {
     alertsToday,
     activeAutomations,
     failedRuns,
     nextRunAt: next?.nextRunAt?.toISOString() ?? null,
+    openAlerts,
+    criticalAlerts,
+    attentionAlerts,
   };
 }
 

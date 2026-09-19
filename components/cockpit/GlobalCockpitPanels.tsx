@@ -10,6 +10,7 @@ import {
   reviewDecisionAction,
 } from "@/app/cockpit/actions";
 import { EmptyState } from "@/components/ui/States";
+import { displayHours, displayMoney, isAllocationDecisionTitle, scenarioFromDecisionTitle } from "@/lib/allocation-ui";
 import { assistantHref } from "@/lib/assistant-ui";
 import { PORTFOLIO_SHORTCUTS } from "@/lib/global-priority-engine";
 import { formatBRL, formatDateBR } from "@/lib/format";
@@ -67,7 +68,21 @@ export function GlobalCockpitPanels({
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div>
-          <Header title="Alertas" subtitle="Falta de dado não vira alarme financeiro." />
+          <Header title="Alertas" subtitle="Condição detectada. Não prova fraude, perda ou falha de gestão." />
+          <div className="mb-3 grid grid-cols-3 gap-2 text-center text-[12px]">
+            <div className="rounded-xl border px-2 py-2" style={{ borderColor: "var(--border)" }}>
+              <p style={{ color: "var(--text-3)" }}>Críticos</p>
+              <p className="font-bold">{snapshot.automation.criticalAlerts}</p>
+            </div>
+            <div className="rounded-xl border px-2 py-2" style={{ borderColor: "var(--border)" }}>
+              <p style={{ color: "var(--text-3)" }}>Atenção</p>
+              <p className="font-bold">{snapshot.automation.attentionAlerts}</p>
+            </div>
+            <div className="rounded-xl border px-2 py-2" style={{ borderColor: "var(--border)" }}>
+              <p style={{ color: "var(--text-3)" }}>Pendências</p>
+              <p className="font-bold">{bundle.decisions.length}</p>
+            </div>
+          </div>
           {bundle.alerts.length ? (
             <ul className="space-y-2">
               {bundle.alerts.map((alert) => (
@@ -83,15 +98,13 @@ export function GlobalCockpitPanels({
             </ul>
           ) : (
             <EmptyState
-              title="Nenhum alerta"
-              body="Nenhum sinal aberto com os dados atuais."
-              action={
-                <Link href="/automacoes" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-                  Ver automações
-                </Link>
-              }
+              title="Nenhum alerta aberto no momento."
+              body="Os números acima usam alertas reais. Zero é zero; ausência de cobertura não inventa alarme."
             />
           )}
+          <Link href="/automacoes#alertas" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Ver todos os alertas
+          </Link>
         </div>
         <DecisionCenter decisions={bundle.decisions} />
       </section>
@@ -247,8 +260,10 @@ export function GlobalCockpitPanels({
         <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
           <Header title="Alocação" subtitle="Simulação não é dinheiro comprometido." />
           <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-            <p>Disponível · {formatBRL(snapshot.allocation.capitalAvailable)}</p>
-            <p>Proposto · {formatBRL(snapshot.allocation.capitalProposed)}</p>
+            <p>Capital disponível · {displayMoney(snapshot.allocation.capitalAvailable)}</p>
+            <p>Capital aguardando decisão · {snapshot.allocation.pendingDecisions}</p>
+            <p>Proposto · {displayMoney(snapshot.allocation.capitalProposed)}</p>
+            <p>Horas · {displayHours(snapshot.allocation.hoursAvailable)}</p>
           </div>
           <Link href="/alocacao" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             Abrir alocação
@@ -257,8 +272,9 @@ export function GlobalCockpitPanels({
         <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
           <Header title="Automações" subtitle="Detecção determinística." />
           <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-            <p>Ativas · {snapshot.automation.activeAutomations}</p>
-            <p>Alertas hoje · {snapshot.automation.alertsToday}</p>
+            <p>Automações ativas · {snapshot.automation.activeAutomations}</p>
+            <p>Alertas abertos · {snapshot.automation.openAlerts}</p>
+            <p>Alertas críticos · {snapshot.automation.criticalAlerts}</p>
           </div>
           <Link href="/automacoes" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             Abrir automações
@@ -347,6 +363,8 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
                 {item.companyName ?? "Sem empresa"} · {statusLabel(item.status, DECISION_STATUS_LABELS)}
                 {item.opportunityTitle ? ` · ${item.opportunityTitle}` : ""}
+                {isAllocationDecisionTitle(item.title) && scenarioFromDecisionTitle(item.title) ? ` · ${scenarioFromDecisionTitle(item.title)}` : ""}
+                {` · ${formatDateBR(item.createdAt)}`}
               </p>
               <dl className="mt-2 grid gap-2 text-[12px] sm:grid-cols-2" style={{ color: "var(--text-2)" }}>
                 <div>
