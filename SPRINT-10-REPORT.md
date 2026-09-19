@@ -2,7 +2,7 @@
 
 **Data:** 2026-09-18  
 **Commit:** `feat: Sprint 10 resource allocation engine`  
-**SHA:** pendente  
+**SHA:** `05978e201bb5514a8a07ab8e2d261746fd33e6bc`  
 **Branch:** `main`  
 **Sprint 11:** não iniciada.
 
@@ -139,11 +139,15 @@ Models `ResourceBudget`, `AllocationProposal`, `AllocationItem` + enums. Increme
 
 ## 33. Commit SHA
 
-Pendente no momento da redação deste arquivo.
+`05978e201bb5514a8a07ab8e2d261746fd33e6bc`
 
 ## 34. Vercel
 
-Pendente no momento da redação. Health previsto: Sprint 10 / 0.10.0.
+**Ready** — `https://a-teia.vercel.app`  
+Deploy: `https://a-teia-cbip0bruy-renato16.vercel.app` (1m)
+
+`/api/health`: ok, Sprint 10 / 0.10.0, `openaiExposed: false`  
+`/api/integrations/status`: OpenAI `configured: true` · Tavily `configured: true`
 
 ## 35. Pendências bloqueantes
 
