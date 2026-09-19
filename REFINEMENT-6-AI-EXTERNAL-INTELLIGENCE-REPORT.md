@@ -3,7 +3,7 @@
 **Escopo:** Assistente IA + inteligência externa + fontes + contexto executivo  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 6 ai assistant and external intelligence UX`  
-**SHA:** (preenchido após o commit)  
+**SHA:** `526c72423ba974aa00cab74b76f133a529a35cff`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 7:** não iniciado  
@@ -74,7 +74,16 @@ Owner, company, conversation e research continuam isolados. Texto web permanece 
 
 ## Commit / Vercel / health
 
-Preenchido após deploy.
+**SHA:** `526c72423ba974aa00cab74b76f133a529a35cff`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-e3bqhvzhc-renato16.vercel.app  
+Inspect: https://vercel.com/renato16/a-teia/4fC3HuQPTqZp3euquP5Dvi4wqmg1  
+
+Health:
+
+```json
+{"status":"ok","ok":true,"app":"A TEIA","release":"1.0","version":"1.0.0","environment":"production","openaiConfigured":true,"webSearchConfigured":true,"openaiExposed":false,"automationEngine":"ok","scheduler":"configured","database":"ok"}
+```
 
 ## Pendências
 
