@@ -3,7 +3,7 @@
 **Escopo:** Oportunidades + Score + Decisões + Execução 30/60/90  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 4 opportunities decisions and execution UX`  
-**SHA:** pendente  
+**SHA:** `0b62aae279a450459c3b46ccf3f5cd00d7cc2c96`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 5:** não iniciado
@@ -50,8 +50,10 @@ Cards no ranking, detalhe, decisões e execução. Informações essenciais sem 
 
 ## Commit / Vercel
 
-**SHA:** pendente no commit desta entrega.  
-Production: https://a-teia.vercel.app
+**SHA:** `0b62aae279a450459c3b46ccf3f5cd00d7cc2c96`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-k5kg69xz3-renato16.vercel.app  
+Health: `1.0` / `1.0.0`.
 
 ## Pendências
 
