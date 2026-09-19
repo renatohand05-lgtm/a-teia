@@ -3,7 +3,7 @@
 **Escopo:** Alocação + Automações + Alertas + Auditoria  
 **Data:** 2026-09-19  
 **Commit:** `refactor: refinement 7 allocation automation alerts and audit UX`  
-**SHA:** (preenchido após o commit)  
+**SHA:** `19ef5221fd127ec8adbcdc4be7195b08d3c68185`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Bloco 8:** não iniciado  
@@ -50,7 +50,15 @@ Owner isolation dos Sprints 10–12 intacto. IA continua bloqueada em `allocatio
 
 ## Commit / Vercel / health
 
-Preenchido após deploy.
+**SHA:** `19ef5221fd127ec8adbcdc4be7195b08d3c68185`  
+Production **Ready**: https://a-teia.vercel.app  
+Deploy: https://a-teia-hlm0k5wtc-renato16.vercel.app  
+
+Health:
+
+```json
+{"status":"ok","ok":true,"app":"A TEIA","release":"1.0","version":"1.0.0","environment":"production","openaiConfigured":true,"webSearchConfigured":true,"openaiExposed":false,"automationEngine":"ok","scheduler":"configured","database":"ok"}
+```
 
 ## Pendências
 
