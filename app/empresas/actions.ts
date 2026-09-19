@@ -33,9 +33,9 @@ export async function createCompanyAction(
     revalidatePath("/empresas");
     revalidatePath("/cockpit");
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível cadastrar." };
+    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível cadastrar. Revise os campos e tente novamente." };
   }
-  redirect(`/empresas/${id}/onboarding`);
+  redirect(`/empresas/${id}`);
 }
 
 export async function updateCompanyAction(
@@ -56,7 +56,7 @@ export async function updateCompanyAction(
     revalidatePath("/cockpit");
     return { ok: true, id };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível salvar." };
+    return { ok: false, error: error instanceof Error ? error.message : "Não foi possível salvar. Revise os campos e tente novamente." };
   }
 }
 

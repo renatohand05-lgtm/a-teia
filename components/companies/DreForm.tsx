@@ -54,6 +54,7 @@ export function DreForm({
               name={name}
               inputMode="decimal"
               defaultValue={values[name] ?? ""}
+              placeholder={name === "salesCount" ? "0" : "Ex.: 600.000,00"}
               className={`${field} mt-2`}
               style={{ borderColor: "var(--border)" }}
             />

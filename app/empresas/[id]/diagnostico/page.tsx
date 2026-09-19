@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { DiagnosticForm } from "@/components/companies/DiagnosticForm";
 import { DiagnosticResult } from "@/components/companies/DiagnosticResult";
+import { EmptyState } from "@/components/ui/States";
 import { createDiagnosisAction } from "@/app/empresas/diagnostic-actions";
 import { requireOwnedCompany } from "@/lib/access";
 import { getDiagnosis, getLatestDiagnosis } from "@/services/diagnosisService";
@@ -40,7 +41,12 @@ export default async function DiagnosticoPage({
           </Link>
         </div>
 
-        {saved ? <DiagnosticResult diagnosis={saved} /> : null}
+        {saved ? <DiagnosticResult diagnosis={saved} /> : (
+          <EmptyState
+            title="Nenhum diagnóstico realizado."
+            body="Preencha as dimensões abaixo para gerar o primeiro 360° desta empresa."
+          />
+        )}
 
         {saved ? (
           <section className="surface-card flex flex-wrap items-center justify-between gap-3 p-5">

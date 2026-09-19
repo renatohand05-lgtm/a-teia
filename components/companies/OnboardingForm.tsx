@@ -21,7 +21,7 @@ export function OnboardingForm({
   return (
     <form action={formAction} className="surface-card grid gap-4 p-6 md:grid-cols-2">
       <p className="md:col-span-2 text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-        Salve a qualquer momento e continue depois. O onboarding fica vinculado a esta empresa no PostgreSQL.
+        Salve a qualquer momento e continue depois. Nada impede o acesso à empresa.
       </p>
       <Field name="name" label="Nome" defaultValue={company.name} required />
       <Field name="segment" label="Segmento" defaultValue={company.segment ?? ""} placeholder="Ex.: Oficina mecânica" />
@@ -30,16 +30,14 @@ export function OnboardingForm({
       <Field
         name="revenueMonthly"
         label="Faturamento mensal (R$)"
-        type="number"
-        step="any"
         defaultValue={company.revenueMonthly ?? ""}
+        placeholder="Ex.: 600.000,00"
       />
       <Field
         name="averageTicket"
         label="Ticket médio (R$)"
-        type="number"
-        step="any"
         defaultValue={onboarding?.averageTicket ?? ""}
+        placeholder="Ex.: 45,00"
       />
       <Field
         name="clientsPerMonth"

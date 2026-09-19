@@ -1,10 +1,11 @@
 import "server-only";
 
 import { CompanyStatus, Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { writeAudit } from "@/services/auditService";
-import type { CompanyInput } from "@/lib/validations";
+import { coverageFromFlags, listingPriorityLabel, nextActionForCompany, type EssentialFlags } from "@/lib/company-ux";
 import { toNumber } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
+import type { CompanyInput } from "@/lib/validations";
+import { writeAudit } from "@/services/auditService";
 
 export { cockpitPriorityFromCompany } from "@/lib/priority";
 
@@ -161,6 +162,91 @@ export async function updateCompany(
   });
 
   return toDTO(row);
+}
+
+export type CompanyDirectoryRow = CompanyDTO & {
+  coverage: ReturnType<typeof coverageFromFlags>;
+  nextAction: ReturnType<typeof nextActionForCompany>;
+  priorityLabel: string;
+};
+
+export async function listCompanyDirectory(ownerId: string, includeArchived = true): Promise<CompanyDirectoryRow[]> {
+  const companies = await listCompanies(ownerId, includeArchived);
+  if (!companies.length) return [];
+
+  const ids = companies.map((company) => company.id);
+  const [onboardings, diagnoses, statements, opportunities, plans] = await Promise.all([
+    prisma.companyOnboarding.findMany({
+      where: { company: { ownerId }, companyId: { in: ids } },
+      select: { companyId: true, status: true },
+    }),
+    prisma.diagnosis.findMany({
+      where: { company: { ownerId }, companyId: { in: ids } },
+      select: { companyId: true },
+    }),
+    prisma.financialStatement.findMany({
+      where: { company: { ownerId }, companyId: { in: ids } },
+      select: { companyId: true, grossRevenue: true },
+    }),
+    prisma.opportunity.findMany({
+      where: { company: { ownerId }, companyId: { in: ids } },
+      select: { companyId: true, status: true },
+    }),
+    prisma.actionPlan.findMany({
+      where: { company: { ownerId }, companyId: { in: ids } },
+      select: { companyId: true },
+    }),
+  ]);
+
+  const onboardingByCompany = new Set(
+    onboardings.filter((item) => item.status === "COMPLETE" || item.status === "DRAFT").map((item) => item.companyId),
+  );
+  const diagnosisByCompany = new Set(diagnoses.map((item) => item.companyId));
+  const financeByCompany = new Set(statements.filter((item) => item.grossRevenue != null).map((item) => item.companyId));
+  const opportunityByCompany = new Map<string, { total: number; active: number }>();
+  for (const item of opportunities) {
+    const current = opportunityByCompany.get(item.companyId) ?? { total: 0, active: 0 };
+    current.total += 1;
+    if (item.status === "ACTIVE" || item.status === "IN_PROGRESS" || item.status === "VALIDATED") current.active += 1;
+    opportunityByCompany.set(item.companyId, current);
+  }
+  const planByCompany = new Map<string, number>();
+  for (const item of plans) {
+    if (!item.companyId) continue;
+    planByCompany.set(item.companyId, (planByCompany.get(item.companyId) ?? 0) + 1);
+  }
+
+  return companies.map((company) => {
+    const flags: EssentialFlags = {
+      cadastro: Boolean(company.segment?.trim()),
+      onboarding: onboardingByCompany.has(company.id),
+      diagnostico: diagnosisByCompany.has(company.id),
+      financeiro: financeByCompany.has(company.id),
+      oportunidades: (opportunityByCompany.get(company.id)?.total ?? 0) > 0,
+    };
+    const nextAction = nextActionForCompany({
+      companyId: company.id,
+      companyName: company.name,
+      hasCompany: true,
+      hasDiagnosis: flags.diagnostico,
+      opportunityCount: opportunityByCompany.get(company.id)?.total ?? 0,
+      prioritizedOpportunityCount: opportunityByCompany.get(company.id)?.active ?? 0,
+      planCount: planByCompany.get(company.id) ?? 0,
+      financialCount: flags.financeiro ? 1 : 0,
+      experimentActiveCount: 0,
+      experimentCompletedCount: 0,
+      evidenceCount: 0,
+      evidenceValidatedCount: 0,
+      memoryValidatedCount: 0,
+      attention: false,
+    });
+    return {
+      ...company,
+      coverage: coverageFromFlags(flags),
+      nextAction,
+      priorityLabel: listingPriorityLabel(company),
+    };
+  });
 }
 
 export async function archiveCompany(ownerId: string, id: string, ip?: string): Promise<CompanyDTO> {

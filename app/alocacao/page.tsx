@@ -25,7 +25,7 @@ export default async function AllocationPage() {
   } catch {
     return (
       <AppShell title="Alocação de recursos" userName={session.user.name}>
-        <ErrorState message="Não foi possível carregar a alocação. Verifique a conexão com o PostgreSQL." />
+        <ErrorState message="Não foi possível carregar a alocação." />
       </AppShell>
     );
   }

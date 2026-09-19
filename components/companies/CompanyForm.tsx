@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
-import type { CompanyDTO } from "@/services/companyService";
 import type { CompanyActionState } from "@/app/empresas/actions";
+import { FormArea, FormField, FormMessage } from "@/components/ui/FormField";
+import type { CompanyDTO } from "@/services/companyService";
+import { useActionState } from "react";
 
 const initial: CompanyActionState = { ok: false, error: "" };
 
@@ -10,54 +11,82 @@ export function CompanyForm({
   company,
   action,
   submitLabel,
+  compact = false,
 }: {
   company?: CompanyDTO;
   action: (state: CompanyActionState | undefined, formData: FormData) => Promise<CompanyActionState>;
   submitLabel: string;
+  compact?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, initial);
+  const creating = !company;
 
   return (
-    <form action={formAction} className="surface-card grid gap-4 p-6 md:grid-cols-2">
-      <Field name="name" label="Nome" defaultValue={company?.name} required />
-      <Field name="segment" label="Segmento" defaultValue={company?.segment ?? ""} placeholder="Ex.: Alimentação" />
-      <Field name="units" label="Unidades" type="number" defaultValue={company?.units ?? ""} />
-      <Field
-        name="revenueMonthly"
-        label="Faturamento mensal (R$)"
-        type="number"
-        defaultValue={company?.revenueMonthly ?? ""}
+    <form action={formAction} className="surface-card grid gap-4 p-5 md:grid-cols-2">
+      <p className="md:col-span-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+        {creating ? "Obrigatório agora" : "Cadastro da empresa"}
+      </p>
+      <FormField
+        name="name"
+        label="Nome da empresa"
+        defaultValue={company?.name}
+        required
+        autoFocus={creating}
       />
-      <Field
-        name="marginPercent"
-        label="Margem (%)"
-        type="number"
-        step="0.1"
-        defaultValue={company?.marginPercent ?? ""}
+      <FormField
+        name="segment"
+        label="Segmento"
+        defaultValue={company?.segment ?? ""}
+        placeholder="Ex.: Alimentação"
+        helper="Pode completar depois."
       />
-      <Field name="teamSize" label="Equipe" type="number" defaultValue={company?.teamSize ?? ""} />
+
+      {creating && compact ? (
+        <p className="md:col-span-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+          Faturamento, equipe e objetivos entram no onboarding ou na edição.
+        </p>
+      ) : (
+        <>
+          <p className="md:col-span-2 mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+            Pode ser completado depois
+          </p>
+          <FormField name="units" label="Unidades" defaultValue={company?.units ?? ""} inputMode="numeric" />
+          <FormField
+            name="revenueMonthly"
+            label="Faturamento mensal"
+            defaultValue={company?.revenueMonthly ?? ""}
+            inputMode="decimal"
+            helper="Ex.: R$ 600.000,00"
+          />
+          <FormField
+            name="marginPercent"
+            label="Margem"
+            defaultValue={company?.marginPercent ?? ""}
+            inputMode="decimal"
+            helper="Informe 30 para 30%."
+          />
+          <FormField name="teamSize" label="Equipe" defaultValue={company?.teamSize ?? ""} inputMode="numeric" />
+          <div className="md:col-span-2">
+            <FormField name="channels" label="Canais" defaultValue={company?.channels ?? ""} />
+          </div>
+          <div className="md:col-span-2">
+            <FormArea name="objectives" label="Objetivos" defaultValue={company?.objectives ?? ""} />
+          </div>
+          <div className="md:col-span-2">
+            <FormArea name="perceivedBottlenecks" label="Gargalos percebidos" defaultValue={company?.perceivedBottlenecks ?? ""} />
+          </div>
+          <div className="md:col-span-2">
+            <FormArea name="notes" label="Observações" defaultValue={company?.notes ?? ""} />
+          </div>
+        </>
+      )}
+
       <div className="md:col-span-2">
-        <Field name="channels" label="Canais" defaultValue={company?.channels ?? ""} placeholder="Ex.: loja, iFood, WhatsApp" />
-      </div>
-      <div className="md:col-span-2">
-        <Area name="objectives" label="Objetivos" defaultValue={company?.objectives ?? ""} />
-      </div>
-      <div className="md:col-span-2">
-        <Area
-          name="perceivedBottlenecks"
-          label="Gargalos percebidos"
-          defaultValue={company?.perceivedBottlenecks ?? ""}
+        <FormMessage
+          error={state && !state.ok ? friendlyCompanyError(state.error) : undefined}
+          success={state?.ok ? "Empresa atualizada." : undefined}
         />
       </div>
-      <div className="md:col-span-2">
-        <Area name="notes" label="Observações" defaultValue={company?.notes ?? ""} />
-      </div>
-      {state && !state.ok && state.error ? (
-        <p className="md:col-span-2 text-[12px] text-[#f09a93]">{state.error}</p>
-      ) : null}
-      {state?.ok ? (
-        <p className="md:col-span-2 text-[12px] text-[#7bd99a]">Alterações salvas. Os dados permanecem após o reload.</p>
-      ) : null}
       <div className="md:col-span-2">
         <button
           type="submit"
@@ -72,63 +101,9 @@ export function CompanyForm({
   );
 }
 
-function Field({
-  name,
-  label,
-  type = "text",
-  defaultValue,
-  required,
-  placeholder,
-  step,
-}: {
-  name: string;
-  label: string;
-  type?: string;
-  defaultValue?: string | number;
-  required?: boolean;
-  placeholder?: string;
-  step?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
-        {label}
-      </span>
-      <input
-        name={name}
-        type={type}
-        step={step}
-        required={required}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          borderColor: "var(--border)",
-          color: "var(--text-1)",
-        }}
-      />
-    </label>
-  );
-}
-
-function Area({ name, label, defaultValue }: { name: string; label: string; defaultValue?: string }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.05em]" style={{ color: "var(--text-3)" }}>
-        {label}
-      </span>
-      <textarea
-        name={name}
-        defaultValue={defaultValue}
-        rows={4}
-        className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          borderColor: "var(--border)",
-          color: "var(--text-1)",
-        }}
-      />
-    </label>
-  );
+function friendlyCompanyError(message: string) {
+  if (!message || /500|internal/i.test(message)) {
+    return "Não foi possível salvar. Revise os campos e tente novamente.";
+  }
+  return message;
 }

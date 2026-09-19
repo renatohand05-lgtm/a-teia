@@ -13,6 +13,11 @@ export const AUTOMATION_ALERT_LABELS: Record<string, string> = {
   DISMISSED: "Dispensado",
 };
 
+export const COMPANY_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Ativa",
+  ARCHIVED: "Arquivada",
+};
+
 export const DECISION_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho",
   PENDING_HUMAN_APPROVAL: "Pendente",

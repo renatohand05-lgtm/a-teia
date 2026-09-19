@@ -95,38 +95,58 @@ export function GlobalCockpitPanels({
       <section>
         <Header title="Empresas" subtitle="Completude dos dados, não se a empresa é boa ou ruim." />
         {bundle.portfolio.length ? (
-          <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)" }}>
-            <table className="min-w-full text-left text-[12px]">
-              <thead style={{ color: "var(--text-3)" }}>
-                <tr>
-                  {["Empresa", "Segmento", "Dados", "360°", "Receita", "Oport.", "Execução", "Exp.", "Prioridade"].map((col) => (
-                    <th key={col} className="px-3 py-2 font-semibold">
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {bundle.portfolio.map((row) => (
-                  <tr key={row.company.id} className="border-t transition hover:bg-white/[0.03]" style={{ borderColor: "var(--border)" }}>
-                    <td className="px-3 py-2.5 font-bold">
-                      <Link href={`/empresas/${row.company.id}`}>{row.company.name}</Link>
-                    </td>
-                    <td className="px-3 py-2.5" style={{ color: "var(--text-2)" }}>{row.company.segment ?? "Não informado"}</td>
-                    <td className="px-3 py-2.5" title={row.health.explanation}>{row.health.level}</td>
-                    <td className="px-3 py-2.5">{row.diagnosisScore ?? "Não informado"}</td>
-                    <td className="px-3 py-2.5">{row.revenue == null ? "Não informado" : formatBRL(row.revenue)}</td>
-                    <td className="px-3 py-2.5">{row.opportunityCount}</td>
-                    <td className="px-3 py-2.5">{row.planCount}</td>
-                    <td className="px-3 py-2.5">{row.experimentCount}</td>
-                    <td className="px-3 py-2.5" style={{ color: LEVEL_TONE[row.topPriority?.level ?? "BAIXA"] }}>
-                      {priorityLevelLabel(row.topPriority?.level)}
-                    </td>
+          <>
+            <div className="hidden overflow-hidden rounded-2xl border md:block" style={{ borderColor: "var(--border)" }}>
+              <table className="min-w-full text-left text-[12px]">
+                <thead style={{ color: "var(--text-3)" }}>
+                  <tr>
+                    {["Empresa", "Segmento", "Dados", "360°", "Receita", "Oport.", "Execução", "Exp.", "Prioridade"].map((col) => (
+                      <th key={col} className="px-3 py-2 font-semibold">
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {bundle.portfolio.map((row) => (
+                    <tr key={row.company.id} className="border-t transition hover:bg-white/[0.03]" style={{ borderColor: "var(--border)" }}>
+                      <td className="px-3 py-2.5 font-bold">
+                        <Link href={`/empresas/${row.company.id}`}>{row.company.name}</Link>
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--text-2)" }}>{row.company.segment ?? "Não informado"}</td>
+                      <td className="px-3 py-2.5" title={row.health.explanation}>{row.health.level}</td>
+                      <td className="px-3 py-2.5">{row.diagnosisScore ?? "Não informado"}</td>
+                      <td className="px-3 py-2.5">{row.revenue == null ? "Não informado" : formatBRL(row.revenue)}</td>
+                      <td className="px-3 py-2.5">{row.opportunityCount}</td>
+                      <td className="px-3 py-2.5">{row.planCount}</td>
+                      <td className="px-3 py-2.5">{row.experimentCount}</td>
+                      <td className="px-3 py-2.5" style={{ color: LEVEL_TONE[row.topPriority?.level ?? "BAIXA"] }}>
+                        {priorityLevelLabel(row.topPriority?.level)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="grid gap-3 md:hidden">
+              {bundle.portfolio.map((row) => (
+                <article key={row.company.id} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
+                  <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                    {row.company.segment ?? "Não informado"} · {row.health.level}
+                  </p>
+                  <Link href={`/empresas/${row.company.id}`} className="mt-1 block text-[15px] font-bold">
+                    {row.company.name}
+                  </Link>
+                  <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                    Receita {row.revenue == null ? "Não informado" : formatBRL(row.revenue)} · Prioridade {priorityLevelLabel(row.topPriority?.level)}
+                  </p>
+                  <Link href={`/empresas/${row.company.id}`} className="mt-3 inline-block rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
+                    Abrir empresa
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </>
         ) : (
           <EmptyState
             title="Carteira vazia"

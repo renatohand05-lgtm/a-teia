@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState } from "@/components/ui/States";
 import { requireOwnedCompany } from "@/lib/access";
+import { formatDateBR } from "@/lib/format";
 import { listDiagnoses } from "@/services/diagnosisService";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
                     Gargalo: {item.bottleneck}
                   </p>
                   <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {new Date(item.createdAt).toLocaleString("pt-BR")}
+                    {formatDateBR(item.createdAt)}
                   </p>
                 </div>
                 <span className="text-[28px] font-black" style={{ color: "var(--gold-soft)" }}>
@@ -48,7 +49,7 @@ export default async function HistoricoPage({ params }: { params: Promise<{ id: 
         ) : (
           <EmptyState
             title="Nenhum diagnóstico ainda"
-            body="Quando você salvar o primeiro 360°, ele aparecerá aqui — persistido no PostgreSQL."
+            body="Nenhum diagnóstico realizado. O histórico aparece quando você salvar o primeiro 360°."
             action={
               <Link href={`/empresas/${company.id}/diagnostico`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
                 Realizar diagnóstico

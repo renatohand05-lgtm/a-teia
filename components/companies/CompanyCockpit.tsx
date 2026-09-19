@@ -4,7 +4,7 @@ import { DemoBadge } from "@/components/ui/DemoBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { StatusChip } from "@/components/ui/StatusChip";
-import { nextCockpitAction, type ModuleStatus } from "@/lib/cockpit";
+import type { ModuleStatus } from "@/lib/cockpit";
 import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
@@ -77,43 +77,8 @@ export function CompanyCockpit({
   const memoryStatus: ModuleStatus =
     (memory?.validated ?? 0) > 0 ? "CONCLUIDO" : (memory?.recent.length ?? 0) > 0 ? "INICIADO" : "SEM_DADOS";
 
-  const next = nextCockpitAction({
-    companyId: company.id,
-    companyName: company.name,
-    hasCompany: true,
-    hasDiagnosis: Boolean(latest),
-    opportunityCount: opportunities?.total ?? 0,
-    prioritizedOpportunityCount: opportunities?.active ?? 0,
-    planCount: execution?.totalPlans ?? 0,
-    financialCount: finance ? 1 : 0,
-    experimentActiveCount: experiments?.active ?? 0,
-    experimentCompletedCount: experiments?.completed ?? 0,
-    evidenceCount: experiments?.completed ?? 0,
-    evidenceValidatedCount: experiments?.validated ?? 0,
-    memoryValidatedCount: memory?.validated ?? 0,
-    attention: (execution?.overdueTasks ?? 0) > 0,
-  });
-
   return (
     <div className="space-y-5">
-      <section
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3"
-        style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.08)" }}
-      >
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-            Próximo passo
-          </p>
-          <p className="mt-1 text-[14px] font-bold">{next.title}</p>
-          <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
-            {next.body}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <GoldLink href={`/empresas/${company.id}/assistente`}>Analisar com IA</GoldLink>
-          <GoldLink href={next.href}>{next.cta}</GoldLink>
-        </div>
-      </section>
       <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <div
           className="rounded-[24px] border p-6"
@@ -373,7 +338,7 @@ function ModuleCard({
         {body}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <GoldLink href={href}>{cta}</GoldLink>
+        <GhostLink href={href}>{cta}</GhostLink>
         {extra}
       </div>
     </div>

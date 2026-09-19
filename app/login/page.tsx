@@ -6,9 +6,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-[720px] px-4 py-10 lg:py-16">
       <BrandHeader />
       <LoginForm />
-      <p className="mt-8 text-center text-[12.5px] leading-relaxed" style={{ color: "var(--text-3)" }}>
-        Uso pessoal · um usuário principal nesta fase.
-        <br />
+      <p className="mt-8 text-center text-[12px] leading-relaxed" style={{ color: "var(--text-3)" }}>
         A TEIA não expõe chaves, tokens ou credenciais no frontend.
       </p>
     </div>

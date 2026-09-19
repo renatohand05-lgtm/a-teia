@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
+import { updateCompanyAction } from "@/app/empresas/actions";
+import { ArchiveCompanyForm } from "@/components/companies/ArchiveCompanyForm";
 import { CompanyCockpit } from "@/components/companies/CompanyCockpit";
 import { CompanyForm } from "@/components/companies/CompanyForm";
+import { CompanyHeader } from "@/components/companies/CompanyHeader";
 import { OpportunityOverview } from "@/components/companies/OpportunityOverview";
-import { archiveCompanyAction, updateCompanyAction } from "@/app/empresas/actions";
+import { AppShell } from "@/components/layout/AppShell";
+import { nextCockpitAction } from "@/lib/cockpit";
 import { requireOwnedCompany } from "@/lib/access";
 import { getOnboarding } from "@/services/onboardingService";
 import { getLatestDiagnosis, listDiagnoses } from "@/services/diagnosisService";
@@ -42,10 +45,32 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
     : null;
 
   const boundUpdate = updateCompanyAction.bind(null, company.id);
+  const next = nextCockpitAction({
+    companyId: company.id,
+    companyName: company.name,
+    hasCompany: true,
+    hasDiagnosis: Boolean(latest),
+    opportunityCount: summary.totalCount,
+    prioritizedOpportunityCount: summary.activeCount,
+    planCount: execution.totalPlans,
+    financialCount: financeSummary ? 1 : 0,
+    experimentActiveCount: experimentSummary.active,
+    experimentCompletedCount: experimentSummary.completed,
+    evidenceCount: experimentSummary.completed,
+    evidenceValidatedCount: experimentSummary.validated,
+    memoryValidatedCount: memorySummary.validated,
+    attention: execution.overdueTasks > 0,
+  });
 
   return (
     <AppShell title={company.name} subtitle="Central da empresa" userName={name}>
       <div className="mx-auto max-w-[1480px] space-y-8">
+        <CompanyHeader
+          company={company}
+          nextTitle={next.title}
+          nextHref={next.href}
+          nextCta={next.cta}
+        />
         <CompanyCockpit
           company={company}
           onboarding={onboarding}
@@ -81,7 +106,7 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
                 Regras determinísticas. A IA não ativa nada sozinha.
               </p>
             </div>
-            <Link href={`/automacoes?empresa=${company.id}`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+            <Link href={`/automacoes?empresa=${company.id}`} className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
               Criar automação
             </Link>
           </div>
@@ -96,28 +121,27 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
                 {execution.activePlans} ativos · {execution.averageProgress}% de progresso médio · {execution.overdueTasks} tarefas atrasadas
               </p>
             </div>
-            <Link href={`/empresas/${company.id}/execucao`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
-              Abrir execução →
+            <Link href={`/empresas/${company.id}/execucao`} className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
+              Abrir execução
             </Link>
           </div>
         </section>
 
-        <section>
-          <h2 className="mb-3 text-[16px] font-bold">Cadastro técnico</h2>
+        <section id="cadastro">
+          <h2 className="mb-3 text-[16px] font-bold">Editar cadastro</h2>
           <p className="mb-4 text-[13px]" style={{ color: "var(--text-2)" }}>
-            Unidades e margem permanecem no cadastro técnico. O onboarding operacional vive em rota própria.
+            Complete os dados quando fizer sentido. O onboarding continua em rota própria.
           </p>
           {company.status === "ACTIVE" ? (
-            <form action={archiveCompanyAction} className="mb-4">
-              <input type="hidden" name="id" value={company.id} />
-              <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
-                Arquivar empresa
-              </button>
-            </form>
+            <div className="mb-4">
+              <ArchiveCompanyForm companyId={company.id} />
+            </div>
           ) : (
-            <p className="mb-4 text-[12px]" style={{ color: "var(--text-3)" }}>Empresa arquivada</p>
+            <p className="mb-4 text-[12px]" style={{ color: "var(--text-3)" }}>
+              Empresa arquivada. Os dados foram preservados.
+            </p>
           )}
-          <CompanyForm company={company} action={boundUpdate} submitLabel="Salvar cadastro técnico" />
+          <CompanyForm company={company} action={boundUpdate} submitLabel="Salvar cadastro" />
         </section>
       </div>
     </AppShell>

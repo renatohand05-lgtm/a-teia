@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { EmptyState } from "@/components/ui/States";
 import { requireOwnedCompany } from "@/lib/access";
 import { getExecutionSummary, listExecutionPlans } from "@/services/executionService";
 import { listOpportunities } from "@/services/opportunityService";
@@ -80,12 +81,15 @@ export default async function ExecucaoPage({ params }: { params: Promise<{ id: s
         <section>
           <h2 className="mb-3 text-[16px] font-black">Carteira de execução</h2>
           {plans.length === 0 ? (
-            <div className="rounded-2xl border p-8 text-center" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-              <p className="font-bold">Nenhum plano criado ainda.</p>
-              <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-                Marque uma oportunidade como “preparar para plano” e transforme a hipótese em execução.
-              </p>
-            </div>
+            <EmptyState
+              title="Nenhum plano criado ainda."
+              body="Prepare uma oportunidade e transforme a hipótese em execução."
+              action={
+                <Link href={`/empresas/${id}/oportunidades`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Revisar oportunidades
+                </Link>
+              }
+            />
           ) : (
             <div className="grid gap-3">
               {plans.map((plan) => (

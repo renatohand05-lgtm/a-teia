@@ -131,3 +131,15 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Contraste AA dos textos terciários (`--text-3`) em fundos escuros
 - Inbox dedicado de alertas; o header hoje leva a `/automacoes#notificacoes`
 - Microajuste de wrapping dos chips “Perguntar à A TEIA” em 768px
+
+## REFINAMENTO 1 — BLOCO 2 (pendências menores)
+
+- Select de segmento com catálogo fechado (hoje o campo continua livre; só a apresentação é normalizada)
+- Edição da empresa em rota dedicada `/empresas/[id]/editar` (hoje o cadastro fica na âncora `#cadastro`)
+- Máscara ao digitar moeda, não só no parse
+- Confirmação de arquivamento com undo
+- Empty state ilustrado da listagem
+- Ordenação da tabela de empresas
+- Focus trap nos painéis de confirmação
+- Histórico de alterações do cadastro na própria ficha
+- Cards de módulo da empresa com densidade ainda menor em 768px

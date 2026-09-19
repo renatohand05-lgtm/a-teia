@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { CompanyDirectory } from "@/components/companies/CompanyDirectory";
 import { AppShell } from "@/components/layout/AppShell";
-import { CompanyCard } from "@/components/ui/CompanyCard";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { MODULE_PICKER_LABELS, pathForModuleQuery } from "@/lib/company-nav";
-import { listCompanies } from "@/services/companyService";
+import { listCompanyDirectory } from "@/services/companyService";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export default async function EmpresasPage({
   const { modulo } = await searchParams;
 
   try {
-    const companies = await listCompanies(session.user.id, true);
+    const companies = await listCompanyDirectory(session.user.id, true);
     const active = companies.filter((company) => company.status === "ACTIVE");
     const archived = companies.filter((company) => company.status === "ARCHIVED");
     const moduleLabel = modulo ? MODULE_PICKER_LABELS[modulo] : null;
@@ -30,7 +30,7 @@ export default async function EmpresasPage({
     }
 
     return (
-      <AppShell title="Empresas" subtitle="Cadastro, edição, visualização e arquivo" userName={session.user.name}>
+      <AppShell title="Empresas" subtitle="Carteira operacional" userName={session.user.name}>
         <div className="mx-auto max-w-[1480px]">
           {moduleLabel ? (
             <div
@@ -42,7 +42,7 @@ export default async function EmpresasPage({
           ) : null}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[14px]" style={{ color: "var(--text-2)" }}>
-              {active.length} ativa{active.length === 1 ? "" : "s"} na carteira
+              {active.length} empresa{active.length === 1 ? "" : "s"} monitorada{active.length === 1 ? "" : "s"}
             </p>
             <Link
               href="/empresas/nova"
@@ -54,22 +54,17 @@ export default async function EmpresasPage({
           </div>
 
           {active.length ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {active.map((company) => (
-                <CompanyCard
-                  key={company.id}
-                  company={company}
-                  href={modulo ? pathForModuleQuery(modulo, company.id) ?? `/empresas/${company.id}` : undefined}
-                />
-              ))}
-            </div>
+            <CompanyDirectory
+              companies={active}
+              hrefFor={modulo ? (id) => pathForModuleQuery(modulo, id) ?? `/empresas/${id}` : undefined}
+            />
           ) : (
             <EmptyState
               title="Nenhuma empresa cadastrada"
-              body="O Cockpit permanece vazio até existir pelo menos um negócio real (ou DEMO identificado)."
+              body="Cadastre o primeiro negócio para montar a carteira."
               action={
                 <Link href="/empresas/nova" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-                  Cadastrar agora
+                  Cadastrar empresa
                 </Link>
               }
             />
@@ -78,11 +73,7 @@ export default async function EmpresasPage({
           {archived.length ? (
             <section className="mt-10">
               <h2 className="mb-3 text-[16px] font-bold">Arquivadas</h2>
-              <div className="grid gap-4 opacity-70 md:grid-cols-2 xl:grid-cols-3">
-                {archived.map((company) => (
-                  <CompanyCard key={company.id} company={company} />
-                ))}
-              </div>
+              <CompanyDirectory companies={archived} />
             </section>
           ) : null}
         </div>
@@ -91,7 +82,7 @@ export default async function EmpresasPage({
   } catch {
     return (
       <AppShell title="Empresas" userName={session.user.name}>
-        <ErrorState message="Falha ao ler empresas no banco." />
+        <ErrorState message="Não foi possível carregar as empresas." />
       </AppShell>
     );
   }

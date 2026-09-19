@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CompanyBreadcrumb } from "@/components/layout/CompanyBreadcrumb";
 import { CompanyModuleNav } from "@/components/layout/CompanyModuleNav";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
@@ -39,6 +40,7 @@ export function AppFrame({
           alertCount={alertCount}
           onOpenMenu={() => setMenuOpen(true)}
         />
+        <CompanyBreadcrumb title={title} subtitle={subtitle} />
         <CompanyModuleNav />
         <main className="animate-fade px-4 py-5 lg:px-8 lg:py-6">{children}</main>
       </div>

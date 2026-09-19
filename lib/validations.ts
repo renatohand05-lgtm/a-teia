@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseBrazilianNumber } from "@/lib/format";
 
 function optionalText(max: number) {
   return z.preprocess((value) => {
@@ -12,8 +13,8 @@ function optionalNumber(min: number, max: number, int = false) {
   const numberSchema = (int ? z.number().int("Deve ser inteiro") : z.number()).min(min).max(max);
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
   }, numberSchema.optional());
 }
 
@@ -153,33 +154,33 @@ export const taskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "DONE"
 function optionalMoney() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
   }, z.number().min(0, "Valor não pode ser negativo.").finite().optional());
 }
 
 function optionalPercent() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
-  }, z.number().min(0, "Percentual mínimo é 0.").max(100, "Percentual máximo é 100.").finite().optional());
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
+  }, z.number().min(0, "Informe um percentual válido.").max(100, "Percentual máximo é 100.").finite().optional());
 }
 
 function requiredMoney() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return Number.NaN;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
   }, z.number().min(0, "Valor não pode ser negativo.").finite());
 }
 
 function requiredPercent() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return Number.NaN;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
-  }, z.number().min(0).max(100).finite());
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
+  }, z.number().min(0, "Informe um percentual válido.").max(100, "Percentual máximo é 100.").finite());
 }
 
 export const periodSchema = z.object({
@@ -256,16 +257,16 @@ export type ExecutionFinanceInput = z.infer<typeof executionFinanceSchema>;
 function optionalFinite() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return undefined;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
   }, z.number().finite().optional());
 }
 
 function requiredFinite() {
   return z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) return Number.NaN;
-    const n = typeof value === "number" ? value : Number(String(value).replace(",", "."));
-    return Number.isFinite(n) ? n : Number.NaN;
+    const n = parseBrazilianNumber(value);
+    return n == null ? Number.NaN : n;
   }, z.number().finite());
 }
 
