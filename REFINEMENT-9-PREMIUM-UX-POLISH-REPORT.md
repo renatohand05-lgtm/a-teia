@@ -2,7 +2,8 @@
 
 **Escopo:** Pente-fino visual + UX + consistência premium  
 **Data:** 2026-09-19  
-**Commit:** pendente neste arquivo até o commit  
+**Commit:** `refactor: refinement 9 premium ux polish and money masks`  
+**SHA:** `f898bb9571ab1ec65851417006d009196f851506`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Migrations:** nenhuma  
