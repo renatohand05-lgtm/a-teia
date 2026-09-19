@@ -24,7 +24,8 @@ export function ExecutionPlanForm({
       <input type="hidden" name="companyId" value={companyId} />
       <input type="hidden" name="opportunityId" value={opportunityId} />
       <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-        Este plano executa uma <b style={{ color: "var(--text-1)" }}>HIPÓTESE</b>. Resultado de tarefa não vira evidência validada sozinho.
+        30 dias corrigem e medem. 60 dias buscam tração. 90 dias só escalam o que mostrou resultado. Tarefa concluída
+        não é evidência de negócio.
       </p>
       <label className="block text-[12px] font-bold">
         Título do plano
@@ -74,7 +75,7 @@ export function ExecutionPlanForm({
         className="w-full rounded-xl px-5 py-3 text-[13px] font-black disabled:opacity-50 sm:w-auto"
         style={{ background: "var(--gold)", color: "#111" }}
       >
-        {pending ? "Criando plano..." : "Criar plano e iniciar execução"}
+        {pending ? "Registrando decisão..." : "Confirmar decisão e criar plano"}
       </button>
     </form>
   );

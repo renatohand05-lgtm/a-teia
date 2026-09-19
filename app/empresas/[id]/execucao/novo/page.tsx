@@ -3,6 +3,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ExecutionPlanForm } from "@/components/companies/ExecutionPlanForm";
 import { requireOwnedCompany } from "@/lib/access";
 import { getOpportunity } from "@/services/opportunityService";
+import { displayPaybackMonths } from "@/lib/opportunity-ui";
+import { formatBRL } from "@/lib/format";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -29,14 +31,38 @@ export default async function NovoPlanoPage({
         </Link>
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>
-            Oportunidade de origem
+            Revisar antes de executar
           </div>
           <h2 className="mt-2 text-xl font-black">{opportunity.title}</h2>
-          <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-            {opportunity.hypothesis ?? opportunity.problemStatement}
-          </p>
+          <dl className="mt-4 space-y-3 text-[13px]" style={{ color: "var(--text-2)" }}>
+            <div>
+              <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                Problema observado
+              </dt>
+              <dd className="mt-1">{opportunity.problemStatement || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                Hipótese
+              </dt>
+              <dd className="mt-1">{opportunity.hypothesis || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                Estimativas
+              </dt>
+              <dd className="mt-1">
+                Investimento {formatBRL(opportunity.estimatedInvestment)} · retorno mensal{" "}
+                {formatBRL(opportunity.expectedMonthlyReturn)} · payback {displayPaybackMonths(opportunity.paybackMonths)}
+              </dd>
+            </div>
+          </dl>
           <p className="mt-3 text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-            Score {opportunity.priorityScore}/100 · HIPÓTESE — não é evidência validada.
+            Score {opportunity.priorityScore}/100{opportunity.scorePartial ? " · parcial" : ""} · ainda é hipótese.
+          </p>
+          <p className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+            Ao criar o plano você registra a decisão humana de executar. A IA não aprova. Tarefa concluída não prova que
+            a hipótese funcionou.
           </p>
         </section>
         <ExecutionPlanForm

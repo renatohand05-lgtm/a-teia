@@ -6,6 +6,7 @@ import { requireOwnedCompany } from "@/lib/access";
 import { getOpportunity } from "@/services/opportunityService";
 import { listExperiments } from "@/services/experimentService";
 import { getOpportunityMemoryPreview } from "@/services/memoryService";
+import { listOpportunityDecisions } from "@/services/decisionService";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,15 @@ export default async function OportunidadePage({
   const { userId, name, company } = await requireOwnedCompany(id);
   const opportunity = await getOpportunity(userId, id, opportunityId);
   if (!opportunity) redirect(`/empresas/${company.id}/oportunidades`);
-  const experiments = await listExperiments(userId, id, { opportunityId });
-  const memoryPreview = await getOpportunityMemoryPreview(userId, id, {
-    id: opportunity.id,
-    sourceDimension: opportunity.sourceDimension,
-    priorityScore: opportunity.priorityScore,
-  });
+  const [experiments, decisions, memoryPreview] = await Promise.all([
+    listExperiments(userId, id, { opportunityId }),
+    listOpportunityDecisions(userId, id, opportunityId),
+    getOpportunityMemoryPreview(userId, id, {
+      id: opportunity.id,
+      sourceDimension: opportunity.sourceDimension,
+      priorityScore: opportunity.priorityScore,
+    }),
+  ]);
 
   return (
     <AppShell title="Oportunidade" subtitle={company.name} userName={name}>
@@ -39,6 +43,7 @@ export default async function OportunidadePage({
           companyId={company.id}
           opportunity={opportunity}
           experiments={experiments}
+          decisions={decisions}
           relatedMemories={memoryPreview.related}
           scorePreview={memoryPreview.preview}
           memoryConflicts={memoryPreview.conflicts}

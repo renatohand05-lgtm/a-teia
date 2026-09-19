@@ -54,6 +54,7 @@ export function decisionStatusLabel(status: string): string {
     PENDING_HUMAN_APPROVAL: "Aguardando aprovação",
     APPROVED: "Aprovada",
     REJECTED: "Rejeitada",
+    DEFERRED: "Adiada",
     EXECUTED: "Executada",
     CANCELLED: "Cancelada",
   };

@@ -23,6 +23,7 @@ export const DECISION_STATUS_LABELS: Record<string, string> = {
   PENDING_HUMAN_APPROVAL: "Pendente",
   APPROVED: "Aprovado",
   REJECTED: "Rejeitado",
+  DEFERRED: "Adiada",
   EXECUTED: "Em execução",
   CANCELLED: "Arquivado",
 };

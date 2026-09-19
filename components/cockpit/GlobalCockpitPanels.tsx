@@ -11,8 +11,10 @@ import {
 } from "@/app/cockpit/actions";
 import { EmptyState } from "@/components/ui/States";
 import { PORTFOLIO_SHORTCUTS } from "@/lib/global-priority-engine";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatDateBR } from "@/lib/format";
 import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
+import { calculatePaybackMonths } from "@/lib/opportunity-score";
+import { displayEvidence, displayPaybackMonths } from "@/lib/opportunity-ui";
 import { DECISION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { CockpitSnapshot } from "@/services/cockpitService";
 
@@ -334,16 +336,51 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
   const [pending, start] = useTransition();
   return (
     <div id="cockpit-decisoes">
-      <Header title="Decisões pendentes" subtitle="A IA propõe. Você decide." />
+      <Header title="Decisões pendentes" subtitle="A IA propõe. Só você aprova." />
       {decisions.length ? (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {decisions.map((item) => (
-            <li key={item.id} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--border)" }}>
+            <li key={item.id} className="rounded-xl border px-3 py-3" style={{ borderColor: "var(--border)" }}>
               <p className="text-[13px] font-bold">{item.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
                 {item.companyName ?? "Sem empresa"} · {statusLabel(item.status, DECISION_STATUS_LABELS)}
+                {item.opportunityTitle ? ` · ${item.opportunityTitle}` : ""}
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <dl className="mt-2 grid gap-2 text-[12px] sm:grid-cols-2" style={{ color: "var(--text-2)" }}>
+                <div>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                    Por quê
+                  </dt>
+                  <dd>{item.rationale || "Sem justificativa registrada."}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                    Custo / retorno estimados
+                  </dt>
+                  <dd>
+                    {formatBRL(item.estimatedInvestment)} · {formatBRL(item.expectedMonthlyReturn)} · payback{" "}
+                    {displayPaybackMonths(calculatePaybackMonths(item.estimatedInvestment, item.expectedMonthlyReturn))}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                    Evidência
+                  </dt>
+                  <dd>{displayEvidence(item.opportunityEvidenceLevel)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                    Se aprovar
+                  </dt>
+                  <dd>A decisão fica registrada em seu nome. A IA não executa e não move capital.</dd>
+                </div>
+              </dl>
+              {item.deferredAt ? (
+                <p className="mt-2 text-[11px]" style={{ color: "var(--text-3)" }}>
+                  Adiada em {formatDateBR(item.deferredAt)} — ainda aguarda decisão humana.
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={pending}
@@ -368,13 +405,8 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
         </ul>
       ) : (
         <EmptyState
-          title="Nenhuma decisão pendente"
-          body="Propostas da IA aparecem aqui para aprovação humana."
-          action={
-            <Link href="/assistente" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-              Abrir Assistente IA
-            </Link>
-          }
+          title="Nenhuma decisão pendente."
+          body="Propostas da IA e da alocação esperam aqui. Nenhuma é aprovada automaticamente."
         />
       )}
     </div>

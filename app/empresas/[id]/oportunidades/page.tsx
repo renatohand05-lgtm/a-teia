@@ -5,7 +5,7 @@ import { requireOwnedCompany } from "@/lib/access";
 import { DIAGNOSTIC_DIMENSIONS } from "@/lib/diagnostic";
 import { opportunityStatusSchema } from "@/lib/validations";
 import { listOpportunities } from "@/services/opportunityService";
-import type { OpportunityOrigin, OpportunityStatus } from "@prisma/client";
+import type { EvidenceLevel, OpportunityOrigin, OpportunityStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export default async function OportunidadesPage({
     status?: string;
     dimensao?: string;
     origem?: string;
+    evidencia?: string;
     financeiro?: string;
     score?: string;
   }>;
@@ -26,10 +27,14 @@ export default async function OportunidadesPage({
   const query = await searchParams;
   const { userId, name, company } = await requireOwnedCompany(id);
   const minScore = query.score ? Number(query.score) : undefined;
+  const filtered = Boolean(
+    query.status || query.dimensao || query.origem || query.evidencia || query.financeiro || query.score,
+  );
   const items = await listOpportunities(userId, id, {
     status: isStatus(query.status) ? query.status : "ALL",
     dimension: query.dimensao || "ALL",
     origin: isOrigin(query.origem) ? query.origem : "ALL",
+    evidence: isEvidence(query.evidencia) ? query.evidencia : "ALL",
     financial: query.financeiro === "with" || query.financeiro === "without" ? query.financeiro : "ALL",
     minScore: Number.isFinite(minScore) ? minScore : undefined,
   });
@@ -47,7 +52,7 @@ export default async function OportunidadesPage({
           </div>
         </div>
 
-        <form className="surface-card grid gap-3 p-4 md:grid-cols-5" method="get">
+        <form className="surface-card grid gap-3 p-4 md:grid-cols-3 lg:grid-cols-6" method="get">
           <Select
             name="status"
             label="Status"
@@ -70,12 +75,24 @@ export default async function OportunidadesPage({
           />
           <Select
             name="origem"
-            label="Fonte"
+            label="Origem"
             defaultValue={query.origem ?? "ALL"}
             options={[
               ["ALL", "Todas"],
-              ["SUGGESTED", "Sugerida"],
+              ["SUGGESTED", "Diagnóstico 360°"],
               ["MANUAL", "Manual"],
+            ]}
+          />
+          <Select
+            name="evidencia"
+            label="Evidência"
+            defaultValue={query.evidencia ?? "ALL"}
+            options={[
+              ["ALL", "Todas"],
+              ["HYPOTHESIS", "Hipótese"],
+              ["TESTING", "Em teste"],
+              ["PARTIAL_EVIDENCE", "Evidência parcial"],
+              ["VALIDATED_EVIDENCE", "Evidência validada"],
             ]}
           />
           <Select
@@ -99,7 +116,7 @@ export default async function OportunidadesPage({
               ["0", "Todas as faixas"],
             ]}
           />
-          <div className="md:col-span-5">
+          <div className="md:col-span-3 lg:col-span-6">
             <button
               type="submit"
               className="rounded-xl border px-4 py-2 text-[12px] font-bold"
@@ -110,7 +127,7 @@ export default async function OportunidadesPage({
           </div>
         </form>
 
-        <OpportunityRanking companyId={company.id} items={items} />
+        <OpportunityRanking companyId={company.id} items={items} filtered={filtered} />
       </div>
     </AppShell>
   );
@@ -122,6 +139,10 @@ function isStatus(value?: string): value is OpportunityStatus {
 
 function isOrigin(value?: string): value is OpportunityOrigin {
   return value === "SUGGESTED" || value === "MANUAL";
+}
+
+function isEvidence(value?: string): value is EvidenceLevel {
+  return value === "HYPOTHESIS" || value === "TESTING" || value === "PARTIAL_EVIDENCE" || value === "VALIDATED_EVIDENCE";
 }
 
 function Select({

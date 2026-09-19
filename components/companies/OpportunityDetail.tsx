@@ -1,21 +1,32 @@
 import Link from "next/link";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
+import { CalculationHelp } from "@/components/ui/CalculationHelp";
 import {
   changeOpportunityStatusAction,
   queueForPlanAction,
 } from "@/app/empresas/opportunity-actions";
+import { formatBRL, formatDateBR, formatPercent } from "@/lib/format";
+import { calculateROI } from "@/lib/financial-engine";
+import { decisionStatusLabel } from "@/lib/execution";
 import {
-  EVIDENCE_LABELS,
-  OPPORTUNITY_STATUS_LABELS,
-  ORIGIN_LABELS,
-} from "@/lib/opportunity-score";
-import { formatBRL, formatPercent } from "@/lib/format";
-import { calculatePayback, calculateROI } from "@/lib/financial-engine";
+  DISPLAY_ORIGIN_LABELS,
+  OPPORTUNITY_HELP,
+  SCORE_FACTORS,
+  displayEvidence,
+  displayOpportunityStatus,
+  displayPaybackMonths,
+  isHypothesis,
+  opportunityNextAction,
+  scoreBadgeLabel,
+  scorePartialNote,
+  whyThisScore,
+} from "@/lib/opportunity-ui";
 import type { OpportunityDTO } from "@/services/opportunityService";
 import type { ExperimentDTO } from "@/services/experimentService";
 import type { RelatedMemoryDTO } from "@/services/memoryService";
 import type { ScorePreview, RepetitionSummary } from "@/lib/memory-engine";
+import type { DecisionDTO } from "@/services/decisionService";
 import { ExperimentClassBadge, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
 import {
   MemoryConfidenceBadge,
@@ -26,6 +37,7 @@ export function OpportunityDetail({
   companyId,
   opportunity,
   experiments = [],
+  decisions = [],
   relatedMemories = [],
   scorePreview,
   memoryConflicts = 0,
@@ -34,138 +46,197 @@ export function OpportunityDetail({
   companyId: string;
   opportunity: OpportunityDTO;
   experiments?: ExperimentDTO[];
+  decisions?: DecisionDTO[];
   relatedMemories?: RelatedMemoryDTO[];
   scorePreview?: ScorePreview;
   memoryConflicts?: number;
   repetition?: RepetitionSummary;
 }) {
+  const next = opportunityNextAction(opportunity, companyId);
+  const roi = calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn);
+  const partialNote = scorePartialNote(opportunity.scorePartial);
+  const latestDecision = decisions[0];
+
   return (
     <div className="space-y-5">
       <section className="grid gap-4 lg:grid-cols-[220px_1fr]">
         <div className="surface-card flex flex-col items-center justify-center p-6">
-          <ScoreGauge score={opportunity.priorityScore} label="Prioridade" caption="/100" />
+          <ScoreGauge score={opportunity.priorityScore} label={scoreBadgeLabel(opportunity.scorePartial)} caption="/100" />
           <p className="mt-3 text-[22px] font-black">{opportunity.priorityScore} / 100</p>
           <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
             {opportunity.band}
-            {opportunity.scorePartial ? " · cálculo parcial" : ""}
           </p>
+          {partialNote ? (
+            <p className="mt-2 text-center text-[12px]" style={{ color: "var(--text-2)" }}>
+              Score parcial. {partialNote}
+            </p>
+          ) : null}
         </div>
         <div className="surface-card space-y-3 p-6">
           <div className="flex flex-wrap gap-2">
-            <RiskBadge label={OPPORTUNITY_STATUS_LABELS[opportunity.status] ?? opportunity.status} />
-            <RiskBadge label={ORIGIN_LABELS[opportunity.origin] ?? opportunity.origin} />
-            <RiskBadge label={`EVIDÊNCIA · ${EVIDENCE_LABELS[opportunity.evidenceLevel]}`} tone="warn" />
-            <RiskBadge label="HIPÓTESE · ação" tone="warn" />
+            <RiskBadge label={displayOpportunityStatus(opportunity.status)} />
+            <RiskBadge label={DISPLAY_ORIGIN_LABELS[opportunity.origin] ?? "—"} />
+            <RiskBadge label={displayEvidence(opportunity.evidenceLevel)} tone="warn" />
+            {isHypothesis(opportunity.evidenceLevel) ? <RiskBadge label="Ainda é hipótese" tone="warn" /> : null}
           </div>
           <h2 className="text-[22px] font-bold">{opportunity.title}</h2>
           <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
-            Dimensão: {opportunity.sourceDimensionLabel}
+            {opportunity.sourceDimensionLabel} · {formatDateBR(opportunity.createdAt)}
           </p>
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-              Por que este score
-            </p>
-            <ul className="mt-2 space-y-1 text-[13px]" style={{ color: "var(--text-2)" }}>
-              {opportunity.reasons.map((reason) => (
-                <li key={reason}>· {reason}</li>
-              ))}
-            </ul>
-          </div>
+          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+            Score descreve o ranking. Prioridade operacional: {next.label}.
+          </p>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Block title="Problema" body={opportunity.problemStatement} />
-        <Block title="Hipótese" body={opportunity.hypothesis} />
+        <Block title="Problema observado" body={opportunity.problemStatement} />
+        <Block title="Hipótese de oportunidade" body={opportunity.hypothesis} />
       </section>
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Mini label="Impacto" value={`${opportunity.expectedImpact ?? "—"}/5`} />
-        <Mini label="Urgência" value={`${opportunity.urgency ?? "—"}/5`} />
-        <Mini label="Confiança" value={`${opportunity.confidence ?? "—"}/5`} />
-        <Mini label="Esforço" value={`${opportunity.effort ?? "—"}/5`} />
-        <Mini label="Investimento" value={formatBRL(opportunity.estimatedInvestment)} />
-        <Mini label="Horas" value={opportunity.estimatedHours != null ? String(opportunity.estimatedHours) : "—"} />
-        <Mini label="Retorno mensal" value={formatBRL(opportunity.expectedMonthlyReturn)} />
-        <Mini
-          label="Payback"
-          value={
-            opportunity.paybackMonths != null ? `${opportunity.paybackMonths} mês(es)` : "Sem dado financeiro"
-          }
-        />
-        <Mini
-          label="ROI simples 12 meses"
-          value={
-            calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) != null
-              ? formatPercent(calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn))
-              : "Sem investimento informado"
-          }
-        />
+      <section className="surface-card space-y-3 p-5">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Score
+        </p>
+        <h3 className="text-[16px] font-bold">{whyThisScore(opportunity.priorityScore)}</h3>
+        <ul className="grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-3" style={{ color: "var(--text-2)" }}>
+          {SCORE_FACTORS.map((factor) => (
+            <li key={factor.key} className="rounded-xl border px-3 py-2" style={{ borderColor: "var(--border)" }}>
+              <span className="block text-[10px] uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                {factor.label}
+              </span>
+              peso {(factor.weight * 100).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}%
+            </li>
+          ))}
+        </ul>
+        <ul className="space-y-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+          {opportunity.reasons.map((reason) => (
+            <li key={reason}>· {reason}</li>
+          ))}
+        </ul>
+        <CalculationHelp label="Score" text={OPPORTUNITY_HELP.score} />
+        <CalculationHelp label="Prioridade" text={OPPORTUNITY_HELP.priority} />
       </section>
-      {opportunity.estimatedInvestment != null || opportunity.expectedMonthlyReturn != null ? (
-        <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-          <RiskBadge label="HIPÓTESE FINANCEIRA" tone="warn" />
-          <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-            Investimento {formatBRL(opportunity.estimatedInvestment)} e retorno mensal esperado{" "}
-            {formatBRL(opportunity.expectedMonthlyReturn)} não são realizados. Payback{" "}
-            {calculatePayback(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn) ?? "n/d"} mês(es)
-            até existir evidência medida.
-          </p>
-        </section>
-      ) : null}
+
+      <section className="space-y-3">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Impacto estimado
+        </p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Mini label="Impacto" value={`${opportunity.expectedImpact ?? "—"}/5`} />
+          <Mini label="Urgência" value={`${opportunity.urgency ?? "—"}/5`} />
+          <Mini label="Confiança" value={`${opportunity.confidence ?? "—"}/5`} />
+          <Mini label="Esforço" value={`${opportunity.effort ?? "—"}/5`} />
+          <Mini label="Investimento estimado" value={formatBRL(opportunity.estimatedInvestment)} />
+          <Mini label="Retorno mensal estimado" value={formatBRL(opportunity.expectedMonthlyReturn)} />
+          <Mini label="Payback" value={displayPaybackMonths(opportunity.paybackMonths)} />
+          <Mini label="ROI simples 12 meses" value={roi != null ? formatPercent(roi) : "Não calculado"} />
+        </div>
+        <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+          Investimento, retorno, payback e ROI desta ficha são estimativas. Resultado realizado só nasce de evidência medida.
+        </p>
+        <CalculationHelp label="Payback" text={OPPORTUNITY_HELP.payback} />
+      </section>
 
       {opportunity.description ? <Block title="Observações" body={opportunity.description} /> : null}
 
-      <section className="flex flex-wrap gap-2">
-        <Link
-          href={`/empresas/${companyId}/oportunidades/${opportunity.id}/editar`}
-          className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-        >
-          Editar
-        </Link>
-        <StatusButton companyId={companyId} id={opportunity.id} status="ACTIVE" label="Ativar" />
-        <StatusButton companyId={companyId} id={opportunity.id} status="IN_PROGRESS" label="Marcar em execução" />
-        <StatusButton companyId={companyId} id={opportunity.id} status="ARCHIVED" label="Arquivar" />
-        <form action={queueForPlanAction}>
-          <input type="hidden" name="companyId" value={companyId} />
-          <input type="hidden" name="opportunityId" value={opportunity.id} />
-          <button
-            type="submit"
-            className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-          >
-            {opportunity.queuedForPlan ? "Na fila do plano 30/60/90" : "Preparar para plano de ação"}
-          </button>
-        </form>
-        <Link
-          href={`/empresas/${companyId}/execucao/novo?opportunityId=${opportunity.id}`}
-          className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
-          style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-        >
-          Criar plano 30/60/90
-        </Link>
-        <Link
-          href={`/empresas/${companyId}/experimentos/novo?opportunityId=${opportunity.id}`}
-          className="rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-        >
-          Testar oportunidade
+      <section className="surface-card space-y-3 p-5">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Evidência
+        </p>
+        <p className="text-[14px] font-bold">{displayEvidence(opportunity.evidenceLevel)}</p>
+        <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+          {isHypothesis(opportunity.evidenceLevel)
+            ? "Diagnóstico, ranking e IA não transformam esta ficha em evidência."
+            : "O nível sobe só com experimento medido — executar tarefas não valida a hipótese."}
+        </p>
+        <CalculationHelp label="Evidência" text={OPPORTUNITY_HELP.evidence} />
+      </section>
+
+      <section className="surface-card space-y-3 p-5">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
+          Decisão
+        </p>
+        {latestDecision ? (
+          <>
+            <p className="text-[14px] font-bold">{latestDecision.title}</p>
+            <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+              {decisionStatusLabel(latestDecision.status)}
+              {latestDecision.approvedAt ? ` · aprovada em ${formatDateBR(latestDecision.approvedAt)}` : ""}
+              {latestDecision.rejectedAt ? ` · rejeitada em ${formatDateBR(latestDecision.rejectedAt)}` : ""}
+              {latestDecision.deferredAt ? ` · adiada em ${formatDateBR(latestDecision.deferredAt)}` : ""}
+            </p>
+            {latestDecision.rationale ? (
+              <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+                {latestDecision.rationale}
+              </p>
+            ) : null}
+            <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+              Rejeição não apaga a oportunidade. A IA não aprova decisão.
+            </p>
+          </>
+        ) : (
+          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            Nenhuma decisão registrada. Criar o plano 30/60/90 é uma decisão humana explícita — a IA não aprova.
+          </p>
+        )}
+        <Link href="/alocacao" className="inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+          Ver alocação
         </Link>
       </section>
+
+      <section className="space-y-3">
+        <PrimaryAction companyId={companyId} opportunity={opportunity} />
+        <details className="text-[13px]">
+          <summary className="cursor-pointer font-semibold" style={{ color: "var(--text-2)" }}>
+            Mais ações
+          </summary>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Ghost href={`/empresas/${companyId}/oportunidades/${opportunity.id}/editar`}>Editar</Ghost>
+            <StatusButton companyId={companyId} id={opportunity.id} status="ACTIVE" label="Ativar" />
+            <StatusButton companyId={companyId} id={opportunity.id} status="IN_PROGRESS" label="Marcar em execução" />
+            <StatusButton companyId={companyId} id={opportunity.id} status="ARCHIVED" label="Arquivar" />
+            <form action={queueForPlanAction}>
+              <input type="hidden" name="companyId" value={companyId} />
+              <input type="hidden" name="opportunityId" value={opportunity.id} />
+              <button
+                type="submit"
+                className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+                style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+              >
+                {opportunity.queuedForPlan ? "Na fila do plano 30/60/90" : "Preparar para plano de ação"}
+              </button>
+            </form>
+            {next.kind !== "plan" ? (
+              <Ghost href={`/empresas/${companyId}/execucao/novo?opportunityId=${opportunity.id}`}>
+                Criar plano 30/60/90
+              </Ghost>
+            ) : null}
+            {next.kind !== "experiment" ? (
+              <Ghost href={`/empresas/${companyId}/experimentos/novo?opportunityId=${opportunity.id}`}>
+                Criar experimento
+              </Ghost>
+            ) : null}
+          </div>
+        </details>
+      </section>
+
       <section className="space-y-3">
         <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
           Aprendizados relacionados
         </h3>
         {relatedMemories.length === 0 ? (
           <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
-            Nenhum aprendizado relacionado ainda. O score original permanece.
+            Nenhuma memória validada relacionada. Isso não vira evidência desta hipótese.
           </p>
         ) : (
           <>
             <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-              {relatedMemories.length} evidência(s) anterior(es) relacionada(s)
-              {repetition ? ` · ${repetition.label} (${repetition.positive} positivas, ${repetition.partial} parciais, ${repetition.inconclusive} inconclusivas, ${repetition.refuted} refutadas)` : ""}.
+              {relatedMemories.length} memória(s) relacionada(s)
+              {repetition
+                ? ` · ${repetition.label} (${repetition.positive} positivas, ${repetition.partial} parciais, ${repetition.inconclusive} inconclusivas, ${repetition.refuted} refutadas)`
+                : ""}
+              .
               {memoryConflicts > 0 ? " Evidências divergentes." : ""}
             </p>
             {relatedMemories.map((item) => (
@@ -183,7 +254,8 @@ export function OpportunityDetail({
                   </div>
                 </div>
                 <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-                  {item.companyName} · {item.segment ?? "segmento não informado"} · {item.matchKind === "EXACT" ? "memória exata" : "aprendizado potencialmente transferível"}
+                  {item.companyName} · {item.segment ?? "segmento não informado"} ·{" "}
+                  {item.matchKind === "EXACT" ? "memória exata" : "aprendizado potencialmente transferível"}
                 </p>
                 <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>
                   {item.transferability.label} · {item.explanation}
@@ -195,11 +267,14 @@ export function OpportunityDetail({
         {scorePreview ? (
           <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-              Preview de impacto — ranking não alterado
+              Preview de memória — ranking não alterado
             </p>
             <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-              scoreBase {scorePreview.scoreBase} · memoryAdjustment {scorePreview.memoryAdjustment > 0 ? "+" : ""}
-              {scorePreview.memoryAdjustment} · scoreFinal {scorePreview.scoreFinal}
+              Score persistido {scorePreview.scoreBase}
+              {scorePreview.memoryAdjustment
+                ? ` · ajuste de memória ${scorePreview.memoryAdjustment > 0 ? "+" : ""}${scorePreview.memoryAdjustment}`
+                : ""}
+              . Preview {scorePreview.scoreFinal} — não substitui o score oficial.
             </p>
             <p className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>{scorePreview.explanation}</p>
           </div>
@@ -244,16 +319,43 @@ export function OpportunityDetail({
   );
 }
 
+function PrimaryAction({
+  companyId,
+  opportunity,
+}: {
+  companyId: string;
+  opportunity: OpportunityDTO;
+}) {
+  const next = opportunityNextAction(opportunity, companyId);
+  if (next.kind === "activate") {
+    return <StatusButton companyId={companyId} id={opportunity.id} status="ACTIVE" label="Ativar" primary />;
+  }
+  if (next.href) {
+    return (
+      <Link
+        href={next.href}
+        className="inline-flex rounded-xl px-4 py-2.5 text-[13px] font-extrabold text-[#241a08]"
+        style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+      >
+        {next.label}
+      </Link>
+    );
+  }
+  return null;
+}
+
 function StatusButton({
   companyId,
   id,
   status,
   label,
+  primary = false,
 }: {
   companyId: string;
   id: string;
   status: string;
   label: string;
+  primary?: boolean;
 }) {
   return (
     <form action={changeOpportunityStatusAction}>
@@ -262,12 +364,28 @@ function StatusButton({
       <input type="hidden" name="status" value={status} />
       <button
         type="submit"
-        className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
-        style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+        className="rounded-xl px-4 py-2.5 text-[13px] font-bold"
+        style={
+          primary
+            ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08", fontWeight: 800 }
+            : { border: "1px solid var(--border)", color: "var(--text-2)" }
+        }
       >
         {label}
       </button>
     </form>
+  );
+}
+
+function Ghost({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
+      style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+    >
+      {children}
+    </Link>
   );
 }
 

@@ -154,3 +154,14 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Comparação lado a lado de três competências
 - Empty state ilustrado do financeiro
 - Densidade do formulário 360° em 768px (10 fieldsets)
+
+## REFINAMENTO 1 — BLOCO 4 (pendências menores)
+
+- “Como calculamos” de score/payback/progresso em tooltip em vez de `<details>`
+- Formulário de primeira tarefa em plano legado sem tarefas (hoje o 30/60/90 já nasce com 3 horizontes)
+- Campo de justificativa curta na aprovação/rejeição (schema atual não tem reason)
+- Densidade do ranking de oportunidades em 768px
+- Atalhos de teclado para Aprovar/Revisar/Rejeitar/Adiar no Cockpit
+- Empty state ilustrado de oportunidades, decisões e execução
+- Histórico visual compacto de decisões na ficha da oportunidade
+- Comparar score vs prioridade operacional em um chip único no ranking

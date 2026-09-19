@@ -33,6 +33,7 @@ export type ExecutionTaskDTO = {
 export type ExecutionPlanDTO = {
   id: string;
   companyId: string | null;
+  ownerId: string | null;
   decisionId: string | null;
   title: string;
   summary: string | null;
@@ -272,6 +273,7 @@ function toExecutionPlanDTO(row: ExecutionPlanRow): ExecutionPlanDTO {
   return {
     id: row.id,
     companyId: row.companyId,
+    ownerId: row.ownerId,
     decisionId: row.decisionId,
     title: row.title,
     summary: row.summary,

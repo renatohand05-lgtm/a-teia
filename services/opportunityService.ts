@@ -65,6 +65,7 @@ export type OpportunityFilters = {
   status?: OpportunityStatus | "ALL";
   dimension?: string | "ALL";
   origin?: OpportunityOrigin | "ALL";
+  evidence?: EvidenceLevel | "ALL";
   financial?: "ALL" | "with" | "without";
   minScore?: number;
 };
@@ -244,6 +245,7 @@ export async function listOpportunities(
       ...(filters.status && filters.status !== "ALL" ? { status: filters.status } : {}),
       ...(filters.dimension && filters.dimension !== "ALL" ? { sourceDimension: filters.dimension } : {}),
       ...(filters.origin && filters.origin !== "ALL" ? { origin: filters.origin } : {}),
+      ...(filters.evidence && filters.evidence !== "ALL" ? { evidenceLevel: filters.evidence } : {}),
     },
     orderBy: [{ score: "desc" }, { title: "asc" }],
   });

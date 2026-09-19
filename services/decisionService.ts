@@ -1,8 +1,9 @@
 import "server-only";
 
-import { AuditSource, DecisionStatus } from "@prisma/client";
+import { AuditSource, DecisionStatus, EvidenceLevel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/services/auditService";
+import { toNumber } from "@/lib/format";
 
 export type DecisionDTO = {
   id: string;
@@ -12,9 +13,16 @@ export type DecisionDTO = {
   origin: AuditSource;
   companyId: string | null;
   companyName: string | null;
+  opportunityId: string | null;
   opportunityTitle: string | null;
+  opportunityEvidenceLevel: EvidenceLevel | null;
+  estimatedInvestment: number | null;
+  expectedMonthlyReturn: number | null;
   createdById: string | null;
   createdAt: string;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  deferredAt: string | null;
   requiresHumanApproval: boolean;
 };
 
@@ -166,28 +174,76 @@ export async function reviewDecision(input: { actorId: string; decisionId: strin
   return existing;
 }
 
+const decisionInclude = {
+  company: { select: { name: true, ownerId: true } },
+  opportunity: { select: { title: true, investment: true, expectedReturn: true, evidenceLevel: true } },
+} as const;
+
+function toDecisionDTO(item: {
+  id: string;
+  title: string;
+  rationale: string | null;
+  status: DecisionStatus;
+  origin: AuditSource;
+  companyId: string | null;
+  opportunityId: string | null;
+  createdById: string | null;
+  createdAt: Date;
+  approvedAt: Date | null;
+  rejectedAt: Date | null;
+  deferredAt: Date | null;
+  requiresHumanApproval: boolean;
+  company: { name: string; ownerId: string } | null;
+  opportunity: {
+    title: string;
+    investment: { toString(): string } | null;
+    expectedReturn: { toString(): string } | null;
+    evidenceLevel: EvidenceLevel;
+  } | null;
+}): DecisionDTO {
+  return {
+    id: item.id,
+    title: item.title,
+    rationale: item.rationale,
+    status: item.status,
+    origin: item.origin,
+    companyId: item.companyId,
+    companyName: item.company?.name ?? null,
+    opportunityId: item.opportunityId,
+    opportunityTitle: item.opportunity?.title ?? null,
+    opportunityEvidenceLevel: item.opportunity?.evidenceLevel ?? null,
+    estimatedInvestment: toNumber(item.opportunity?.investment),
+    expectedMonthlyReturn: toNumber(item.opportunity?.expectedReturn),
+    createdById: item.createdById,
+    createdAt: item.createdAt.toISOString(),
+    approvedAt: item.approvedAt ? item.approvedAt.toISOString() : null,
+    rejectedAt: item.rejectedAt ? item.rejectedAt.toISOString() : null,
+    deferredAt: item.deferredAt ? item.deferredAt.toISOString() : null,
+    requiresHumanApproval: item.requiresHumanApproval,
+  };
+}
+
+export async function listOpportunityDecisions(
+  ownerId: string,
+  companyId: string,
+  opportunityId: string,
+): Promise<DecisionDTO[]> {
+  const rows = await prisma.decision.findMany({
+    where: { opportunityId, companyId, company: { ownerId } },
+    include: decisionInclude,
+    orderBy: { updatedAt: "desc" },
+  });
+  return rows.filter((item) => !item.company || item.company.ownerId === ownerId).map(toDecisionDTO);
+}
+
 export async function listOwnerDecisions(ownerId: string): Promise<DecisionDTO[]> {
   const rows = await prisma.decision.findMany({
     where: {
       OR: [{ createdById: ownerId }, { company: { ownerId } }],
     },
-    include: { company: { select: { name: true, ownerId: true } }, opportunity: { select: { title: true } } },
+    include: decisionInclude,
     orderBy: { updatedAt: "desc" },
     take: 20,
   });
-  return rows
-    .filter((item) => !item.company || item.company.ownerId === ownerId)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      rationale: item.rationale,
-      status: item.status,
-      origin: item.origin,
-      companyId: item.companyId,
-      companyName: item.company?.name ?? null,
-      opportunityTitle: item.opportunity?.title ?? null,
-      createdById: item.createdById,
-      createdAt: item.createdAt.toISOString(),
-      requiresHumanApproval: item.requiresHumanApproval,
-    }));
+  return rows.filter((item) => !item.company || item.company.ownerId === ownerId).map(toDecisionDTO);
 }
