@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { assistantHref } from "@/lib/assistant-ui";
+import { contextualAssistantPrompt } from "@/lib/journey-ui";
 import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState } from "@/components/ui/States";
 import { ExperimentClassBadge, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
@@ -41,6 +43,9 @@ export default async function ExperimentosPage({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href={`/empresas/${id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             ← Central da empresa
+          </Link>
+          <Link href={assistantHref(id, contextualAssistantPrompt("experimento"))} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Analisar com IA
           </Link>
           <Link href={`/empresas/${id}/experimentos/novo`} className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
             {hasCoverage ? "Novo experimento" : "Criar primeiro experimento"}

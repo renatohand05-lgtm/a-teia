@@ -55,6 +55,8 @@ export function auditCategoryLabel(category: string | null | undefined): string 
   return AUDIT_CATEGORY_LABELS[category] ?? category;
 }
 
+export { auditEntityLabel, auditResourceHref } from "@/lib/journey-ui";
+
 export const EMPTY_AUDIT = {
   title: "Nenhum evento encontrado para os filtros selecionados.",
   body: "Ajuste o período, a empresa ou a ação. Nenhum dado de outro owner aparece aqui.",

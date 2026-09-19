@@ -205,3 +205,19 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Contraste AA dos textos terciários nos cards de alerta
 - Inbox dedicado além do atalho do header
 - Filtros persistidos na URL da auditoria
+
+## REFINAMENTO 1 — BLOCO 8 (pendências menores)
+
+- Skeleton avançado da jornada da empresa no hub e no Cockpit
+- Heatmap visual do progresso Cadastro → Memória
+- Tooltips dos estágios HIPÓTESE ≠ EVIDÊNCIA na trilha
+- Gráfico decorativo do funil de decisão
+- Hover premium e transições nos chips da jornada
+- Densidade final da trilha em 768px e 1280px
+- Tipografia final dos breadcrumbs Empresa / módulo
+- Drawer de detalhe do recurso na auditoria
+- Comparação lado a lado de duas empresas na mesma jornada
+- Atalhos de teclado para próxima ação
+- Microinterações do botão Analisar com IA
+- Inbox de alertas com preview do recurso vinculado
+- Polimento visual extremo do hub operacional

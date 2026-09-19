@@ -2,7 +2,7 @@ export function formatBRL(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function formatPercent(value: number | string | null | undefined): string {
@@ -12,11 +12,27 @@ export function formatPercent(value: number | string | null | undefined): string
   return `${n.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 }
 
+const SAO_PAULO = "America/Sao_Paulo";
+
 export function formatDateBR(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString("pt-BR", { timeZone: SAO_PAULO });
+}
+
+export function formatDateTimeBR(value: string | Date | null | undefined): string {
+  if (!value) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("pt-BR", {
+    timeZone: SAO_PAULO,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function parseBrazilianNumber(value: unknown): number | null {

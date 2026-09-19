@@ -148,7 +148,7 @@ describe("menu do produto publicado", () => {
     expect(GESTAO_NAV.map((item) => item.label)).toEqual([
       "Diagnóstico 360°",
       "Oportunidades",
-      "Execução",
+      "Plano 30/60/90",
       "Financeiro",
       "Experimentos",
     ]);
@@ -157,7 +157,7 @@ describe("menu do produto publicado", () => {
     expect(FUTURE_NAV.map((item) => item.label)).not.toContain("Assistente IA");
     expect(FUTURE_NAV.map((item) => item.label)).not.toContain("Auditoria");
     expect(COMPANY_MODULE_TABS.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Execução", "Financeiro", "Experimentos", "Memória"]),
+      expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Plano 30/60/90", "Financeiro", "Experimentos", "Memória Estratégica"]),
     );
     expect(FUTURE_NAV.map((item) => item.label)).toEqual(["Conexões", "Estratégia"]);
     expect(FUTURE_NAV.every((item) => item.enabled === false)).toBe(true);

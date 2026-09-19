@@ -18,6 +18,7 @@ import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
 import { calculatePaybackMonths } from "@/lib/opportunity-score";
 import { displayEvidence, displayPaybackMonths } from "@/lib/opportunity-ui";
 import { displayRecordCount } from "@/lib/experiment-ui";
+import { cockpitPriorityCta } from "@/lib/journey-ui";
 import { DECISION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { CockpitSnapshot } from "@/services/cockpitService";
 
@@ -326,11 +327,11 @@ function PriorityRow({ item, rank }: { item: CockpitSnapshot["portfolio"]["prior
           {priorityLevelLabel(item.level)}
         </span>
         <Link
-          href={`/empresas/${item.companyId}`}
+          href={item.href}
           className="rounded-xl border px-3 py-1.5 text-[11px] font-bold"
           style={{ borderColor: "var(--border)", color: "var(--text-1)" }}
         >
-          Ver
+          {cockpitPriorityCta(item.nextAction)}
         </Link>
       </div>
       <details
@@ -399,6 +400,11 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
                 <p className="mt-2 text-[11px]" style={{ color: "var(--text-3)" }}>
                   Adiada em {formatDateBR(item.deferredAt)} — ainda aguarda decisão humana.
                 </p>
+              ) : null}
+              {item.companyId ? (
+                <Link href={`/empresas/${item.companyId}`} className="mt-2 inline-block text-[11px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Abrir empresa
+                </Link>
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <button

@@ -41,6 +41,7 @@ export type OpportunityActionInput = {
   evidenceLevel: string;
   queuedForPlan: boolean;
   experimentCount: number;
+  planId?: string | null;
 };
 
 export function displayOrigin(origin: string | null | undefined): string {
@@ -88,12 +89,15 @@ export function opportunityNextAction(item: OpportunityActionInput, companyId: s
   if (item.status === "DRAFT") {
     return { label: "Ativar", kind: "activate" };
   }
+  if (item.planId) {
+    return { label: "Abrir plano", kind: "execution", href: `${base}/execucao/${item.planId}` };
+  }
   if (item.status === "IN_PROGRESS") {
     return { label: "Continuar execução", kind: "execution", href: `${base}/execucao` };
   }
   if (item.queuedForPlan) {
     return {
-      label: "Criar plano",
+      label: "Criar plano 30/60/90",
       kind: "plan",
       href: `${base}/execucao/novo?opportunityId=${item.id}`,
     };
@@ -109,8 +113,12 @@ export function opportunityNextAction(item: OpportunityActionInput, companyId: s
     return { label: "Continuar execução", kind: "execution", href: `${base}/experimentos` };
   }
   return {
-    label: "Criar plano",
-    kind: "plan",
-    href: `${base}/execucao/novo?opportunityId=${item.id}`,
+    label: "Revisar para decisão",
+    kind: "review",
+    href: `${base}/oportunidades/${item.id}#decisao`,
   };
+}
+
+export function opportunityReviewDecisionLabel(queued: boolean): string {
+  return queued ? "Na fila do plano 30/60/90" : "Revisar para decisão";
 }

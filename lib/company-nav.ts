@@ -19,7 +19,7 @@ export const COMPANY_NAV: CompanyNavItem[] = [
   },
   {
     key: "diagnostico",
-    label: "Diagnóstico",
+    label: "Diagnóstico 360°",
     href: (id) => `/empresas/${id}/diagnostico`,
     match: (pathname) => pathname.includes("/diagnostico"),
   },
@@ -31,7 +31,7 @@ export const COMPANY_NAV: CompanyNavItem[] = [
   },
   {
     key: "execucao",
-    label: "Execução 30/60/90",
+    label: "Plano 30/60/90",
     href: (id) => `/empresas/${id}/execucao`,
     match: (pathname) => pathname.includes("/execucao"),
   },
@@ -81,7 +81,7 @@ export function companyIdFromPath(pathname: string): string | null {
 export const GESTAO_NAV: Array<{ key: string; label: string }> = [
   { key: "diagnostico", label: "Diagnóstico 360°" },
   { key: "oportunidades", label: "Oportunidades" },
-  { key: "execucao", label: "Execução" },
+  { key: "execucao", label: "Plano 30/60/90" },
   { key: "financeiro", label: "Financeiro" },
   { key: "experimentos", label: "Experimentos" },
 ];
@@ -90,10 +90,10 @@ export const COMPANY_MODULE_TABS: Array<{ key: string; label: string }> = [
   { key: "central", label: "Visão Geral" },
   { key: "diagnostico", label: "Diagnóstico 360°" },
   { key: "oportunidades", label: "Oportunidades" },
-  { key: "execucao", label: "Execução" },
+  { key: "execucao", label: "Plano 30/60/90" },
   { key: "financeiro", label: "Financeiro" },
   { key: "experimentos", label: "Experimentos" },
-  { key: "memoria", label: "Memória" },
+  { key: "memoria", label: "Memória Estratégica" },
   { key: "assistente", label: "Assistente IA" },
 ];
 
@@ -101,7 +101,7 @@ export const MODULE_PICKER_LABELS: Record<string, string> = {
   central: "visão geral da empresa",
   diagnostico: "Diagnóstico 360°",
   oportunidades: "Oportunidades",
-  execucao: "Execução",
+  execucao: "Plano 30/60/90",
   financeiro: "Financeiro",
   dre: "DRE",
   caixa: "Fluxo de caixa",

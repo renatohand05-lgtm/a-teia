@@ -9,7 +9,9 @@ import {
   MemoryStatusBadge,
 } from "@/components/companies/MemoryBadges";
 import { requireOwnedCompany } from "@/lib/access";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatDateBR } from "@/lib/format";
+import { memoryOriginCopy } from "@/lib/journey-ui";
+import { PendingButton } from "@/components/ui/PendingButton";
 import { calculateTransferability, detectConflictingMemories, familyLabel } from "@/lib/memory-engine";
 import { displayMemoryConfidence, memoryValidationLabel, transferabilityCopy } from "@/lib/memory-ui";
 import { approveMemoryAction, rejectMemoryAction } from "@/app/empresas/memory-actions";
@@ -76,6 +78,13 @@ export default async function MemoriaDetalhePage({
           <p className="mt-2 text-[12px]" style={{ color: "var(--gold-soft)" }}>
             {memoryValidationLabel(memory.validated, memory.origin)}
           </p>
+          <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+            {memoryOriginCopy({
+              validated: memory.validated,
+              companyName: memory.companyName ?? company.name,
+              sameCompany: memory.companyId === id,
+            })}
+          </p>
         </section>
 
         <Block title="O que aprendemos" body={memory.lesson} />
@@ -98,7 +107,11 @@ export default async function MemoriaDetalhePage({
         <section className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <h2 className="text-[16px] font-black">Rastreabilidade</h2>
           <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
-            {memory.evidenceId ? `Evidência ${memory.evidenceId}` : "Sem evidência — observação/lição manual."}
+            Empresa: {memory.companyName ?? company.name}
+            {memory.createdAt ? ` · ${formatDateBR(memory.createdAt)}` : ""}
+          </p>
+          <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+            {memory.evidenceId ? "Origem: evidência avaliada de experimento." : "Sem evidência — observação/lição manual."}
           </p>
           {memory.experimentId ? (
             <p className="mt-1 text-[13px]">
@@ -119,7 +132,7 @@ export default async function MemoriaDetalhePage({
           {memory.hypothesis ? <p className="mt-2 text-[13px]" style={{ color: "var(--text-3)" }}>Hipótese: {memory.hypothesis}</p> : null}
           {memory.approvedAt ? (
             <p className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
-              Aprovado por {memory.approvedByName ?? "owner"} em {new Intl.DateTimeFormat("pt-BR").format(new Date(memory.approvedAt))}
+              Aprovado por {memory.approvedByName ?? "owner"} em {formatDateBR(memory.approvedAt)}
             </p>
           ) : null}
         </section>
@@ -157,16 +170,16 @@ export default async function MemoriaDetalhePage({
             <form action={approveMemoryAction}>
               <input type="hidden" name="companyId" value={id} />
               <input type="hidden" name="memoryId" value={memory.id} />
-              <button className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+              <PendingButton className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }} pendingLabel="Aprovando...">
                 Aprovar aprendizado
-              </button>
+              </PendingButton>
             </form>
             <form action={rejectMemoryAction}>
               <input type="hidden" name="companyId" value={id} />
               <input type="hidden" name="memoryId" value={memory.id} />
-              <button className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
+              <PendingButton className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }} pendingLabel="Rejeitando..." confirm="Rejeitar este aprendizado? Ele não vira memória validada.">
                 Rejeitar
-              </button>
+              </PendingButton>
             </form>
           </div>
         ) : null}

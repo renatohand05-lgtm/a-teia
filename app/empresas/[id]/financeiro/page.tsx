@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { assistantHref } from "@/lib/assistant-ui";
+import { contextualAssistantPrompt } from "@/lib/journey-ui";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinancialNav, moneyOrMissing, percentOrMissing } from "@/components/companies/FinancialNav";
 import { CalculationHelp } from "@/components/ui/CalculationHelp";
@@ -33,9 +35,14 @@ export default async function FinanceiroPage({
   return (
     <AppShell title="Financeiro" subtitle={company.name} userName={name}>
       <div className="mx-auto max-w-[1320px] space-y-6">
-        <Link href={`/empresas/${id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-          ← Central da empresa
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link href={`/empresas/${id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            ← Central da empresa
+          </Link>
+          <Link href={assistantHref(id, contextualAssistantPrompt("financeiro"))} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Analisar com IA
+          </Link>
+        </div>
         <FinancialNav companyId={id} period={period} current="resultado" availablePeriods={dash.availablePeriods} />
         <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
           Competência: {periodLongLabel(period)}

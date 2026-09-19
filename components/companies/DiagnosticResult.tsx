@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { assistantHref } from "@/lib/assistant-ui";
 import { DIAGNOSTIC_DIMENSIONS } from "@/lib/diagnostic";
 import { bottleneckSummary, diagnosisCoverage, diagnosisDelta, displayDiagnosisScore, financeIsBottleneck, scaleLabel } from "@/lib/diagnostic-ui";
 import { formatDateBR } from "@/lib/format";
+import { contextualAssistantPrompt } from "@/lib/journey-ui";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 
 export function DiagnosticResult({
@@ -19,7 +21,7 @@ export function DiagnosticResult({
   const bottleneck = bottleneckSummary(diagnosis.bottlenecks);
   const financeGap = financeIsBottleneck(diagnosis.bottlenecks);
   const nextHref = financeGap ? `/empresas/${companyId}/financeiro` : `/empresas/${companyId}/oportunidades/gerar?diagnostico=${diagnosis.id}`;
-  const nextCta = financeGap ? "Analisar financeiro" : "Revisar oportunidades";
+  const nextCta = financeGap ? "Analisar financeiro" : "Analisar oportunidades";
 
   return (
     <div className="space-y-5">
@@ -78,14 +80,26 @@ export function DiagnosticResult({
         <p className="text-[13px] font-bold">Leitura executiva</p>
         <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
           Notas são dado interno. Gargalo é inferência. O diagnóstico sozinho não vira evidência.
+          {bottleneck.title !== "Sem gargalo identificado"
+            ? " Os gargalos abaixo podem virar oportunidades — você revisa e salva. Nada é criado automaticamente."
+            : ""}
         </p>
-        <Link
-          href={nextHref}
-          className="mt-3 inline-flex rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]"
-          style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
-        >
-          {nextCta}
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href={nextHref}
+            className="inline-flex rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]"
+            style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+          >
+            {nextCta}
+          </Link>
+          <Link
+            href={assistantHref(companyId, contextualAssistantPrompt("diagnostico"))}
+            className="inline-flex rounded-xl border px-4 py-2 text-[12px] font-bold"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+          >
+            Analisar com IA
+          </Link>
+        </div>
       </section>
     </div>
   );

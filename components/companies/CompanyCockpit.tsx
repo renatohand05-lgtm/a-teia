@@ -1,16 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { formatBRL, formatDateBR, formatPercent } from "@/lib/format";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { StatusChip } from "@/components/ui/StatusChip";
 import type { ModuleStatus } from "@/lib/cockpit";
+import type { JourneyChip } from "@/lib/journey-ui";
 import type { CompanyDTO } from "@/services/companyService";
 import type { DiagnosisDTO } from "@/services/diagnosisService";
 import type { OnboardingDTO } from "@/services/onboardingService";
 
 export function CompanyCockpit({
   company,
+  journey,
   onboarding,
   latest,
   historyCount,
@@ -21,6 +24,7 @@ export function CompanyCockpit({
   memory,
 }: {
   company: CompanyDTO;
+  journey?: JourneyChip[];
   onboarding: OnboardingDTO | null;
   latest: DiagnosisDTO | null;
   historyCount: number;
@@ -56,10 +60,7 @@ export function CompanyCockpit({
   } | null;
 }) {
   const onboardingLabel = !onboarding ? "Não iniciado" : onboarding.status === "COMPLETE" ? "Completo" : "Em andamento";
-  const money = (value: number | null) =>
-    value != null
-      ? value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
-      : "—";
+  const money = (value: number | null) => (value != null ? formatBRL(value) : "Sem dados");
 
   const diagnosisStatus: ModuleStatus = latest ? "CONCLUIDO" : "SEM_DADOS";
   const opportunityStatus: ModuleStatus =
@@ -80,6 +81,30 @@ export function CompanyCockpit({
 
   return (
     <div className="space-y-5">
+      {journey?.length ? (
+        <section>
+          <h3 className="mb-3 text-[13px] font-bold uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+            Jornada da empresa
+          </h3>
+          <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8" aria-label="Progresso da jornada">
+            {journey.map((stage) => (
+              <li key={stage.key}>
+                <Link
+                  href={stage.href}
+                  className="block rounded-xl border px-3 py-2 transition hover:bg-white/[0.03]"
+                  style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+                >
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>
+                    {stage.label}
+                  </p>
+                  <p className="mt-1 text-[14px] font-bold">{stage.value}</p>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
       <section className="grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <div
           className="rounded-[24px] border p-6"
@@ -118,7 +143,7 @@ export function CompanyCockpit({
                   Gargalo: {latest.bottleneck}
                 </p>
                 <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
-                  {new Date(latest.createdAt).toLocaleString("pt-BR")}
+                  {formatDateBR(latest.createdAt)}
                 </p>
                 <div className="mt-3">
                   <RiskBadge label="DADO informado" tone="neutral" />
@@ -154,7 +179,7 @@ export function CompanyCockpit({
           />
           <ModuleCard
             eyebrow="Oportunidades"
-            title="Ranking de hipóteses"
+            title="Oportunidades"
             status={opportunityStatus}
             body={
               opportunities
@@ -177,7 +202,7 @@ export function CompanyCockpit({
             status={executionStatus}
             body="Tarefa concluída não valida oportunidade. Evidência nasce de experimento."
             href={`/empresas/${company.id}/execucao`}
-            cta="Abrir execução"
+            cta="Abrir plano 30/60/90"
           />
           <ModuleCard
             eyebrow="Financeiro"
@@ -212,7 +237,7 @@ export function CompanyCockpit({
           />
           <ModuleCard
             eyebrow="Aprendizado"
-            title="Memória estratégica"
+            title="Memória Estratégica"
             status={memoryStatus}
             body={
               memory
@@ -244,8 +269,8 @@ export function CompanyCockpit({
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
             <Mini label="Receita" value={money(finance.revenue)} />
             <Mini label="EBITDA" value={money(finance.ebitda)} />
-            <Mini label="EBITDA %" value={finance.ebitdaPercent != null ? `${finance.ebitdaPercent}%` : "—"} />
-            <Mini label="CMV %" value={finance.cogsPercent != null ? `${finance.cogsPercent}%` : "—"} />
+            <Mini label="EBITDA %" value={finance.ebitdaPercent != null ? formatPercent(finance.ebitdaPercent) : "Sem dados"} />
+            <Mini label="CMV %" value={finance.cogsPercent != null ? formatPercent(finance.cogsPercent) : "Sem dados"} />
             <Mini label="Ponto de equilíbrio" value={money(finance.breakEven)} />
             <Mini label="Gap para meta" value={money(finance.revenueGap)} />
           </div>

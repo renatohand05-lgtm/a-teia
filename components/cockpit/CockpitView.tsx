@@ -6,6 +6,7 @@ import { SourceCard } from "@/components/ui/SourceCard";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { displayPriorityScore, showCountBadge } from "@/lib/cockpit-ui";
 import { formatBRL } from "@/lib/format";
+import { cockpitPriorityCta, journeyChipValue } from "@/lib/journey-ui";
 import type { CockpitSnapshot } from "@/services/cockpitService";
 
 export function CockpitView({
@@ -58,11 +59,11 @@ export function CockpitView({
               <p className="text-[13px] font-semibold">{nextStep}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
-                  href={focusId ? `/empresas/${focusId}` : action.href}
+                  href={topPriority?.href ?? (focusId ? `/empresas/${focusId}` : action.href)}
                   className="rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]"
                   style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
                 >
-                  Ver empresa
+                  {cockpitPriorityCta(topPriority?.nextAction ?? action.cta)}
                 </Link>
                 <Link
                   href={focusId ? `/empresas/${focusId}/assistente?pergunta=${encodeURIComponent("Onde devo agir primeiro?")}` : "/assistente"}
@@ -99,6 +100,7 @@ export function CockpitView({
                   style={{ borderColor: "var(--border)" }}
                 >
                   <span className="block text-[11px] font-semibold">{stage.label}</span>
+                  <span className="mt-1 block text-[12px] font-bold">{journeyChipValue(snapshot.progress, stage.key)}</span>
                   <span className="mt-1 inline-flex">
                     <StatusChip status={stage.status} />
                   </span>

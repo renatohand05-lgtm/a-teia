@@ -7,6 +7,7 @@ import { CompanyHeader } from "@/components/companies/CompanyHeader";
 import { OpportunityOverview } from "@/components/companies/OpportunityOverview";
 import { AppShell } from "@/components/layout/AppShell";
 import { nextCockpitAction } from "@/lib/cockpit";
+import { buildCompanyHubJourney } from "@/lib/journey-ui";
 import { requireOwnedCompany } from "@/lib/access";
 import { getOnboarding } from "@/services/onboardingService";
 import { getLatestDiagnosis, listDiagnoses } from "@/services/diagnosisService";
@@ -73,6 +74,22 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
         />
         <CompanyCockpit
           company={company}
+          journey={buildCompanyHubJourney({
+            companyId: company.id,
+            companyName: company.name,
+            hasCompany: true,
+            hasDiagnosis: Boolean(latest),
+            opportunityCount: summary.totalCount,
+            prioritizedOpportunityCount: summary.activeCount,
+            planCount: execution.totalPlans,
+            financialCount: financeSummary ? 1 : 0,
+            experimentActiveCount: experimentSummary.active,
+            experimentCompletedCount: experimentSummary.completed,
+            evidenceCount: experimentSummary.completed,
+            evidenceValidatedCount: experimentSummary.validated,
+            memoryValidatedCount: memorySummary.validated,
+            attention: execution.overdueTasks > 0,
+          })}
           onboarding={onboarding}
           latest={latest}
           historyCount={history.length}
@@ -117,13 +134,13 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Execução estratégica</div>
-              <h2 className="mt-1 text-[18px] font-black">Planos 30/60/90</h2>
+              <h2 className="mt-1 text-[18px] font-black">Plano 30/60/90</h2>
               <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
                 {execution.activePlans} ativos · {execution.averageProgress}% de progresso médio · {execution.overdueTasks} tarefas atrasadas
               </p>
             </div>
             <Link href={`/empresas/${company.id}/execucao`} className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
-              Abrir execução
+              Abrir plano 30/60/90
             </Link>
           </div>
         </section>

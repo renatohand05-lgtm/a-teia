@@ -101,7 +101,7 @@ describe("Refinamento 2 — empresas e formulários", () => {
 
   it("módulos contextuais usam rotas reais", () => {
     expect(COMPANY_MODULE_TABS.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Execução", "Financeiro", "Experimentos", "Memória", "Assistente IA"]),
+      expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Plano 30/60/90", "Financeiro", "Experimentos", "Memória Estratégica", "Assistente IA"]),
     );
     expect(pathForModuleQuery("financeiro", "emp-1")).toBe("/empresas/emp-1/financeiro");
     expect(pathForModuleQuery("evidencias", "emp-1")).toContain("/experimentos");

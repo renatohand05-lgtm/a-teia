@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/States";
-import { EMPTY_AUDIT, auditActionLabel, auditCategoryLabel } from "@/lib/audit-ui";
+import Link from "next/link";
+import { formatDateTimeBR } from "@/lib/format";
+import { EMPTY_AUDIT, auditActionLabel, auditCategoryLabel, auditEntityLabel, auditResourceHref } from "@/lib/audit-ui";
 
 export type AuditEventView = {
   id: string;
   createdAt: string;
   actorName: string;
+  companyId: string | null;
   companyName: string | null;
   category: string;
   action: string;
@@ -126,10 +129,10 @@ export function AuditView({
                       background: selected?.id === item.id ? "rgba(232,191,122,0.08)" : "transparent",
                     }}
                   >
-                    <td className="px-4 py-3 whitespace-nowrap">{new Date(item.createdAt).toLocaleString("pt-BR")}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{formatDateTimeBR(item.createdAt)}</td>
                     <td className="px-4 py-3">{item.actorName}</td>
                     <td className="px-4 py-3">{auditActionLabel(item.action)}</td>
-                    <td className="px-4 py-3">{item.entity}</td>
+                    <td className="px-4 py-3">{auditEntityLabel(item.entity)}</td>
                     <td className="px-4 py-3">{item.companyName ?? "—"}</td>
                     <td className="px-4 py-3">{item.success ? "Sucesso" : "Falha"}</td>
                   </tr>
@@ -151,7 +154,7 @@ export function AuditView({
                 <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
                   {item.actorName} · {item.companyName ?? "Sem empresa"} · {item.success ? "Sucesso" : "Falha"}
                 </p>
-                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
+                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>{formatDateTimeBR(item.createdAt)}</p>
               </button>
             ))}
           </div>
@@ -164,9 +167,18 @@ export function AuditView({
               <Detail label="Usuário" value={selected.actorName} />
               <Detail label="Ação" value={auditActionLabel(selected.action)} />
               <Detail label="Técnico" value={selected.action} />
-              <Detail label="Recurso" value={`${selected.entity}${selected.entityId ? ` · ${selected.entityId}` : ""}`} />
+              <Detail label="Recurso" value={auditEntityLabel(selected.entity)} />
               <Detail label="Empresa" value={selected.companyName ?? "—"} />
-              <Detail label="Quando" value={new Date(selected.createdAt).toLocaleString("pt-BR")} />
+              <Detail label="Quando" value={formatDateTimeBR(selected.createdAt)} />
+              {auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ? (
+                <Link
+                  href={auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ?? "/auditoria"}
+                  className="inline-flex text-[12px] font-bold"
+                  style={{ color: "var(--gold-soft)" }}
+                >
+                  Abrir recurso
+                </Link>
+              ) : null}
               <div>
                 <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
                   Metadata

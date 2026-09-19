@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { assistantHref } from "@/lib/assistant-ui";
+import { contextualAssistantPrompt } from "@/lib/journey-ui";
+import { PendingButton } from "@/components/ui/PendingButton";
 import { AppShell } from "@/components/layout/AppShell";
 import { ExperimentClassBadge, ExperimentStage, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
 import { MeasurementForm } from "@/components/companies/MeasurementForm";
@@ -44,9 +47,14 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
   return (
     <AppShell title="Experimento" subtitle={company.name} userName={name}>
       <div className="mx-auto max-w-4xl space-y-5">
-        <Link href={`/empresas/${id}/experimentos`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-          ← Carteira de experimentos
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Link href={`/empresas/${id}/experimentos`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            ← Carteira de experimentos
+          </Link>
+          <Link href={assistantHref(id, contextualAssistantPrompt("experimento", experiment.title))} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Analisar com IA
+          </Link>
+        </div>
         <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <ExperimentStage
             status={experiment.status}
@@ -83,9 +91,9 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
           <form action={startExperimentAction}>
             <input type="hidden" name="companyId" value={id} />
             <input type="hidden" name="experimentId" value={experiment.id} />
-            <button className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }}>
+            <PendingButton className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }} pendingLabel="Iniciando...">
               Iniciar teste
-            </button>
+            </PendingButton>
           </form>
         ) : null}
 
@@ -104,7 +112,9 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
             <form action={cancelExperimentAction}>
               <input type="hidden" name="companyId" value={id} />
               <input type="hidden" name="experimentId" value={experiment.id} />
-              <button className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>Cancelar</button>
+              <PendingButton className="rounded-xl border px-4 py-3 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }} pendingLabel="Cancelando..." confirm="Cancelar este experimento? O histórico permanece.">
+                Cancelar
+              </PendingButton>
             </form>
           </div>
         ) : null}
@@ -172,7 +182,7 @@ export default async function ExperimentoPage({ params }: { params: Promise<{ id
                     className="mt-3 inline-flex rounded-xl px-4 py-3 text-[12px] font-black"
                     style={{ background: "var(--gold)", color: "#111" }}
                   >
-                    Registrar aprendizado
+                    Transformar em aprendizado
                   </Link>
                 ) : null}
               </div>

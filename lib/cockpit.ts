@@ -56,7 +56,7 @@ export const JOURNEY_STAGES = [
   { key: "empresa", label: "Empresa", moduleKey: "central" },
   { key: "diagnostico", label: "360°", moduleKey: "diagnostico" },
   { key: "oportunidade", label: "Oportunidade", moduleKey: "oportunidades" },
-  { key: "execucao", label: "Execução", moduleKey: "execucao" },
+  { key: "execucao", label: "Plano 30/60/90", moduleKey: "execucao" },
   { key: "financeiro", label: "Financeiro", moduleKey: "financeiro" },
   { key: "experimento", label: "Experimento", moduleKey: "experimentos" },
   { key: "evidencia", label: "Evidência", moduleKey: "evidencias" },

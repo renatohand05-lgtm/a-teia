@@ -26,6 +26,6 @@ export const INTELLIGENCE_NAV: NavItem[] = [
 ];
 
 export const FUTURE_NAV: NavItem[] = [
-  { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
-  { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
+  { href: "", label: "Conexões", enabled: false, group: "Em breve" },
+  { href: "", label: "Estratégia", enabled: false, group: "Em breve" },
 ];

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { assistantHref } from "@/lib/assistant-ui";
 import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState } from "@/components/ui/States";
 import { CalculationHelp } from "@/components/ui/CalculationHelp";
@@ -22,14 +23,17 @@ export default async function ExecucaoPage({ params }: { params: Promise<{ id: s
   const primaryHref = queued[0]
     ? `/empresas/${id}/execucao/novo?opportunityId=${queued[0].id}`
     : `/empresas/${id}/oportunidades`;
-  const primaryLabel = queued[0] ? "Criar plano" : "Revisar oportunidades";
+  const primaryLabel = queued[0] ? "Criar plano 30/60/90" : "Revisar oportunidades";
 
   return (
-    <AppShell title="Execução 30/60/90" subtitle={company.name} userName={name}>
+    <AppShell title="Plano 30/60/90" subtitle={company.name} userName={name}>
       <div className="mx-auto max-w-[1320px] space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href={`/empresas/${id}`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             ← Central da empresa
+          </Link>
+          <Link href={assistantHref(id, "O que está atrasado?")} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Analisar com IA
           </Link>
           <Link
             href={primaryHref}

@@ -33,10 +33,10 @@ export default async function PlanoPage({ params }: { params: Promise<{ id: stri
   const evidenceLabel = displayEvidence(plan.opportunityEvidenceLevel);
 
   return (
-    <AppShell title="Plano de execução" subtitle={company.name} userName={name}>
+    <AppShell title="Plano 30/60/90" subtitle={company.name} userName={name}>
       <div className="mx-auto max-w-4xl space-y-5">
         <Link href={`/empresas/${id}/execucao`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-          ← Carteira de execução
+          ← Carteira de planos 30/60/90
         </Link>
         <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
           <div className="flex flex-wrap items-start justify-between gap-4">

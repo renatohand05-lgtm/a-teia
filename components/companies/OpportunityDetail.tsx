@@ -18,6 +18,7 @@ import {
   displayPaybackMonths,
   isHypothesis,
   opportunityNextAction,
+  opportunityReviewDecisionLabel,
   scoreBadgeLabel,
   scorePartialNote,
   whyThisScore,
@@ -27,6 +28,9 @@ import type { ExperimentDTO } from "@/services/experimentService";
 import type { RelatedMemoryDTO } from "@/services/memoryService";
 import type { ScorePreview, RepetitionSummary } from "@/lib/memory-engine";
 import type { DecisionDTO } from "@/services/decisionService";
+import { assistantHref } from "@/lib/assistant-ui";
+import { contextualAssistantPrompt, decisionExecutionNext } from "@/lib/journey-ui";
+import { PendingButton } from "@/components/ui/PendingButton";
 import { ExperimentClassBadge, ExperimentStatusBadge } from "@/components/companies/ExperimentStage";
 import {
   MemoryConfidenceBadge,
@@ -36,6 +40,7 @@ import {
 export function OpportunityDetail({
   companyId,
   opportunity,
+  planId = null,
   experiments = [],
   decisions = [],
   relatedMemories = [],
@@ -45,6 +50,7 @@ export function OpportunityDetail({
 }: {
   companyId: string;
   opportunity: OpportunityDTO;
+  planId?: string | null;
   experiments?: ExperimentDTO[];
   decisions?: DecisionDTO[];
   relatedMemories?: RelatedMemoryDTO[];
@@ -52,10 +58,16 @@ export function OpportunityDetail({
   memoryConflicts?: number;
   repetition?: RepetitionSummary;
 }) {
-  const next = opportunityNextAction(opportunity, companyId);
+  const next = opportunityNextAction({ ...opportunity, planId }, companyId);
   const roi = calculateROI(opportunity.estimatedInvestment, opportunity.expectedMonthlyReturn);
   const partialNote = scorePartialNote(opportunity.scorePartial);
   const latestDecision = decisions[0];
+  const executionNext = decisionExecutionNext({
+    status: latestDecision?.status,
+    companyId,
+    opportunityId: opportunity.id,
+    planId,
+  });
 
   return (
     <div className="space-y-5">
@@ -153,7 +165,7 @@ export function OpportunityDetail({
         <CalculationHelp label="Evidência" text={OPPORTUNITY_HELP.evidence} />
       </section>
 
-      <section className="surface-card space-y-3 p-5">
+      <section id="decisao" className="surface-card space-y-3 p-5">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
           Decisão
         </p>
@@ -172,21 +184,33 @@ export function OpportunityDetail({
               </p>
             ) : null}
             <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-              Rejeição não apaga a oportunidade. A IA não aprova decisão.
+              {executionNext.show === false && executionNext.note
+                ? executionNext.note
+                : "Rejeição não apaga a oportunidade. A IA não aprova decisão."}
             </p>
+            {executionNext.show ? (
+              <Link href={executionNext.href} className="inline-flex rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
+                {executionNext.label}
+              </Link>
+            ) : null}
           </>
         ) : (
           <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
-            Nenhuma decisão registrada. Criar o plano 30/60/90 é uma decisão humana explícita — a IA não aprova.
+            Nenhuma decisão registrada. Revisar para decisão é uma ação humana explícita — a IA não aprova.
           </p>
         )}
-        <Link href="/alocacao" className="inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
-          Ver alocação
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/alocacao" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Ver alocação
+          </Link>
+          <Link href={assistantHref(companyId, contextualAssistantPrompt("oportunidade", opportunity.title))} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Analisar com IA
+          </Link>
+        </div>
       </section>
 
       <section className="space-y-3">
-        <PrimaryAction companyId={companyId} opportunity={opportunity} />
+        <PrimaryAction companyId={companyId} opportunity={opportunity} planId={planId} />
         <details className="text-[13px]">
           <summary className="cursor-pointer font-semibold" style={{ color: "var(--text-2)" }}>
             Mais ações
@@ -199,15 +223,14 @@ export function OpportunityDetail({
             <form action={queueForPlanAction}>
               <input type="hidden" name="companyId" value={companyId} />
               <input type="hidden" name="opportunityId" value={opportunity.id} />
-              <button
-                type="submit"
+              <PendingButton
                 className="rounded-xl border px-4 py-2.5 text-[13px] font-bold"
                 style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
               >
-                {opportunity.queuedForPlan ? "Na fila do plano 30/60/90" : "Preparar para plano de ação"}
-              </button>
+                {opportunityReviewDecisionLabel(opportunity.queuedForPlan)}
+              </PendingButton>
             </form>
-            {next.kind !== "plan" ? (
+            {next.kind !== "plan" && !planId && executionNext.show !== true ? (
               <Ghost href={`/empresas/${companyId}/execucao/novo?opportunityId=${opportunity.id}`}>
                 Criar plano 30/60/90
               </Ghost>
@@ -328,11 +351,13 @@ export function OpportunityDetail({
 function PrimaryAction({
   companyId,
   opportunity,
+  planId,
 }: {
   companyId: string;
   opportunity: OpportunityDTO;
+  planId?: string | null;
 }) {
-  const next = opportunityNextAction(opportunity, companyId);
+  const next = opportunityNextAction({ ...opportunity, planId }, companyId);
   if (next.kind === "activate") {
     return <StatusButton companyId={companyId} id={opportunity.id} status="ACTIVE" label="Ativar" primary />;
   }
@@ -368,17 +393,17 @@ function StatusButton({
       <input type="hidden" name="companyId" value={companyId} />
       <input type="hidden" name="opportunityId" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
+      <PendingButton
         className="rounded-xl px-4 py-2.5 text-[13px] font-bold"
         style={
           primary
             ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08", fontWeight: 800 }
             : { border: "1px solid var(--border)", color: "var(--text-2)" }
         }
+        confirm={status === "ARCHIVED" ? "Arquivar esta oportunidade? O histórico permanece." : undefined}
       >
         {label}
-      </button>
+      </PendingButton>
     </form>
   );
 }

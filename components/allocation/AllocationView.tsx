@@ -20,6 +20,8 @@ import {
   riskLabel,
   scenarioLabel,
 } from "@/lib/allocation-ui";
+import { assistantHref } from "@/lib/assistant-ui";
+import { contextualAssistantPrompt } from "@/lib/journey-ui";
 import { ALLOCATION_SHORTCUTS } from "@/lib/resource-allocation-engine";
 import type { AllocationWorkspace } from "@/services/allocationService";
 
@@ -48,6 +50,13 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
         <p className="mt-2 text-[12px]" style={{ color: "var(--text-3)" }}>
           {workspace.coverage}
         </p>
+        <Link
+          href={assistantHref(workspace.companies[0]?.id, contextualAssistantPrompt("alocacao"))}
+          className="mt-3 inline-flex text-[12px] font-bold"
+          style={{ color: "var(--gold-soft)" }}
+        >
+          Analisar com IA
+        </Link>
       </section>
 
       <form action={simulateAllocationAction} className="rounded-2xl border p-4 space-y-4" style={{ borderColor: "var(--border)" }}>

@@ -4,7 +4,7 @@ export const COVERAGE_ITEMS = [
   { key: "financeiro da competência", label: "Financeiro" },
   { key: "diagnóstico 360°", label: "Diagnóstico" },
   { key: "oportunidades", label: "Oportunidades" },
-  { key: "planos 30/60/90", label: "Execução" },
+  { key: "planos 30/60/90", label: "Plano 30/60/90" },
   { key: "experimentos", label: "Experimentos" },
   { key: "memória estratégica", label: "Memória" },
 ] as const;

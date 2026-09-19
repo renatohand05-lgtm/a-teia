@@ -30,9 +30,9 @@ describe("navegação da empresa", () => {
     const labels = COMPANY_NAV.flatMap((item) => [item.label, ...(item.children?.map((child) => child.label) ?? [])]);
     expect(labels).toEqual(
       expect.arrayContaining([
-        "Diagnóstico",
+        "Diagnóstico 360°",
         "Oportunidades",
-        "Execução 30/60/90",
+        "Plano 30/60/90",
         "Financeiro",
         "DRE",
         "Fluxo de caixa",
