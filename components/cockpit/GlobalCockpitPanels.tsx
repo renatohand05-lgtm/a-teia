@@ -62,6 +62,19 @@ export function GlobalCockpitPanels({
         <Mini label="Evidências recentes" value={String(snapshot.counts.evidenceValidated)} hint="Validadas" />
       </section>
 
+      <section className="rounded-2xl border p-4" style={{ borderColor: "rgba(232,191,122,.28)", background: "rgba(232,191,122,.05)" }}>
+        <Header title="Alocação de recursos" subtitle="Quanto alocar, em qual empresa e com qual risco. A IA não aprova sozinha." />
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <Mini label="Capital disponível" value={formatBRL(snapshot.allocation.capitalAvailable)} hint={snapshot.allocation.capitalAvailable == null ? "Não informado" : "Persistido pelo owner"} />
+          <Mini label="Capital proposto" value={formatBRL(snapshot.allocation.capitalProposed)} hint={snapshot.allocation.status ?? "Sem simulação"} />
+          <Mini label="Capital preservado" value={formatBRL(snapshot.allocation.capitalPreserved)} hint="Não força 100%" />
+          <Mini label="Horas / capacidade" value={snapshot.allocation.hoursProposed == null ? "Não informado" : `${snapshot.allocation.hoursProposed}h`} hint={`Capacidade ${snapshot.allocation.capacityUsed ?? "—"}/${snapshot.allocation.capacityLimit ?? "não definida"} · ${snapshot.allocation.pendingDecisions} decisões`} />
+        </div>
+        <Link href="/alocacao" className="mt-3 inline-block text-[12px] font-extrabold" style={{ color: "var(--gold-soft)" }}>
+          Simular alocação
+        </Link>
+      </section>
+
       <FilterBar filters={filters} companies={snapshot.companies} />
 
       <section id="cockpit-prioridades">

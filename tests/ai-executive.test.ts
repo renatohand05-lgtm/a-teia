@@ -286,6 +286,7 @@ describe("segurança do prompt e recorte de contexto", () => {
     expect(detectQuestionIntent("Meu CMV está bom comparado ao mercado?")).toBe("BENCHMARK");
     expect(detectQuestionIntent("Analise concorrentes públicos do meu segmento")).toBe("COMPETITION");
     expect(detectQuestionIntent("Quais oportunidades externas existem?")).toBe("EXTERNAL_OPPORTUNITY");
+    expect(detectQuestionIntent("Tenho R$ 100 mil. Onde alocar?")).toBe("ALLOCATION");
     expect(resolveOpenAIModel("")).toBe("gpt-4.1-mini");
     expect(resolveOpenAIModel("gpt-4.1")).toBe("gpt-4.1");
     expect(blockedMutationTypes()).toContain("concluir experimento");

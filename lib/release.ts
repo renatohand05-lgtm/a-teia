@@ -1,7 +1,7 @@
 import packageJson from "../package.json";
 
 export const APP_NAME = "A TEIA";
-export const APP_RELEASE = "Sprint 9";
+export const APP_RELEASE = "Sprint 10";
 export const APP_VERSION = packageJson.version;
 
 export function appEnvironment(): string {

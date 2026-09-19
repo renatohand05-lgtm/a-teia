@@ -24,6 +24,8 @@ import { getExecutiveContext } from "@/services/aiContextService";
 import { persistProposedActions } from "@/services/aiActionService";
 import { writeAudit } from "@/services/auditService";
 import { runExternalResearch } from "@/services/researchService";
+import { getAllocationAIBundle } from "@/services/allocationService";
+import { isAllocationQuestion } from "@/lib/resource-allocation-engine";
 import { loadPortfolioBundle } from "@/services/portfolioService";
 
 export type AIChatMessage = {
@@ -170,6 +172,9 @@ export async function askExecutiveAssistant(input: {
   const context = conversation.companyId ? await getExecutiveContext(input.userId, conversation.companyId) : null;
   const sliced = context ? sliceExecutiveContext(context, detectQuestionIntent(input.message)) : null;
   const portfolio = conversation.companyId ? null : await loadPortfolioBundle(input.userId);
+  const allocation = !conversation.companyId && isAllocationQuestion(input.message)
+    ? await getAllocationAIBundle(input.userId)
+    : null;
   if (portfolio) {
     await writeAudit({
       actorId: input.userId,
@@ -193,7 +198,19 @@ export async function askExecutiveAssistant(input: {
     },
     input.message,
   );
-  if (portfolio) {
+  if (allocation) {
+    answer = {
+      ...answer,
+      summary: allocation.summary,
+      data: [
+        { kind: "DADO" as const, text: allocation.summary.split("\n").find((line) => line.startsWith("DADO:")) ?? "Simulação persistida do owner.", source: "Cadastro" as const },
+      ],
+      inferences: [
+        { kind: "INFERENCIA" as const, text: "Ranking determinístico. Retorno estimado não é garantia. IA não aprova investimento.", source: "Cadastro" as const },
+      ],
+      nextActions: ["Revisar a proposta em /alocacao e enviar para decisão humana se fizer sentido."],
+    };
+  } else if (portfolio) {
     answer = {
       ...answer,
       summary: portfolio.aiSummary,
@@ -261,7 +278,7 @@ export async function askExecutiveAssistant(input: {
             : null;
       const narrative = await callOpenAIChat(
         buildOpenAIMessages({
-          context: sliced ?? { portfolio: portfolio?.aiContext.payload ?? null },
+          context: sliced ?? { portfolio: portfolio?.aiContext.payload ?? null, allocation: allocation?.context.payload ?? null },
           question: input.message,
           deterministic: answer,
           externalResearch: externalBlock,

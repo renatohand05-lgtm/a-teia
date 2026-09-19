@@ -15,6 +15,7 @@ export const PRIMARY_NAV: NavItem[] = [
 export const CENTRAL_NAV: NavItem[] = [
   { href: "/cockpit#cockpit-prioridades", label: "Prioridades", enabled: true, group: "Central" },
   { href: "/cockpit#cockpit-decisoes", label: "Decisões", enabled: true, group: "Central" },
+  { href: "/alocacao", label: "Alocação", enabled: true, group: "Central" },
 ];
 
 export const INTELLIGENCE_NAV: NavItem[] = [

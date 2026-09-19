@@ -25,6 +25,7 @@ export type DecisionDTO = {
 export async function proposeDecision(input: {
   createdById: string;
   companyId?: string;
+  opportunityId?: string;
   title: string;
   rationale: string;
   origin: AuditSource;
@@ -33,6 +34,12 @@ export async function proposeDecision(input: {
     const company = await prisma.company.findFirst({ where: { id: input.companyId, ownerId: input.createdById } });
     if (!company) throw new Error("Empresa não encontrada.");
   }
+  if (input.opportunityId) {
+    const opportunity = await prisma.opportunity.findFirst({
+      where: { id: input.opportunityId, company: { ownerId: input.createdById } },
+    });
+    if (!opportunity) throw new Error("Oportunidade não encontrada.");
+  }
 
   const requiresHumanApproval = true;
 
@@ -40,6 +47,7 @@ export async function proposeDecision(input: {
     data: {
       createdById: input.createdById,
       companyId: input.companyId,
+      opportunityId: input.opportunityId,
       title: input.title,
       rationale: input.rationale,
       origin: input.origin,

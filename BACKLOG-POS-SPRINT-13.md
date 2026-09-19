@@ -1,6 +1,6 @@
 # Backlog pós-Sprint 13 — acabamento não bloqueante
 
-Itens abaixo **não bloqueiam** o Sprint 9. São microajustes visuais e de acabamento.
+Itens abaixo **não bloqueiam** os Sprints 9 e 10. São microajustes visuais e de acabamento.
 
 Não usar este arquivo para esconder bug, falha de segurança, cálculo incorreto, vazamento, erro de banco, quebra de owner isolation ou falha de deploy.
 
@@ -26,3 +26,14 @@ Não usar este arquivo para esconder bug, falha de segurança, cálculo incorret
 - Truncamento de títulos longos de oportunidade no resumo global
 - Ícones discretos de tendência (↑ ↓ →)
 - Estado vazio ilustrado sem conteúdo demo
+- Gráficos simples de mapa de capital/tempo na Alocação
+- Tooltips dos campos de reserva e máximo percentual
+- Densidade dos cards da proposta em mobile
+- Animação ao recalcular cenário
+- Drag-and-drop para reordenar iniciativas na simulação
+- Comparação visual lado a lado Conservador/Balanceado/Expansão
+- Atalhos de teclado para simular e enviar à decisão
+- Copy mais curta dos avisos de concentração
+- Personalização da ordem dos mapas de capital e tempo
+- Skeleton da simulação
+- Microinteração do “Por que esta alocação?”

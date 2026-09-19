@@ -91,7 +91,12 @@ export function Sidebar() {
 
         <GroupLabel>Central</GroupLabel>
         {CENTRAL_NAV.map((item) => (
-          <NavLink key={item.href} href={item.href} active={false} label={item.label} />
+          <NavLink
+            key={item.href}
+            href={item.href}
+            active={item.href === "/alocacao" ? pathname === "/alocacao" : false}
+            label={item.label}
+          />
         ))}
 
         <GroupLabel>Em breve</GroupLabel>

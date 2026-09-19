@@ -153,7 +153,7 @@ describe("menu do produto publicado", () => {
       "Experimentos",
     ]);
     expect(INTELLIGENCE_NAV.map((item) => item.label)).toEqual(expect.arrayContaining(["Memória Estratégica", "Assistente IA"]));
-    expect(CENTRAL_NAV.map((item) => item.label)).toEqual(["Prioridades", "Decisões"]);
+    expect(CENTRAL_NAV.map((item) => item.label)).toEqual(["Prioridades", "Decisões", "Alocação"]);
     expect(FUTURE_NAV.map((item) => item.label)).not.toContain("Assistente IA");
     expect(COMPANY_MODULE_TABS.map((item) => item.label)).toEqual(
       expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Execução", "Financeiro", "Experimentos", "Memória"]),

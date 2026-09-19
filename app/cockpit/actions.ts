@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AuditSource } from "@prisma/client";
 import { auth } from "@/auth";
 import { writeAudit } from "@/services/auditService";
+import { syncAllocationFromDecision } from "@/services/allocationService";
 import { approveDecision, deferDecision, rejectDecision, reviewDecision } from "@/services/decisionService";
 
 async function actor() {
@@ -16,13 +17,17 @@ async function actor() {
 export async function approveDecisionAction(decisionId: string) {
   const actorId = await actor();
   await approveDecision({ actorId, decisionId });
+  await syncAllocationFromDecision({ actorId, decisionId, status: "APPROVED" });
   revalidatePath("/cockpit");
+  revalidatePath("/alocacao");
 }
 
 export async function rejectDecisionAction(decisionId: string) {
   const actorId = await actor();
   await rejectDecision({ actorId, decisionId });
+  await syncAllocationFromDecision({ actorId, decisionId, status: "REJECTED" });
   revalidatePath("/cockpit");
+  revalidatePath("/alocacao");
 }
 
 export async function deferDecisionAction(decisionId: string) {

@@ -148,6 +148,63 @@ enum MemoryPolarity {
   INCONCLUSIVE
 }
 
+enum AllocationScenarioKind {
+  CONSERVADOR
+  BALANCEADO
+  EXPANSAO
+}
+
+enum AllocationHorizon {
+  DAYS_30
+  DAYS_60
+  DAYS_90
+  MONTHS_6
+  MONTHS_12
+}
+
+enum AllocationStatus {
+  SIMULATION
+  PROPOSAL
+  SENT_TO_DECISION
+  APPROVED
+  REJECTED
+}
+
+enum AllocationEligibility {
+  ELEGIVEL
+  ELEGIVEL_COM_RESSALVAS
+  DADOS_INSUFICIENTES
+  BLOQUEADO
+}
+
+enum AllocationSourceKind {
+  OPPORTUNITY
+  PLAN
+  EXPERIMENT
+  DECISION
+  PRIORITY
+}
+
+enum AllocationEvidenceClass {
+  SEM_EVIDENCIA
+  HIPOTESE
+  SINAL_INICIAL
+  EVIDENCIA_VALIDADA
+}
+
+enum AllocationRiskLevel {
+  BAIXO
+  MODERADO
+  ALTO
+  INDETERMINADO
+}
+
+enum AllocationReadiness {
+  PRONTO
+  PARCIAL
+  INSUFICIENTE
+}
+
 enum AIActionType {
   CREATE_EXPERIMENT
   CREATE_PLAN
@@ -184,7 +241,9 @@ model User {
   opportunities     Opportunity[]
   experiments       Experiment[]
   experimentResults ExperimentResult[]
-  aiActionProposals AIActionProposal[]
+  aiActionProposals   AIActionProposal[]
+  resourceBudget      ResourceBudget?
+  allocationProposals AllocationProposal[]
 }
 
 model Company {
@@ -226,6 +285,7 @@ model Company {
   files              StoredFile[]
   onboarding         CompanyOnboarding?
   aiActionProposals  AIActionProposal[]
+  allocationItems    AllocationItem[]
 
   @@index([ownerId, status])
   @@index([name])
@@ -479,8 +539,9 @@ model Decision {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  actionPlans      ActionPlan[]
-  researchSessions ResearchSession[]
+  actionPlans          ActionPlan[]
+  researchSessions     ResearchSession[]
+  allocationProposals  AllocationProposal[]
 
   @@index([companyId, status])
 }
@@ -831,4 +892,83 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([actorId, createdAt])
+}
+
+/// Orçamento do owner. Nulo = não informado. Nunca inventar disponibilidade.
+model ResourceBudget {
+  id                      String            @id @default(cuid())
+  ownerId                 String            @unique
+  owner                   User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  capitalAvailable        Decimal?          @db.Decimal(14, 2)
+  hoursAvailable          Decimal?          @db.Decimal(10, 2)
+  capacityLimit           Int?
+  reserveMinimum          Decimal?          @db.Decimal(14, 2)
+  maxPerCompany           Decimal?          @db.Decimal(14, 2)
+  maxPerInitiative        Decimal?          @db.Decimal(14, 2)
+  maxPercentPerInitiative Decimal?          @db.Decimal(8, 2)
+  horizon                 AllocationHorizon @default(DAYS_90)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+}
+
+/// Simulação/proposta versionada. Nova simulação não sobrescreve decisão aprovada.
+model AllocationProposal {
+  id                      String                 @id @default(cuid())
+  ownerId                 String
+  owner                   User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  version                 Int
+  status                  AllocationStatus       @default(SIMULATION)
+  scenario                AllocationScenarioKind @default(BALANCEADO)
+  horizon                 AllocationHorizon      @default(DAYS_90)
+  capitalAvailable        Decimal?               @db.Decimal(14, 2)
+  hoursAvailable          Decimal?               @db.Decimal(10, 2)
+  capacityLimit           Int?
+  reserveMinimum          Decimal?               @db.Decimal(14, 2)
+  maxPerCompany           Decimal?               @db.Decimal(14, 2)
+  maxPerInitiative        Decimal?               @db.Decimal(14, 2)
+  maxPercentPerInitiative Decimal?               @db.Decimal(8, 2)
+  capitalAllocated        Decimal?               @db.Decimal(14, 2)
+  capitalPreserved        Decimal?               @db.Decimal(14, 2)
+  hoursAllocated          Decimal?               @db.Decimal(10, 2)
+  hoursPreserved          Decimal?               @db.Decimal(10, 2)
+  snapshot                Json
+  decisionId              String?
+  decision                Decision?              @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  actionPlanId            String?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  items AllocationItem[]
+
+  @@unique([ownerId, version])
+  @@index([ownerId, status, createdAt])
+}
+
+model AllocationItem {
+  id              String                   @id @default(cuid())
+  proposalId      String
+  proposal        AllocationProposal       @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  companyId       String?
+  company         Company?                 @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  sourceKind      AllocationSourceKind
+  sourceId        String
+  title           String
+  allocated       Boolean                  @default(false)
+  skipReason      String?
+  eligibility     AllocationEligibility
+  readiness       AllocationReadiness
+  risk            AllocationRiskLevel
+  evidenceClass   AllocationEvidenceClass
+  capital         Decimal?                 @db.Decimal(14, 2)
+  hours           Decimal?                 @db.Decimal(10, 2)
+  expectedReturn  Decimal?                 @db.Decimal(14, 2)
+  paybackMonths   Decimal?                 @db.Decimal(8, 2)
+  estimatedRoiBps Int?
+  rationale       String?
+  explanation     Json?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([proposalId, allocated])
+  @@index([companyId])
 }
