@@ -1,8 +1,8 @@
 {
   "name": "a-teia",
-  "version": "0.12.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "A TEIA — sistema executivo de decisão. Release Sprint 12.",
+  "description": "A TEIA — sistema executivo de decisão. Release 1.0.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate --schema database/schema.prisma && next build",

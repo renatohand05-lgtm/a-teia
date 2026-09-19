@@ -159,6 +159,7 @@ describe("menu do produto publicado", () => {
     expect(COMPANY_MODULE_TABS.map((item) => item.label)).toEqual(
       expect.arrayContaining(["Visão Geral", "Diagnóstico 360°", "Oportunidades", "Execução", "Financeiro", "Experimentos", "Memória"]),
     );
+    expect(FUTURE_NAV.map((item) => item.label)).toEqual(["Conexões", "Estratégia"]);
     expect(FUTURE_NAV.every((item) => item.enabled === false)).toBe(true);
     expect(FUTURE_NAV.map((item) => item.label)).not.toEqual(expect.arrayContaining(["Execução", "Financeiro", "Oportunidades"]));
   });

@@ -85,7 +85,15 @@ export default async function ExperimentosPage({
         </form>
 
         {items.length === 0 ? (
-          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Nenhum experimento neste filtro.</p>
+          <div className="rounded-2xl border p-6" style={{ borderColor: "var(--border)" }}>
+            <p className="font-bold">Nenhum experimento neste filtro.</p>
+            <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+              Hipótese sem medição não é evidência. Crie um teste a partir de uma oportunidade ou plano.
+            </p>
+            <Link href={`/empresas/${id}/experimentos/novo`} className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+              Novo experimento →
+            </Link>
+          </div>
         ) : (
           <div className="space-y-3">
             {items.map((item) => (

@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/States";
 import { formatBRL } from "@/lib/format";
 import { fromCents, fromHourHundredths } from "@/lib/money";
 import { ALLOCATION_SHORTCUTS } from "@/lib/resource-allocation-engine";
+import { ALLOCATION_STATUS_LABELS, statusLabel } from "@/lib/status-labels";
 import type { AllocationWorkspace } from "@/services/allocationService";
 
 export function AllocationView({ workspace }: { workspace: AllocationWorkspace }) {
@@ -222,7 +223,7 @@ export function AllocationView({ workspace }: { workspace: AllocationWorkspace }
                       <td className="px-3 py-2.5">{row.count}</td>
                       <td className="px-3 py-2.5">{row.risk}</td>
                       <td className="px-3 py-2.5">{row.evidence}</td>
-                      <td className="px-3 py-2.5">{latest?.status ?? "SIMULATION"}</td>
+                      <td className="px-3 py-2.5">{statusLabel(latest?.status, ALLOCATION_STATUS_LABELS, "Simulação")}</td>
                     </tr>
                   ))}
                 </tbody>

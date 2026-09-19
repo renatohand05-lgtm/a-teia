@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/States";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import {
   EVIDENCE_LABELS,
@@ -17,9 +18,20 @@ export function OpportunityRanking({
 }) {
   if (!items.length) {
     return (
-      <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
-        Nenhuma oportunidade neste filtro. Gere a partir do diagnóstico ou crie uma hipótese manual.
-      </p>
+      <EmptyState
+        title="Nenhuma oportunidade neste filtro."
+        body="Gere hipóteses a partir do Diagnóstico 360° ou registre uma oportunidade manual."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/empresas/${companyId}/oportunidades/gerar`} className="rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
+              Gerar do diagnóstico
+            </Link>
+            <Link href={`/empresas/${companyId}/oportunidades/nova`} className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
+              Nova oportunidade
+            </Link>
+          </div>
+        }
+      />
     );
   }
 

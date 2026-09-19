@@ -1,8 +1,8 @@
 # A TEIA
 
-Sistema executivo de decisão. **GESTÃO NO FOCO** no núcleo.
+Sistema executivo de decisão. **Release 1.0.**
 
-Sprint 0: fundação da aplicação real a partir do protótipo visual V9.
+GESTÃO NO FOCO no núcleo. Hipótese não é evidência. A IA analisa e propõe; o humano decide.
 
 ## Stack
 
@@ -13,10 +13,9 @@ Next.js · TypeScript · React · Tailwind CSS · PostgreSQL · Prisma · Auth.j
 ```bash
 npm install
 cp .env.example .env.local
-npx prisma dev --detach --name a-teia
 ```
 
-Copie a URL `postgres://...` impressa para `DATABASE_URL` em `.env` e `.env.local`. Preencha também `AUTH_SECRET`, `AUTH_EMAIL` e `AUTH_PASSWORD`.
+Preencha `DATABASE_URL`, `AUTH_SECRET`, `AUTH_EMAIL` e `AUTH_PASSWORD`.
 
 ```bash
 npx prisma migrate deploy --schema database/schema.prisma
@@ -33,23 +32,24 @@ Abra [http://localhost:3000](http://localhost:3000) e entre com o usuário princ
 | `npm run dev` | Desenvolvimento |
 | `npm run build` | Build de produção |
 | `npm start` | Servidor de produção |
-| `npm test` | Testes da fundação |
+| `npm test` | Testes |
 | `npm run db:migrate` | Migração Prisma (dev) |
 | `npm run db:seed` | Cria/atualiza o usuário principal |
-| `npm run verify` | Checagens extras da Sprint 0 |
 
-## Rotas
+## Rotas principais
 
-- `/login` — autenticação do usuário principal
-- `/cockpit` — cockpit executivo (V9)
+- `/login` — autenticação
+- `/cockpit` — cockpit multiempresa
 - `/empresas` — carteira
-- `/empresas/nova` — cadastro
-- `/empresas/[id]` — visualizar / editar / arquivar
-- `/api/ai` — arquitetura de IA (servidor)
-- `/api/companies` — API validada de empresas
+- `/alocacao` — simulação e proposta de recursos
+- `/automacoes` — regras, alertas e rotinas
+- `/auditoria` — rastro de ações
+- `/assistente` — IA executiva
+- `/memoria` — memória estratégica
+- `/api/health` — saúde operacional
 
 ## Segurança
 
-A chave `OPENAI_API_KEY`, a `DATABASE_URL` e o `AUTH_SECRET` existem apenas em variáveis de ambiente de servidor. Não são enviadas ao frontend.
+`OPENAI_API_KEY`, `TAVILY_API_KEY`, `CRON_SECRET`, `DATABASE_URL` e `AUTH_SECRET` existem só no servidor. Não vão para o browser.
 
-Veja `/docs` para arquitetura, banco, IA e deploy.
+Documentação do produto: `A-TEIA-1.0-PRODUCT-MAP.md`. Checklist: `RELEASE-1.0-CHECKLIST.md`.

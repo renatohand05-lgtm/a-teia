@@ -156,8 +156,8 @@ describe("Sprint 12 — pesquisa, cron, rate limit e erros", () => {
   it("health não expõe segredo e erro não devolve stack", () => {
     const payload = buildHealthPayload();
     const serialized = JSON.stringify(payload);
-    expect(payload.release).toBe("Sprint 12");
-    expect(payload.version).toBe("0.12.0");
+    expect(payload.release).toBe("1.0");
+    expect(payload.version).toBe("1.0.0");
     expect(serialized).not.toMatch(/sk-|tvly-|CRON_SECRET=|DATABASE_URL|AUTH_SECRET/);
     const mapped = toPublicError(new Error("PrismaClientKnownRequestError\n    at foo (internal/prisma.ts:12:3)"));
     expect(mapped.status).toBe(500);

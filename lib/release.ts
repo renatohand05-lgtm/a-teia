@@ -3,7 +3,7 @@ import { isOpenAIConfigured, isWebSearchConfigured } from "@/lib/integrations";
 import packageJson from "../package.json";
 
 export const APP_NAME = "A TEIA";
-export const APP_RELEASE = "Sprint 12";
+export const APP_RELEASE = "1.0";
 export const APP_VERSION = packageJson.version;
 
 export function appEnvironment(): string {

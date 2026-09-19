@@ -3,7 +3,7 @@ import { ActionPanel } from "@/components/ui/ActionPanel";
 import { DecisionCard } from "@/components/ui/DecisionCard";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { NetworkMap } from "@/components/ui/NetworkMap";
+import { ConnectionsPreview } from "@/components/cockpit/ConnectionsPreview";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { EmptyState } from "@/components/ui/States";
@@ -384,7 +384,7 @@ export function CockpitView({
         </div>
       </section>
 
-      <NetworkMap />
+      <ConnectionsPreview companies={active.map((company) => ({ id: company.id, name: company.name }))} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <SourceCard kind="INTERNAL_DATA" title="Dado interno" body="Cadastro, 360°, financeiro e evidências persistidos." />
@@ -392,7 +392,7 @@ export function CockpitView({
         <SourceCard kind="HYPOTHESIS" title="Hipótese" body="Oportunidade ainda não validada. Exige experimento." />
         <SourceCard kind="EVIDENCE" title="Evidência" body="Resultado medido. Nunca sobrescreve o histórico." />
         <SourceCard kind="RECOMMENDATION" title="Recomendação" body="Sugestão prática. Execução só após aprovação humana." />
-        <SourceCard kind="EXTERNAL_SOURCE" title="Fonte externa" body="Pesquisa web ainda não está disponível neste produto." />
+        <SourceCard kind="EXTERNAL_SOURCE" title="Fonte externa" body="Pesquisa web persistida e rotulada. Não vira evidência interna nem altera score automaticamente." />
       </section>
     </div>
   );

@@ -108,7 +108,20 @@ export default async function EmpresaMemoriaPage({
         </form>
 
         {items.length === 0 ? (
-          <p className="text-[13px]" style={{ color: "var(--text-2)" }}>Nenhuma memória neste filtro. Transforme uma evidência em aprendizado ou registre uma observação.</p>
+          <div className="rounded-2xl border p-6" style={{ borderColor: "var(--border)" }}>
+            <p className="font-bold">Nenhuma memória neste filtro.</p>
+            <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
+              Transforme uma evidência em aprendizado ou registre uma observação. Pesquisa externa não vira memória validada sozinha.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href={`/empresas/${id}/experimentos?status=COMPLETED`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                Ver evidências →
+              </Link>
+              <Link href={`/empresas/${id}/memoria/nova`} className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                Registrar observação →
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
             {items.map((item) => (

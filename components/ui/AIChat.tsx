@@ -5,7 +5,7 @@ import { useState } from "react";
 type Msg = { role: "system" | "user" | "ai"; text: string };
 
 export function AIChat({
-  disabledReason = "Assistente completo ainda não está disponível.",
+  disabledReason = "Ações críticas exigem confirmação humana.",
 }: {
   disabledReason?: string;
 }) {
