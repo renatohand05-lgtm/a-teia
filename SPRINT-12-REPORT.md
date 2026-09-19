@@ -2,7 +2,7 @@
 
 **Data:** 2026-09-19  
 **Commit:** `feat: Sprint 12 security hardening and operational governance`  
-**SHA:** _registrado após o commit_  
+**SHA:** `236edca5451dd71bb937e1872c0c0e6d4b935b61`  
 **Branch:** `main`  
 **Sprint 13:** não iniciada.
 
