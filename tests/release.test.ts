@@ -10,12 +10,18 @@ describe("release e health", () => {
     expect(payload.app).toBe(APP_NAME);
     expect(payload.release).toBe(APP_RELEASE);
     expect(payload.version).toBe(APP_VERSION);
-    expect(payload.version).toBe("0.11.0");
+    expect(payload.version).toBe("0.12.0");
+    expect(payload.release).toBe("Sprint 12");
     expect(payload).not.toHaveProperty("sprint");
     expect(payload.openaiExposed).toBe(false);
+    expect(typeof payload.openaiConfigured).toBe("boolean");
+    expect(typeof payload.webSearchConfigured).toBe("boolean");
+    expect(["ok", "not_configured"]).toContain(payload.database);
     expect(payload.automationEngine).toBe("ok");
     expect(["configured", "not_configured"]).toContain(payload.scheduler);
     expect(JSON.stringify(payload)).not.toMatch(/CRON_SECRET=/);
+    expect(JSON.stringify(payload)).not.toMatch(/sk-/);
+    expect(JSON.stringify(payload)).not.toMatch(/tvly-/);
   });
 });
 

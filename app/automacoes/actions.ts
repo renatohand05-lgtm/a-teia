@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { HUMAN_MESSAGES } from "@/lib/human-messages";
+import { assertAiCannotExecute } from "@/lib/security/critical-actions";
+import { AppError } from "@/lib/security/errors";
+import { consumeNamedLimit } from "@/lib/security/rate-limit";
 import {
   acknowledgeAlert,
   createAutomationFromTemplate,
@@ -33,6 +37,7 @@ export async function createAutomationAction(formData: FormData) {
 
 export async function enableAutomationAction(automationId: string, enabled: boolean) {
   const user = await actor();
+  assertAiCannotExecute("automation.enable");
   await setAutomationEnabled({ ownerId: user.id, automationId, enabled });
   revalidatePath("/automacoes");
   revalidatePath("/cockpit");
@@ -40,6 +45,10 @@ export async function enableAutomationAction(automationId: string, enabled: bool
 
 export async function runAutomationAction(automationId: string) {
   const user = await actor();
+  const limited = consumeNamedLimit("automation", user.id);
+  if (!limited.ok) {
+    throw new AppError("RATE_LIMITED", HUMAN_MESSAGES.rateLimited);
+  }
   await runAutomation({ ownerId: user.id, automationId, mode: "manual" });
   revalidatePath("/automacoes");
   revalidatePath("/cockpit");

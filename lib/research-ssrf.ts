@@ -2,6 +2,7 @@ const BLOCKED_HOSTS = new Set([
   "localhost",
   "127.0.0.1",
   "0.0.0.0",
+  "169.254.169.254",
   "::1",
   "[::1]",
   "metadata.google.internal",

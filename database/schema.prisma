@@ -346,6 +346,7 @@ model Company {
   allocationItems    AllocationItem[]
   automations        Automation[]
   automationAlerts   AutomationAlert[]
+  auditLogs          AuditLog[]
 
   @@index([ownerId, status])
   @@index([name])
@@ -937,21 +938,28 @@ model StoredFile {
 }
 
 model AuditLog {
-  id          String      @id @default(cuid())
-  actorId     String?
-  actor       User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action      String
-  entity      String
-  entityId    String?
+  id            String      @id @default(cuid())
+  actorId       String?
+  actor         User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  companyId     String?
+  company       Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  action        String
+  entity        String
+  entityId      String?
+  category      String?
+  success       Boolean     @default(true)
   previousValue Json?
-  newValue    Json?
-  origin      AuditSource @default(USER)
-  ip          String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  newValue      Json?
+  origin        AuditSource @default(USER)
+  ip            String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([entity, entityId])
   @@index([actorId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([category, createdAt])
+  @@index([success, createdAt])
 }
 
 /// Orçamento do owner. Nulo = não informado. Nunca inventar disponibilidade.

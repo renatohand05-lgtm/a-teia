@@ -21,7 +21,18 @@ export function classifyKind(kind: KnowledgeKind): ClassifiedContent["label"] {
 
 export function assertNotSecretLeak(payload: unknown): void {
   const text = JSON.stringify(payload).toLowerCase();
-  const forbidden = ["openai_api_key", "sk-", "database_url", "auth_secret", "passwordhash"];
+  const forbidden = [
+    "openai_api_key",
+    "tavily_api_key",
+    "cron_secret",
+    "sk-",
+    "tvly-",
+    "database_url",
+    "auth_secret",
+    "nextauth_secret",
+    "passwordhash",
+    "authorization",
+  ];
   for (const token of forbidden) {
     if (text.includes(token) && token !== "passwordhash") {
       throw new Error("Resposta bloqueada: possível vazamento de segredo.");

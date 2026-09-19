@@ -17,6 +17,7 @@ export const CENTRAL_NAV: NavItem[] = [
   { href: "/cockpit#cockpit-decisoes", label: "Decisões", enabled: true, group: "Central" },
   { href: "/alocacao", label: "Alocação", enabled: true, group: "Central" },
   { href: "/automacoes", label: "Automações", enabled: true, group: "Central" },
+  { href: "/auditoria", label: "Auditoria", enabled: true, group: "Central" },
 ];
 
 export const INTELLIGENCE_NAV: NavItem[] = [
@@ -27,5 +28,4 @@ export const INTELLIGENCE_NAV: NavItem[] = [
 export const FUTURE_NAV: NavItem[] = [
   { href: "#", label: "Conexões", enabled: false, group: "Em breve" },
   { href: "#", label: "Estratégia", enabled: false, group: "Em breve" },
-  { href: "#", label: "Auditoria", enabled: false, group: "Em breve" },
 ];

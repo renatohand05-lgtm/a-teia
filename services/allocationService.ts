@@ -467,7 +467,7 @@ async function ownedProposal(ownerId: string, proposalId: string) {
 
 function requireFresh(proposal: { updatedAt: Date }, expectedUpdatedAt?: string) {
   if (expectedUpdatedAt && proposal.updatedAt.toISOString() !== expectedUpdatedAt) {
-    throw new Error("A proposta foi atualizada em outra sessão. Recarregue e tente de novo.");
+    throw new Error("Este registro foi alterado em outra sessão. Atualize antes de continuar.");
   }
 }
 

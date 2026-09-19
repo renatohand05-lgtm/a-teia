@@ -79,5 +79,7 @@ Base confirmada em 17/09/2026: Sprint 0, Sprint 1 e Sprint 2 concluídas. A part
 ## Regra de promoção
 Cada bloco deve passar por revisão de código e, quando possível, testes/build antes de entrar na `main`. A Vercel continua responsável pelo deploy automático da `main`.
 
+Sprint 12 (segurança, hardening e governança) entra neste bloco J sem redesenho de interface.
+
 ## Regra central de conhecimento
 Hipótese não é evidência. Nenhuma sugestão, inferência ou memória é promovida para aprendizado validado sem resultado real suficiente.

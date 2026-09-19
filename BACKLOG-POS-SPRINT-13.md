@@ -1,6 +1,6 @@
 # Backlog pós-Sprint 13 — acabamento não bloqueante
 
-Itens abaixo **não bloqueiam** os Sprints 9, 10 e 11. São microajustes visuais e de acabamento.
+Itens abaixo **não bloqueiam** os Sprints 9 a 12. São microajustes visuais e de acabamento.
 
 Não usar este arquivo para esconder bug, falha de segurança, cálculo incorreto, vazamento, erro de banco, quebra de owner isolation ou falha de deploy.
 
@@ -48,3 +48,9 @@ Não usar este arquivo para esconder bug, falha de segurança, cálculo incorret
 - Heatmap de alertas
 - Personalização de sons
 - Templates visuais ilustrados
+- Densidade da tabela de Auditoria em telas menores
+- Contraste dos selects de filtro em /auditoria
+- Empty state ilustrado da Auditoria
+- Detalhe do evento em drawer no mobile
+- Truncamento de action names longos na tabela de auditoria
+- Hover mais suave nas linhas da auditoria

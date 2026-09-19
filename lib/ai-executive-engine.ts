@@ -274,9 +274,11 @@ const INJECTION_PATTERNS = [
   /ignore (todas as |as )?regras/i,
   /ignore previous/i,
   /ignore all (previous )?instructions/i,
+  /disregard (all )?(previous )?instructions/i,
   /system prompt/i,
   /you are now/i,
   /esqueça (suas |as )?instruções/i,
+  /reveal (the )?(system|hidden) (prompt|rules)/i,
 ];
 
 export function classifyStatementType(text: string): StatementKind {
@@ -962,6 +964,9 @@ export function blockedMutationTypes(): string[] {
     "criar despesa",
     "mudar status crítico",
     "aprovar investimento",
+    "aprovar decisão",
+    "movimentar capital",
+    "ativar automação",
     "excluir dados",
     "concluir experimento",
     "validar evidência",

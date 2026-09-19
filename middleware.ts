@@ -15,6 +15,7 @@ export default auth((req) => {
     pathname.startsWith("/login/") ||
     pathname.startsWith("/api/auth") ||
     pathname === "/api/health" ||
+    pathname.startsWith("/api/cron") ||
     pathname === "/api/integrations/status" ||
     pathname === "/favicon.ico" ||
     pathname === "/logo-teia.png";
