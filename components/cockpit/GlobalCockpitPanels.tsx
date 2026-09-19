@@ -10,6 +10,7 @@ import {
   reviewDecisionAction,
 } from "@/app/cockpit/actions";
 import { EmptyState } from "@/components/ui/States";
+import { assistantHref } from "@/lib/assistant-ui";
 import { PORTFOLIO_SHORTCUTS } from "@/lib/global-priority-engine";
 import { formatBRL, formatDateBR } from "@/lib/format";
 import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
@@ -280,7 +281,7 @@ export function GlobalCockpitPanels({
           {PORTFOLIO_SHORTCUTS.map((item) => (
             <Link
               key={item.prompt}
-              href={`/assistente?pergunta=${encodeURIComponent(item.prompt)}`}
+              href={assistantHref(filters.companyId, item.prompt)}
               className="rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:bg-white/[0.04]"
               style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
             >

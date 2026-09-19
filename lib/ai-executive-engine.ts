@@ -317,7 +317,7 @@ export function detectQuestionIntent(question: string): QuestionIntent {
   if (/financeir|faturamento|receita|cmv|ebitda|caixa|meta|cenário|cenario|folha|margem/.test(q)) return "FINANCIAL";
   if (/oportun/.test(q)) return "OPPORTUNITIES";
   if (/execu|plano|tarefa|atrasad|30\/60\/90/.test(q)) return "EXECUTION";
-  if (/evid[eê]n/.test(q)) return "EVIDENCE";
+  if (/evid[eê]n|comprov/.test(q)) return "EVIDENCE";
   if (/experiment|testado|validado|não funcion|nao funcion/.test(q)) return "EXPERIMENTS";
   if (/mem[oó]ria|aprend/.test(q)) return "MEMORY";
   if (/risco|atenção|atencao/.test(q)) return "RISKS";
@@ -605,17 +605,22 @@ export function buildEvidenceSummary(experiments: ExecutiveExperiment[], evidenc
   return rows;
 }
 
-export function buildMemorySummary(memories: ExecutiveMemory[]): ClassifiedStatement[] {
+export function buildMemorySummary(memories: ExecutiveMemory[], currentCompanyName?: string | null): ClassifiedStatement[] {
   if (!memories.length) {
     return [stmt("DADO", "Não há memória estratégica persistida para o recorte.", "Memória")];
   }
-  return memories.map((item) =>
-    stmt(
+  return memories.map((item) => {
+    const other =
+      Boolean(item.companyName) &&
+      Boolean(currentCompanyName) &&
+      item.companyName !== currentCompanyName;
+    const prefix = other ? "Aprendizado de outra operação. " : "";
+    return stmt(
       "DADO",
-      `${item.title} · origem ${item.origin} · empresa ${item.companyName ?? "—"} · experimento ${item.experimentTitle ?? "—"} · confiança ${item.confidence}${item.limitations ? ` · limitações: ${item.limitations}` : ""}${item.transferabilityLabel ? ` · ${item.transferabilityLabel}` : ""}. Lição: ${item.lesson}. Compatibilidade estratégica não é chance de sucesso.`,
+      `${prefix}${item.title} · origem ${item.origin} · empresa ${item.companyName ?? "—"} · experimento ${item.experimentTitle ?? "—"} · confiança ${item.confidence}${item.limitations ? ` · limitações: ${item.limitations}` : ""}${item.transferabilityLabel ? ` · ${item.transferabilityLabel}` : ""}. Lição: ${item.lesson}. Compatibilidade estratégica não é chance de sucesso.`,
       "Memória",
-    ),
-  );
+    );
+  });
 }
 
 export function buildPrioritySummary(context: ExecutiveContext): { title: string; body: string; statements: ClassifiedStatement[] } {
@@ -869,7 +874,7 @@ export function buildExecutiveBriefing(context: ExecutiveContext, question: stri
     push(buildEvidenceSummary(sliced.experiments, sliced.evidence));
   }
   if (intent === "MEMORY" || intent === "BRIEFING" || intent === "GENERAL") {
-    push(buildMemorySummary(sliced.memories));
+    push(buildMemorySummary(sliced.memories, context.company.name));
   }
   if (intent === "PRIORITY" || intent === "BRIEFING" || intent === "RISKS") {
     push(priority.statements);
@@ -889,7 +894,7 @@ export function buildExecutiveBriefing(context: ExecutiveContext, question: stri
   } else if (intent === "BOTTLENECK") {
     summary = context.diagnosis?.bottleneck
       ? `Principal gargalo observado no 360°: ${context.diagnosis.bottleneck}.`
-      : "Não há informação suficiente de gargalo no diagnóstico.";
+      : "Esta empresa ainda não possui Diagnóstico 360°.";
   } else if (intent === "MEMORY") {
     summary = context.memories.length
       ? `Memórias no recorte: ${context.memories.length}. Compatibilidade estratégica não é probabilidade.`
@@ -897,13 +902,20 @@ export function buildExecutiveBriefing(context: ExecutiveContext, question: stri
   } else if (intent === "EXPERIMENTS") {
     const done = context.experiments.filter((item) => item.status === "COMPLETED");
     const running = context.experiments.filter((item) => item.status === "RUNNING" || item.status === "READY");
-    summary = context.experiments.length
-      ? `${running.length} em andamento (hipótese) e ${done.length} concluído(s). Nada em andamento é declarado como “funcionou”.`
-      : "Não há experimentos persistidos.";
+    const askingWorked = /funcionou/.test(question.toLowerCase());
+    const measured = context.experiments.filter((item) => item.finalValue != null);
+    if (askingWorked && !measured.length) {
+      summary = "O experimento ainda não possui resultado medido.";
+    } else {
+      summary = context.experiments.length
+        ? `${running.length} em andamento (hipótese) e ${done.length} concluído(s). Nada em andamento é declarado como “funcionou”.`
+        : "Não há experimentos persistidos.";
+    }
   } else if (intent === "EVIDENCE") {
-    summary = context.evidence.length
-      ? `${context.evidence.length} evidência(s) persistida(s).`
-      : "Não há evidências persistidas.";
+    const proven = context.evidence.filter((item) => item.classification === "VALIDATED");
+    summary = proven.length
+      ? `${proven.length} evidência(s) validada(s). Resultado ainda não avaliado não aparece como comprovado.`
+      : "Não há evidências validadas. Resultado ainda não avaliado não deve aparecer como comprovado.";
   } else if (intent === "OPPORTUNITIES") {
     summary = context.opportunities.length
       ? `${context.opportunities.length} oportunidade(s) no recorte. Score não foi alterado pela IA.`
@@ -981,15 +993,15 @@ export function isAllowedProposedAction(type: string): type is ProposedActionTyp
 }
 
 export const EXECUTIVE_SHORTCUTS = [
-  { label: "Resumo executivo", prompt: "Resumo executivo" },
-  { label: "Principal gargalo", prompt: "Qual é o principal gargalo desta empresa?" },
-  { label: "Financeiro", prompt: "Como está o financeiro?" },
-  { label: "Oportunidades", prompt: "Quais oportunidades estão priorizadas?" },
-  { label: "Execução", prompt: "O que está em execução?" },
-  { label: "Experimentos", prompt: "O que já foi testado?" },
-  { label: "Evidências", prompt: "O que foi validado?" },
-  { label: "Memória", prompt: "O que aprendemos?" },
-  { label: "Onde agir primeiro?", prompt: "Onde devo agir primeiro?" },
+  { label: "Onde devo agir primeiro?", prompt: "Onde devo agir primeiro?" },
+  { label: "Como está minha saúde financeira?", prompt: "Como está o financeiro?" },
+  { label: "Quais são meus maiores gargalos?", prompt: "Qual é o principal gargalo desta empresa?" },
+  { label: "Quais oportunidades devo analisar?", prompt: "Quais oportunidades estão priorizadas?" },
+  { label: "O que está atrasado?", prompt: "O que está atrasado?" },
+  { label: "Quais experimentos precisam de atenção?", prompt: "Quais testes precisam de atenção?" },
+  { label: "O que já aprendemos nesta empresa?", prompt: "O que aprendemos?" },
+  { label: "Existe aprendizado de outra empresa que pode ser aplicado aqui?", prompt: "Existe aprendizado de outra empresa que pode ser aplicado aqui?" },
+  { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 
 export const EXTERNAL_SHORTCUTS = [

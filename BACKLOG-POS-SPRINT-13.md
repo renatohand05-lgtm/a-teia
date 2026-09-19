@@ -176,3 +176,17 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Atalho de teclado para registrar resultado
 - Hover mais suave nos cards de memória
 - Filtro de período por mês, além do ano já disponível
+
+## REFINAMENTO 1 — BLOCO 6 (pendências menores)
+
+- Microinterações dos chips de perguntas rápidas
+- Spacing e tipografia do card de cobertura da empresa
+- Skeleton discreto no lugar do texto de carregamento
+- Tooltip da classificação DADO / INFERÊNCIA / HIPÓTESE / EVIDÊNCIA
+- Hover mais suave nos cards de fonte
+- Contraste dos tipos OFICIAL / ESTUDO / BENCHMARK em fundo escuro
+- Densidade do histórico de conversas em 768px
+- Wrapping dos atalhos e do botão Perguntar no mobile
+- Animação mínima da troca “Analisando…” → “Organizando análise…”
+- Detalhe visual de data nas fontes sem publishedAt
+- Chips de cobertura com ícone além de ✓ / —

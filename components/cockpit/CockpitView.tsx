@@ -66,11 +66,11 @@ export function CockpitView({
                   Ver empresa
                 </Link>
                 <Link
-                  href={focusId ? `/empresas/${focusId}/assistente` : "/assistente"}
+                  href={focusId ? `/empresas/${focusId}/assistente?pergunta=${encodeURIComponent("Onde devo agir primeiro?")}` : "/assistente"}
                   className="rounded-xl border px-4 py-2 text-[12px] font-bold"
                   style={{ borderColor: "var(--border)", color: "var(--text-1)" }}
                 >
-                  Analisar com IA
+                  Analisar esta prioridade com IA
                 </Link>
               </div>
             </div>
