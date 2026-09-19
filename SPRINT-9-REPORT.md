@@ -2,6 +2,7 @@
 
 **Data:** 2026-09-18  
 **Commit:** `feat: Sprint 9 global cockpit and decision center`  
+**SHA:** `b51f9a302e075784b4cda812a52709c24c369df1`  
 **Branch:** `main`  
 **Sprint 10:** não iniciada.
 
@@ -118,7 +119,7 @@ Queries em lote por owner (sem N+1 por empresa). Listas limitadas (prioridades 5
 
 ## 28. Commit SHA
 
-Preenchido após o push.
+`b51f9a302e075784b4cda812a52709c24c369df1`
 
 ## 29. Vercel
 
