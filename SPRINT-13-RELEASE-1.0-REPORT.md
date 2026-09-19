@@ -46,7 +46,9 @@ Nenhuma. Schema atual já suportava o Release 1.0.
 
 ## 22–24. Produção
 
-SHA, Vercel e health serão confirmados após push.
+**SHA:** `1413cee96b0affb4372db931e5478876bc43ff69`  
+Vercel Production **Ready**: https://a-teia.vercel.app  
+`/api/health`: release `1.0`, version `1.0.0`, `openaiConfigured: true`, `webSearchConfigured: true`, `openaiExposed: false`, `automationEngine: ok`, `scheduler: configured`, `database: ok`. Sem secrets.
 
 ## 25. Pendências reais
 
@@ -61,4 +63,4 @@ Conexões e Estratégia — schema existe, sem motor nem UI operacional. Playboo
 
 ## 27. Backlog de refinamento
 
-`BACKLOG-POS-SPRINT-13.md` consolidado em 15 grupos. Acabamento não executado.
+`BACKLOG-POS-SPRINT-13.md` consolidado em 15 grupos, **67 itens**. Acabamento não executado.
