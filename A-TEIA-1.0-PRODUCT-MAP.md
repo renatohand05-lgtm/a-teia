@@ -22,7 +22,7 @@ O Cockpit responde: carteira, empresa prioritária, por quê, próxima ação, d
 | --- | --- | --- | --- | --- |
 | Auth | `/login` | User | sessão | login |
 | Cockpit | `/cockpit` | agregado | owner | view |
-| Empresas | `/empresas` | Company | ownerId | create/update |
+| Empresas | `/empresas`, `/empresas/[id]/editar` | Company | ownerId | create/update/archive/restore |
 | Diagnóstico | `/empresas/[id]/diagnostico` | Diagnosis | company.owner | created |
 | Oportunidades | `/empresas/[id]/oportunidades` | Opportunity | company.owner | created/updated |
 | Decisões | `/cockpit#cockpit-decisoes` | Decision | owner | proposed/approved |
@@ -33,7 +33,8 @@ O Cockpit responde: carteira, empresa prioritária, por quê, próxima ação, d
 | Assistente IA | `/assistente` | AIConversation | userId | question/answer |
 | Pesquisa externa | via Assistente | ResearchSession | userId | started/completed |
 | Alocação | `/alocacao` | ResourceBudget, AllocationProposal | ownerId | simulated/approved |
-| Automações | `/automacoes` | Automation, Alert | ownerId | executed |
+| Automações | `/automacoes` | Automation | ownerId | executed |
+| Alertas | `/alertas` | AutomationAlert | ownerId | acknowledged/resolved |
 | Auditoria | `/auditoria` | AuditLog | actor/company owner | sanitize |
 
 ## Módulos parciais
