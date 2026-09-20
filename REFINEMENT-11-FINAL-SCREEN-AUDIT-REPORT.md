@@ -2,7 +2,8 @@
 
 **Escopo:** Auditoria final tela por tela + consistência  
 **Data:** 2026-09-19  
-**Commit:** a registrar  
+**Commit:** `fix: close remaining 1.0 polish leftovers from screen audit`  
+**SHA:** `3ddf4706c4eb2969fa7d9457f30a2f622204ce9c`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Migrations:** nenhuma  
