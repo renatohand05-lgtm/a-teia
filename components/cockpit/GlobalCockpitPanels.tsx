@@ -9,6 +9,8 @@ import {
   rejectDecisionAction,
   reviewDecisionAction,
 } from "@/app/cockpit/actions";
+import { DecisionReasonForm } from "@/components/decisions/DecisionReasonForm";
+import { COCKPIT_PERIOD_OPTIONS } from "@/lib/cockpit-period";
 import { EmptyState } from "@/components/ui/States";
 import { displayHours, displayMoney, isAllocationDecisionTitle, scenarioFromDecisionTitle } from "@/lib/allocation-ui";
 import { assistantHref } from "@/lib/assistant-ui";
@@ -34,7 +36,7 @@ export function GlobalCockpitPanels({
   filters,
 }: {
   snapshot: CockpitSnapshot;
-  filters: { companyId?: string; segment?: string; level?: string; kind?: string };
+  filters: { companyId?: string; segment?: string; level?: string; kind?: string; period?: string };
 }) {
   const bundle = snapshot.portfolio;
 
@@ -103,7 +105,7 @@ export function GlobalCockpitPanels({
               body="Os números acima usam alertas reais. Zero é zero; ausência de cobertura não inventa alarme."
             />
           )}
-          <Link href="/automacoes#alertas" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+          <Link href="/alertas" className="mt-3 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
             Ver todos os alertas
           </Link>
         </div>
@@ -396,6 +398,11 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
                   <dd>A decisão fica registrada em seu nome. A IA não executa e não move capital.</dd>
                 </div>
               </dl>
+              {item.humanReason ? (
+                <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                  Justificativa: {item.humanReason}
+                </p>
+              ) : null}
               {item.deferredAt ? (
                 <p className="mt-2 text-[11px]" style={{ color: "var(--text-3)" }}>
                   Adiada em {formatDateBR(item.deferredAt)} — ainda aguarda decisão humana.
@@ -406,21 +413,16 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
                   Abrir empresa
                 </Link>
               ) : null}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={pending}
-                  className="rounded-lg px-2.5 py-1 text-[11px] font-extrabold text-[#241a08] disabled:opacity-50"
-                  style={{ background: "var(--gold-soft)" }}
-                  onClick={() => start(() => approveDecisionAction(item.id))}
-                >
-                  {pending ? "Salvando..." : "Aprovar"}
-                </button>
+              <DecisionReasonForm
+                decisionId={item.id}
+                companyId={item.companyId}
+                title={item.title}
+                onApprove={(id, reason) => approveDecisionAction(id, reason)}
+                onReject={(id, reason) => rejectDecisionAction(id, reason)}
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
                 <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => reviewDecisionAction(item.id))}>
                   Revisar
-                </button>
-                <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => rejectDecisionAction(item.id))}>
-                  Rejeitar
                 </button>
                 <button type="button" disabled={pending} className="text-[11px] font-semibold disabled:opacity-50" style={{ color: "var(--text-2)" }} onClick={() => start(() => deferDecisionAction(item.id))}>
                   Adiar
@@ -443,7 +445,7 @@ function FilterBar({
   filters,
   companies,
 }: {
-  filters: { companyId?: string; segment?: string; level?: string; kind?: string };
+  filters: { companyId?: string; segment?: string; level?: string; kind?: string; period?: string };
   companies: CockpitSnapshot["companies"];
 }) {
   const segments = [...new Set(companies.map((item) => item.segment).filter(Boolean))] as string[];
@@ -472,6 +474,11 @@ function FilterBar({
         <option value="">Tipo</option>
         {["RISK", "OPPORTUNITY", "EXECUTION", "FINANCIAL", "DIAGNOSIS", "EXPERIMENT", "EVIDENCE", "DATA_GAP"].map((item) => (
           <option key={item} value={item}>{signalKindLabel(item)}</option>
+        ))}
+      </select>
+      <select name="periodo" defaultValue={filters.period ?? "atual"} className="teia-select max-w-[180px]" aria-label="Período">
+        {COCKPIT_PERIOD_OPTIONS.map((item) => (
+          <option key={item.value} value={item.value}>{item.label}</option>
         ))}
       </select>
       <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)", color: "var(--text-1)" }}>

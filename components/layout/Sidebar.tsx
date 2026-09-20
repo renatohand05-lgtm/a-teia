@@ -9,9 +9,11 @@ import { CENTRAL_NAV, FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types"
 export function Sidebar({
   open = false,
   onNavigate,
+  onClose,
 }: {
   open?: boolean;
   onNavigate?: () => void;
+  onClose?: () => void;
 }) {
   const pathname = usePathname();
   const companyId = companyIdFromPath(pathname);
@@ -21,6 +23,10 @@ export function Sidebar({
       className={`fixed inset-y-0 left-0 z-40 flex w-[260px] shrink-0 flex-col border-r transition-transform duration-200 lg:visible lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
         open ? "translate-x-0" : "invisible -translate-x-full"
       }`}
+      data-teia-drawer={open ? "true" : undefined}
+      role={open ? "dialog" : undefined}
+      aria-modal={open ? true : undefined}
+      aria-label="Menu"
       style={{
         background: "rgba(10,10,13,0.94)",
         borderColor: "var(--border)",
@@ -40,6 +46,17 @@ export function Sidebar({
             Centro de Decisão Empresarial
           </p>
         </div>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar menu"
+            className="ml-auto rounded-lg border px-2 py-1 text-[11px] font-bold lg:hidden"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+          >
+            Fechar
+          </button>
+        ) : null}
       </div>
 
       <nav className="flex flex-1 flex-col overflow-auto px-3 pb-6" aria-label="Navegação principal">

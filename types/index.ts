@@ -17,6 +17,7 @@ export const CENTRAL_NAV: NavItem[] = [
   { href: "/cockpit#cockpit-decisoes", label: "Decisões", enabled: true, group: "Central" },
   { href: "/alocacao", label: "Alocação", enabled: true, group: "Central" },
   { href: "/automacoes", label: "Automações", enabled: true, group: "Central" },
+  { href: "/alertas", label: "Alertas", enabled: true, group: "Central" },
   { href: "/auditoria", label: "Auditoria", enabled: true, group: "Central" },
 ];
 

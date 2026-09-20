@@ -163,8 +163,8 @@ const AUDIT_ENTITY_HREF: Record<string, (companyId: string | null, entityId: str
   StrategicMemory: (companyId, entityId) =>
     companyId && entityId ? `/empresas/${companyId}/memoria/${entityId}` : companyId ? `/empresas/${companyId}/memoria` : "/memoria",
   Automation: () => "/automacoes",
-  AutomationAlert: () => "/automacoes#alertas",
-  Alert: () => "/automacoes#alertas",
+  AutomationAlert: () => "/alertas",
+  Alert: () => "/alertas",
   ResourceBudget: () => "/alocacao",
   AllocationProposal: () => "/alocacao",
   AllocationScenario: () => "/alocacao",

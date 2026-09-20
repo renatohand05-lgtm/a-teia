@@ -14,17 +14,17 @@ async function actor() {
   return session.user.id;
 }
 
-export async function approveDecisionAction(decisionId: string) {
+export async function approveDecisionAction(decisionId: string, humanReason?: string) {
   const actorId = await actor();
-  await approveDecision({ actorId, decisionId });
+  await approveDecision({ actorId, decisionId, humanReason });
   await syncAllocationFromDecision({ actorId, decisionId, status: "APPROVED" });
   revalidatePath("/cockpit");
   revalidatePath("/alocacao");
 }
 
-export async function rejectDecisionAction(decisionId: string) {
+export async function rejectDecisionAction(decisionId: string, humanReason?: string) {
   const actorId = await actor();
-  await rejectDecision({ actorId, decisionId });
+  await rejectDecision({ actorId, decisionId, humanReason });
   await syncAllocationFromDecision({ actorId, decisionId, status: "REJECTED" });
   revalidatePath("/cockpit");
   revalidatePath("/alocacao");

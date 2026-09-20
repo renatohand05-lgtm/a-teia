@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EmptyState } from "@/components/ui/States";
 import Link from "next/link";
-import { formatDateTimeBR } from "@/lib/format";
+import { Drawer } from "@/components/ui/Drawer";
+import { EmptyState } from "@/components/ui/States";
+import { auditOriginLabel, presentAuditMetadata } from "@/lib/audit-detail";
 import { EMPTY_AUDIT, auditActionLabel, auditCategoryLabel, auditEntityLabel, auditResourceHref } from "@/lib/audit-ui";
+import { formatDateTimeBR } from "@/lib/format";
 
 export type AuditEventView = {
   id: string;
@@ -50,7 +52,7 @@ export function AuditView({
     return true;
   });
 
-  const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0] ?? null;
+  const selected = filtered.find((item) => item.id === selectedId) ?? null;
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -105,7 +107,7 @@ export function AuditView({
       {filtered.length === 0 ? (
         <EmptyState title={EMPTY_AUDIT.title} body={EMPTY_AUDIT.body} />
       ) : (
-        <div className="grid gap-5 xl:grid-cols-[1.4fr_0.8fr]">
+        <div>
           <div className="hidden overflow-hidden rounded-2xl border md:block" style={{ borderColor: "var(--border)" }}>
             <table className="teia-table">
               <thead style={{ color: "var(--text-3)" }}>
@@ -159,36 +161,45 @@ export function AuditView({
             ))}
           </div>
 
-          {selected ? (
-            <aside className="rounded-2xl border p-5 space-y-3" style={{ borderColor: "var(--border)" }}>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color: "var(--gold-soft)" }}>
-                Detalhe
-              </p>
-              <Detail label="Usuário" value={selected.actorName} />
-              <Detail label="Ação" value={auditActionLabel(selected.action)} />
-              <Detail label="Técnico" value={selected.action} />
-              <Detail label="Recurso" value={auditEntityLabel(selected.entity)} />
-              <Detail label="Empresa" value={selected.companyName ?? "—"} />
-              <Detail label="Quando" value={formatDateTimeBR(selected.createdAt)} />
-              {auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ? (
-                <Link
-                  href={auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ?? "/auditoria"}
-                  className="inline-flex text-[12px] font-bold"
-                  style={{ color: "var(--gold-soft)" }}
-                >
-                  Abrir recurso
-                </Link>
-              ) : null}
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
-                  Metadata
-                </p>
-                <pre className="mt-1 overflow-auto rounded-xl p-3 text-[11px] leading-relaxed" style={{ background: "rgba(255,255,255,0.03)", color: "var(--text-2)" }}>
-                  {JSON.stringify(selected.metadata ?? {}, null, 2)}
-                </pre>
+          <Drawer open={Boolean(selectedId && selected)} title="Detalhe do evento" onClose={() => setSelectedId(null)}>
+            {selected ? (
+              <div className="space-y-3">
+                <Detail label="Data/hora" value={formatDateTimeBR(selected.createdAt)} />
+                <Detail label="Ator" value={selected.actorName} />
+                <Detail label="Empresa" value={selected.companyName ?? "—"} />
+                <Detail label="Ação" value={auditActionLabel(selected.action)} />
+                <Detail label="Recurso" value={auditEntityLabel(selected.entity)} />
+                <Detail label="Resultado" value={selected.success ? "Sucesso" : "Falha"} />
+                <Detail label="Origem" value={auditOriginLabel(selected.origin)} />
+                {auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ? (
+                  <Link
+                    href={auditResourceHref({ entity: selected.entity, entityId: selected.entityId, companyId: selected.companyId }) ?? "/auditoria"}
+                    className="inline-flex text-[12px] font-bold"
+                    style={{ color: "var(--gold-soft)" }}
+                  >
+                    Abrir recurso
+                  </Link>
+                ) : null}
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--text-3)" }}>
+                    Metadata
+                  </p>
+                  {presentAuditMetadata(selected.metadata).length ? (
+                    <dl className="mt-2 space-y-2">
+                      {presentAuditMetadata(selected.metadata).map((item) => (
+                        <div key={item.key}>
+                          <dt className="text-[11px]" style={{ color: "var(--text-3)" }}>{item.key}</dt>
+                          <dd className="text-[13px]" style={{ color: "var(--text-1)" }}>{item.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="mt-1 text-[13px]" style={{ color: "var(--text-3)" }}>Sem metadata adicional.</p>
+                  )}
+                </div>
               </div>
-            </aside>
-          ) : null}
+            ) : null}
+          </Drawer>
         </div>
       )}
     </div>

@@ -183,6 +183,11 @@ export function OpportunityDetail({
                 {latestDecision.rationale}
               </p>
             ) : null}
+            {latestDecision.humanReason ? (
+              <p className="text-[13px]" style={{ color: "var(--text-2)" }}>
+                Justificativa humana: {latestDecision.humanReason}
+              </p>
+            ) : null}
             <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
               {executionNext.show === false && executionNext.note
                 ? executionNext.note

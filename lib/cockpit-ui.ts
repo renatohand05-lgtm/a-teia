@@ -46,6 +46,7 @@ export const SIDEBAR_HREFS = [
   "/empresas",
   "/alocacao",
   "/automacoes",
+  "/alertas",
   "/auditoria",
   "/memoria",
   "/assistente",

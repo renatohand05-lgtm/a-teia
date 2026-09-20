@@ -277,3 +277,35 @@ export async function archiveCompany(ownerId: string, id: string, ip?: string): 
   return toDTO(row);
 }
 
+export async function restoreCompany(ownerId: string, id: string, ip?: string): Promise<CompanyDTO> {
+  const existing = await prisma.company.findFirst({ where: { id, ownerId } });
+  if (!existing) {
+    throw new Error("Empresa não encontrada.");
+  }
+  if (existing.status !== CompanyStatus.ARCHIVED) {
+    throw new Error("Empresa não está arquivada.");
+  }
+
+  const row = await prisma.company.update({
+    where: { id },
+    data: {
+      status: CompanyStatus.ACTIVE,
+      archivedAt: null,
+    },
+  });
+
+  await writeAudit({
+    actorId: ownerId,
+    action: "company.restore",
+    entity: "Company",
+    entityId: row.id,
+    companyId: row.id,
+    previousValue: { status: existing.status },
+    newValue: { status: row.status },
+    origin: "USER",
+    ip,
+  });
+
+  return toDTO(row);
+}
+

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { CockpitView } from "@/components/cockpit/CockpitView";
 import { ErrorState } from "@/components/ui/States";
+import { parseCockpitPeriod } from "@/lib/cockpit-period";
 import { getCockpitSnapshot } from "@/services/cockpitService";
 import { writeAudit } from "@/services/auditService";
 import { AuditSource } from "@prisma/client";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function CockpitPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ empresa?: string; segmento?: string; prioridade?: string; tipo?: string }>;
+  searchParams?: Promise<{ empresa?: string; segmento?: string; prioridade?: string; tipo?: string; periodo?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -22,6 +23,7 @@ export default async function CockpitPage({
     segment: params.segmento || undefined,
     level: params.prioridade || undefined,
     kind: params.tipo || undefined,
+    period: parseCockpitPeriod(params.periodo),
   };
 
   try {

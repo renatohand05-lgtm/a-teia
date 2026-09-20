@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { updateCompanyAction } from "@/app/empresas/actions";
 import { ArchiveCompanyForm } from "@/components/companies/ArchiveCompanyForm";
+import { RestoreCompanyForm } from "@/components/companies/RestoreCompanyForm";
 import { CompanyCockpit } from "@/components/companies/CompanyCockpit";
 import { CompanyForm } from "@/components/companies/CompanyForm";
 import { CompanyHeader } from "@/components/companies/CompanyHeader";
@@ -155,9 +156,12 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
               <ArchiveCompanyForm companyId={company.id} />
             </div>
           ) : (
-            <p className="mb-4 text-[12px]" style={{ color: "var(--text-3)" }}>
-              Empresa arquivada. Os dados foram preservados.
-            </p>
+            <div className="mb-4 space-y-2">
+              <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+                Empresa arquivada. Os dados foram preservados. Isto não é exclusão.
+              </p>
+              <RestoreCompanyForm companyId={company.id} />
+            </div>
           )}
           <CompanyForm company={company} action={boundUpdate} submitLabel="Salvar cadastro" />
         </section>

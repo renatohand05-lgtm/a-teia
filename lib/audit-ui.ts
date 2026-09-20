@@ -18,6 +18,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "notification.read": "Notificação lida",
   "decision.approved": "Decisão aprovada",
   "decision.rejected": "Decisão rejeitada",
+  "company.restore": "Empresa restaurada",
+  "company.archive": "Empresa arquivada",
   "decision.deferred": "Decisão adiada",
   "auth.login": "Login",
   "auth.login_denied": "Login negado",

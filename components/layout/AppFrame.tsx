@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CompanyBreadcrumb } from "@/components/layout/CompanyBreadcrumb";
 import { CompanyModuleNav } from "@/components/layout/CompanyModuleNav";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { FocusTrap } from "@/components/ui/FocusTrap";
 
 export function AppFrame({
   title,
@@ -21,19 +22,6 @@ export function AppFrame({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
-
   return (
     <div className="min-h-screen lg:flex">
       {menuOpen ? (
@@ -44,7 +32,9 @@ export function AppFrame({
           onClick={() => setMenuOpen(false)}
         />
       ) : null}
-      <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)} />
+      <FocusTrap active={menuOpen} onEscape={() => setMenuOpen(false)}>
+        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={() => setMenuOpen(false)} />
+      </FocusTrap>
       <div className="min-w-0 flex-1">
         <Topbar
           title={title}

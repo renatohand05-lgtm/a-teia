@@ -4,6 +4,7 @@ import { GlobalCockpitPanels } from "@/components/cockpit/GlobalCockpitPanels";
 import { EmptyState } from "@/components/ui/States";
 import { SourceCard } from "@/components/ui/SourceCard";
 import { StatusChip } from "@/components/ui/StatusChip";
+import { cockpitPeriodCaption, parseCockpitPeriod } from "@/lib/cockpit-period";
 import { displayPriorityScore, showCountBadge } from "@/lib/cockpit-ui";
 import { formatBRL } from "@/lib/format";
 import { cockpitPriorityCta, journeyChipValue } from "@/lib/journey-ui";
@@ -14,7 +15,7 @@ export function CockpitView({
   filters,
 }: {
   snapshot: CockpitSnapshot;
-  filters?: { companyId?: string; segment?: string; level?: string; kind?: string };
+  filters?: { companyId?: string; segment?: string; level?: string; kind?: string; period?: string };
 }) {
   const { companies, ranked, counts, action, journey, briefing } = snapshot;
   const active = companies.filter((company) => company.status === "ACTIVE");
@@ -26,6 +27,7 @@ export function CockpitView({
   const pendingDecisions = snapshot.portfolio.decisions.length;
   const score = displayPriorityScore(ranked[0]?.score, active.length > 0);
   const consolidation = snapshot.portfolio.consolidation;
+  const periodCaption = cockpitPeriodCaption(parseCockpitPeriod(filters?.period));
 
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
@@ -113,7 +115,7 @@ export function CockpitView({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
           <Signal href="/empresas" label="Carteira" value={`${counts.companiesActive} empresa${counts.companiesActive === 1 ? "" : "s"}`} hint="Monitoradas" />
           <Signal
-            href="/automacoes#alertas"
+            href="/alertas"
             label="Alertas"
             value={String(snapshot.automation.openAlerts)}
             hint={showCountBadge(snapshot.automation.openAlerts) ? "Abertos agora" : "Nada aberto"}
@@ -134,21 +136,21 @@ export function CockpitView({
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6" data-testid="cockpit-kpis">
-        <Kpi href="/empresas" label="Empresas" value={String(counts.companiesActive)} hint="Monitoradas" />
+        <Kpi href="/empresas" label="Empresas" value={String(counts.companiesActive)} hint="Cadastro atual · não recortado pelo período" />
         <Kpi
           href={stageLink(snapshot, "financeiro")}
           label="Receita consolidada"
           value={formatBRL(consolidation.revenue)}
-          hint={coverageOrDash(consolidation.revenueUsed ?? consolidation.total, consolidation.total, "receita")}
+          hint={`${coverageOrDash(consolidation.revenueUsed ?? 0, consolidation.total, "receita")} · ${periodCaption}`}
         />
         <Kpi
           href={stageLink(snapshot, "financeiro")}
           label="EBITDA consolidado"
           value={formatBRL(consolidation.ebitda)}
-          hint={`${consolidation.ebitdaUsed}/${consolidation.total} empresas com dados`}
+          hint={`${consolidation.ebitdaUsed}/${consolidation.total} empresas com dados · ${periodCaption}`}
         />
         <Kpi href={stageLink(snapshot, "execucao")} label="Planos ativos" value={String(snapshot.portfolio.execution.activePlans)} hint="Em execução" />
-        <Kpi href="/automacoes#alertas" label="Alertas" value={String(snapshot.automation.openAlerts)} hint="Abertos agora" />
+        <Kpi href="/alertas" label="Alertas" value={String(snapshot.automation.openAlerts)} hint="Abertos agora · não recortado pelo período" />
         <Kpi href="/cockpit#cockpit-decisoes" label="Decisões" value={String(pendingDecisions)} hint="Aguardando humano" />
       </section>
 

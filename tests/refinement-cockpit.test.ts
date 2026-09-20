@@ -19,6 +19,7 @@ describe("Refinamento 1 — Cockpit e navegação", () => {
       "/cockpit#cockpit-decisoes",
       "/alocacao",
       "/automacoes",
+      "/alertas",
       "/auditoria",
     ]);
     expect(FUTURE_NAV.map((item) => item.label)).toEqual(["Conexões", "Estratégia"]);

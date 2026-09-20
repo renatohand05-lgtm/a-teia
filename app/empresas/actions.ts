@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { companyInputSchema } from "@/lib/validations";
-import { archiveCompany, createCompany, updateCompany } from "@/services/companyService";
+import { archiveCompany, createCompany, restoreCompany, updateCompany } from "@/services/companyService";
 
 export type CompanyActionState = { ok: false; error: string } | { ok: true; id?: string };
 
@@ -70,6 +70,19 @@ export async function archiveCompanyAction(formData: FormData): Promise<void> {
   revalidatePath("/empresas");
   revalidatePath("/cockpit");
   redirect("/empresas");
+}
+
+export async function restoreCompanyAction(formData: FormData): Promise<void> {
+  const userId = await requireUserId();
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    throw new Error("Empresa inválida.");
+  }
+  await restoreCompany(userId, id);
+  revalidatePath("/empresas");
+  revalidatePath(`/empresas/${id}`);
+  revalidatePath("/cockpit");
+  redirect(`/empresas/${id}`);
 }
 
 function readCompanyForm(formData: FormData) {

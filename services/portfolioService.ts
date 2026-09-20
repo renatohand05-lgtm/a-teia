@@ -9,6 +9,7 @@ import {
 import { calculateDRE, calculateFinancialRatios, summarizeCashFlow } from "@/lib/financial-engine";
 import { toNumber } from "@/lib/format";
 import { isClosedTaskStatus } from "@/lib/execution";
+import { inPeriodWindow, matchesCompetence, parseCockpitPeriod, type CockpitPeriodKey } from "@/lib/cockpit-period";
 import { periodLabel } from "@/lib/period";
 import {
   assessDataHealth,
@@ -37,6 +38,7 @@ export type PortfolioFilters = {
   segment?: string;
   level?: string;
   kind?: string;
+  period?: CockpitPeriodKey;
 };
 
 export type PortfolioRow = {
@@ -146,6 +148,7 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
         title: true,
         status: true,
         classification: true,
+        updatedAt: true,
         _count: { select: { results: true, evidence: true } },
         evidence: { select: { classification: true }, take: 4 },
       },
@@ -172,8 +175,12 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
     listOwnerDecisions(ownerId),
   ]);
 
+  const period = parseCockpitPeriod(filters.period);
+  const statementsInPeriod = statements.filter((row) =>
+    matchesCompetence({ periodMonth: row.periodMonth, periodYear: row.periodYear }, period),
+  );
   const diagnosisByCompany = latestByCompany(diagnoses);
-  const statementByCompany = latestByCompany(statements);
+  const statementByCompany = latestByCompany(statementsInPeriod);
   const goalByCompany = latestByCompany(goals);
   const historyByCompany = new Map<string, typeof statements>();
   for (const row of statements) {
@@ -290,6 +297,11 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
         })),
       experiments: experiments
         .filter((item) => item.companyId === company.id)
+        .filter((item) =>
+          item.status === "COMPLETED" || item.status === "ABANDONED"
+            ? inPeriodWindow(item.updatedAt, period)
+            : true,
+        )
         .map((item) => ({
           id: item.id,
           title: item.title,

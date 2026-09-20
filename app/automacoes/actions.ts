@@ -32,6 +32,7 @@ export async function createAutomationAction(formData: FormData) {
     enabled: false,
   });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 
@@ -40,6 +41,7 @@ export async function enableAutomationAction(automationId: string, enabled: bool
   assertAiCannotExecute("automation.enable");
   await setAutomationEnabled({ ownerId: user.id, automationId, enabled });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 
@@ -51,6 +53,7 @@ export async function runAutomationAction(automationId: string) {
   }
   await runAutomation({ ownerId: user.id, automationId, mode: "manual" });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 
@@ -58,6 +61,7 @@ export async function acknowledgeAlertAction(alertId: string) {
   const user = await actor();
   await acknowledgeAlert({ ownerId: user.id, alertId });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 
@@ -65,6 +69,7 @@ export async function resolveAlertAction(alertId: string) {
   const user = await actor();
   await resolveAlert({ ownerId: user.id, alertId });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 
@@ -72,6 +77,7 @@ export async function dismissAlertAction(alertId: string) {
   const user = await actor();
   await dismissAlert({ ownerId: user.id, alertId });
   revalidatePath("/automacoes");
+  revalidatePath("/alertas");
   revalidatePath("/cockpit");
 }
 

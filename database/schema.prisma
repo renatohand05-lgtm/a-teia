@@ -591,6 +591,7 @@ model Decision {
   createdBy      User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   title          String
   rationale      String?
+  humanReason    String?
   status         DecisionStatus @default(DRAFT)
   origin         AuditSource    @default(USER)
   requiresHumanApproval Boolean @default(true)

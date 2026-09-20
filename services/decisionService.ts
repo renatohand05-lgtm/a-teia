@@ -1,14 +1,16 @@
 import "server-only";
 
 import { AuditSource, DecisionStatus, EvidenceLevel } from "@prisma/client";
+import { normalizeHumanReason } from "@/lib/decision-reason";
+import { toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/services/auditService";
-import { toNumber } from "@/lib/format";
 
 export type DecisionDTO = {
   id: string;
   title: string;
   rationale: string | null;
+  humanReason: string | null;
   status: DecisionStatus;
   origin: AuditSource;
   companyId: string | null;
@@ -98,15 +100,17 @@ function requirePending(existing: { status: DecisionStatus; requiresHumanApprova
   }
 }
 
-export async function approveDecision(input: { actorId: string; decisionId: string }) {
+export async function approveDecision(input: { actorId: string; decisionId: string; humanReason?: string | null }) {
   const existing = await ownedDecision(input.actorId, input.decisionId);
   requirePending(existing);
+  const humanReason = normalizeHumanReason(input.humanReason);
 
   const decision = await prisma.decision.update({
     where: { id: input.decisionId },
     data: {
       status: DecisionStatus.APPROVED,
       approvedAt: new Date(),
+      humanReason,
     },
   });
 
@@ -115,28 +119,31 @@ export async function approveDecision(input: { actorId: string; decisionId: stri
     action: "decision.approved",
     entity: "Decision",
     entityId: decision.id,
+    companyId: existing.companyId,
     previousValue: { status: existing.status },
-    newValue: { status: decision.status },
+    newValue: { status: decision.status, humanReason },
     origin: AuditSource.USER,
   });
 
   return decision;
 }
 
-export async function rejectDecision(input: { actorId: string; decisionId: string }) {
+export async function rejectDecision(input: { actorId: string; decisionId: string; humanReason?: string | null }) {
   const existing = await ownedDecision(input.actorId, input.decisionId);
   requirePending(existing);
+  const humanReason = normalizeHumanReason(input.humanReason);
   const decision = await prisma.decision.update({
     where: { id: input.decisionId },
-    data: { status: DecisionStatus.REJECTED, rejectedAt: new Date() },
+    data: { status: DecisionStatus.REJECTED, rejectedAt: new Date(), humanReason },
   });
   await writeAudit({
     actorId: input.actorId,
     action: "decision.rejected",
     entity: "Decision",
     entityId: decision.id,
+    companyId: existing.companyId,
     previousValue: { status: existing.status },
-    newValue: { status: decision.status },
+    newValue: { status: decision.status, humanReason },
     origin: AuditSource.USER,
   });
   return decision;
@@ -183,6 +190,7 @@ function toDecisionDTO(item: {
   id: string;
   title: string;
   rationale: string | null;
+  humanReason: string | null;
   status: DecisionStatus;
   origin: AuditSource;
   companyId: string | null;
@@ -205,6 +213,7 @@ function toDecisionDTO(item: {
     id: item.id,
     title: item.title,
     rationale: item.rationale,
+    humanReason: item.humanReason,
     status: item.status,
     origin: item.origin,
     companyId: item.companyId,

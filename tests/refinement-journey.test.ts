@@ -179,7 +179,7 @@ describe("Refinamento 8 — contexto, auditoria e isolamento", () => {
       "/empresas/emp-1/memoria/mem-1",
     );
     expect(auditResourceHref({ entity: "Opportunity", companyId: null, entityId: "op-1" })).toBeNull();
-    expect(auditResourceHref({ entity: "AutomationAlert", companyId: null, entityId: "al-1" })).toBe("/automacoes#alertas");
+    expect(auditResourceHref({ entity: "AutomationAlert", companyId: null, entityId: "al-1" })).toBe("/alertas");
   });
 
   it("Conexões e Estratégia continuam em breve sem href morto", () => {

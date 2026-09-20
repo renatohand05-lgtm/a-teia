@@ -73,6 +73,7 @@ export type AlertDTO = {
   message: string;
   priority: string;
   status: AlertStatus;
+  companyId: string | null;
   companyName: string | null;
   ruleKey: string;
   href: string | null;
@@ -596,7 +597,7 @@ export async function getAutomationWorkspace(ownerId: string, companyId?: string
       where: { ownerId, ...(companyId ? { companyId } : {}) },
       include: { company: { select: { name: true } } },
       orderBy: { detectedAt: "desc" },
-      take: 30,
+      take: 80,
     }),
     prisma.appNotification.findMany({
       where: { ownerId },
@@ -637,6 +638,7 @@ export async function getAutomationWorkspace(ownerId: string, companyId?: string
       message: item.message,
       priority: item.priority,
       status: item.status,
+      companyId: item.companyId,
       companyName: item.company?.name ?? null,
       ruleKey: item.ruleKey,
       href: item.href,

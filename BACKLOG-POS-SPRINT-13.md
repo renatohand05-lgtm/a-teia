@@ -26,17 +26,21 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Tabela de auditoria com densidade e hover
 - Input/botão do Assistente alinhados ao design system
 
+## RESOLVIDO NO BLOCO 10
+
+- Focus trap compartilhado (TAB cicla, ESC fecha, foco retorna, body lock) — RESOLVIDO
+- Inbox dedicado `/alertas` com filtros de status e severidade — RESOLVIDO
+- Filtro de período no Cockpit por competência mensal (URL `periodo`) — RESOLVIDO
+- Restaurar empresa arquivada com isolamento e auditoria — RESOLVIDO
+- Justificativa humana opcional em aprovação/rejeição (`Decision.humanReason`) — RESOLVIDO
+- Drawer de detalhe da auditoria com metadata sanitizada e cards no mobile — RESOLVIDO
+
 ## PENDENTE
 
-- Focus trap completo no drawer (ESC e overlay já existem)
-- Inbox dedicado de alertas além de `/automacoes#alertas`
-- Filtro de período no Cockpit (o motor ainda não recorta por competência)
-- Select fechado de segmento
-- Rota `/empresas/[id]/editar`
-- Undo de arquivamento
-- Justificativa textual na aprovação (schema sem reason)
-- Filtros persistidos na URL da auditoria
-- Drawer de detalhe da auditoria
+- Select fechado de segmento — PENDENTE (catálogo livre; só apresentação normalizada)
+- Rota `/empresas/[id]/editar` — PENDENTE (cadastro continua na âncora `#cadastro`)
+- Filtros persistidos na URL da auditoria — PENDENTE
+- Justificativa obrigatória — PENDENTE de propósito (recomendada, não obrigatória, para não quebrar fluxos existentes)
 
 ## FUTURO
 

@@ -173,6 +173,11 @@ export function AutomationView({
 
       <section id="alertas">
         <Header title="Alertas" subtitle="Detectado → Aberto → Reconhecido → Resolvido ou Dispensado. Histórico preservado." />
+        <p className="mb-3">
+          <Link href="/alertas" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Abrir inbox de alertas
+          </Link>
+        </p>
         {workspace.alerts.length ? (
           <ul className="space-y-2">
             {workspace.alerts.map((item) => (
