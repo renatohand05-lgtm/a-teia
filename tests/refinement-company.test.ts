@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  COMPANY_SEGMENT_OPTIONS,
   COMPANY_STATUS_LABELS,
   coverageFromFlags,
   displaySegment,
   listingPriorityLabel,
+  segmentSelectValue,
 } from "@/lib/company-ux";
 import { formatBRL, formatDateBR, parseBrazilianNumber } from "@/lib/format";
 import { companyInputSchema, dreInputSchema, financialGoalSchema } from "@/lib/validations";
@@ -53,6 +55,13 @@ describe("Refinamento 2 — empresas e formulários", () => {
     expect(displaySegment("alimentacao")).toBe("Alimentação");
     expect(displaySegment("Restaurante")).toBe("Alimentação");
     expect(displaySegment(null)).toBe("Não informado");
+  });
+
+  it("select fechado de segmento preserva valor livre como Outro", () => {
+    expect(COMPANY_SEGMENT_OPTIONS).toContain("Alimentação");
+    expect(segmentSelectValue("Restaurante")).toBe("Alimentação");
+    expect(segmentSelectValue("Academia")).toBe("Outro");
+    expect(segmentSelectValue(null)).toBe("");
   });
 
   it("padroniza status sem inventar estado", () => {

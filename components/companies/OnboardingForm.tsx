@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { SegmentSelect } from "@/components/companies/SegmentSelect";
 import { MoneyInput } from "@/components/ui/MoneyInput";
 import type { CompanyDTO } from "@/services/companyService";
 import type { OnboardingDTO } from "@/services/onboardingService";
@@ -25,7 +26,7 @@ export function OnboardingForm({
         Salve a qualquer momento e continue depois. Nada impede o acesso à empresa.
       </p>
       <Field name="name" label="Nome" defaultValue={company.name} required />
-      <Field name="segment" label="Segmento" defaultValue={company.segment ?? ""} placeholder="Ex.: Oficina mecânica" />
+      <SegmentSelect defaultValue={company.segment} />
       <Field name="city" label="Cidade" defaultValue={onboarding?.city ?? ""} placeholder="Ex.: Curitiba" />
       <Field name="state" label="UF" defaultValue={onboarding?.state ?? ""} placeholder="PR" maxLength={2} />
       <label className="block">

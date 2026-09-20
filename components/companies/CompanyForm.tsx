@@ -1,6 +1,7 @@
 "use client";
 
 import type { CompanyActionState } from "@/app/empresas/actions";
+import { SegmentSelect } from "@/components/companies/SegmentSelect";
 import { FormArea, FormField, FormMessage } from "@/components/ui/FormField";
 import type { CompanyDTO } from "@/services/companyService";
 import { useActionState } from "react";
@@ -33,13 +34,7 @@ export function CompanyForm({
         required
         autoFocus={creating}
       />
-      <FormField
-        name="segment"
-        label="Segmento"
-        defaultValue={company?.segment ?? ""}
-        placeholder="Ex.: Alimentação"
-        helper="Pode completar depois."
-      />
+      <SegmentSelect defaultValue={company?.segment} />
 
       {creating && compact ? (
         <p className="md:col-span-2 text-[12px]" style={{ color: "var(--text-2)" }}>

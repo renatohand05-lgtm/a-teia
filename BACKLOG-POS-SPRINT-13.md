@@ -35,12 +35,19 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Justificativa humana opcional em aprovação/rejeição (`Decision.humanReason`) — RESOLVIDO
 - Drawer de detalhe da auditoria com metadata sanitizada e cards no mobile — RESOLVIDO
 
-## PENDENTE
+## RESOLVIDO NO BLOCO 11
 
-- Select fechado de segmento — PENDENTE (catálogo livre; só apresentação normalizada)
-- Rota `/empresas/[id]/editar` — PENDENTE (cadastro continua na âncora `#cadastro`)
-- Filtros persistidos na URL da auditoria — PENDENTE
-- Justificativa obrigatória — PENDENTE de propósito (recomendada, não obrigatória, para não quebrar fluxos existentes)
+- Select fechado de segmento com opção Outro — RESOLVIDO
+- Rota `/empresas/[id]/editar` — RESOLVIDO
+- Filtros da auditoria na URL — RESOLVIDO
+- Breadcrumb Empresas → empresa → Financeiro → DRE — RESOLVIDO
+- Copy “Funcionou” / “Não funcionou” na memória — RESOLVIDO (Resultado positivo/negativo)
+- Erro de pesquisa sem citar Tavily — RESOLVIDO
+- Segmento e saúde de dados no Cockpit com labels consistentes — RESOLVIDO
+
+## PENDENTE REAL
+
+- Justificativa obrigatória — PENDENTE de propósito (recomendada, não obrigatória)
 
 ## FUTURO
 
@@ -51,6 +58,15 @@ Itens abaixo são acabamento. Não bloqueiam o Release 1.0.
 - Atalhos globais de teclado
 - Personalização de KPIs e briefing
 - Empty states ilustrados e templates visuais
+
+## VETADO / FORA DO RELEASE 1.0
+
+- Conexões
+- Estratégia
+- RBAC avançado
+- WhatsApp, e-mail automation, push
+- Novos agentes autônomos
+- Novos canais externos
 
 ## VISUAL
 

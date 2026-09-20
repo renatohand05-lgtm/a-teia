@@ -59,6 +59,38 @@ export function auditCategoryLabel(category: string | null | undefined): string 
 
 export { auditEntityLabel, auditResourceHref } from "@/lib/journey-ui";
 
+export type AuditUrlFilters = {
+  empresa?: string;
+  categoria?: string;
+  acao?: string;
+  usuario?: string;
+  de?: string;
+  ate?: string;
+};
+
+export function parseAuditUrlFilters(search: AuditUrlFilters): AuditUrlFilters {
+  return {
+    empresa: search.empresa?.trim() || undefined,
+    categoria: search.categoria?.trim() || undefined,
+    acao: search.acao?.trim() || undefined,
+    usuario: search.usuario?.trim() || undefined,
+    de: search.de?.trim() || undefined,
+    ate: search.ate?.trim() || undefined,
+  };
+}
+
+export function buildAuditSearch(filters: AuditUrlFilters): string {
+  const params = new URLSearchParams();
+  if (filters.empresa) params.set("empresa", filters.empresa);
+  if (filters.categoria) params.set("categoria", filters.categoria);
+  if (filters.acao) params.set("acao", filters.acao);
+  if (filters.usuario) params.set("usuario", filters.usuario);
+  if (filters.de) params.set("de", filters.de);
+  if (filters.ate) params.set("ate", filters.ate);
+  const query = params.toString();
+  return query ? `/auditoria?${query}` : "/auditoria";
+}
+
 export const EMPTY_AUDIT = {
   title: "Nenhum evento encontrado para os filtros selecionados.",
   body: "Ajuste o período, a empresa ou a ação. Nenhum dado de outro owner aparece aqui.",

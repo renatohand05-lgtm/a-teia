@@ -2,10 +2,19 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Drawer } from "@/components/ui/Drawer";
 import { EmptyState } from "@/components/ui/States";
 import { auditOriginLabel, presentAuditMetadata } from "@/lib/audit-detail";
-import { EMPTY_AUDIT, auditActionLabel, auditCategoryLabel, auditEntityLabel, auditResourceHref } from "@/lib/audit-ui";
+import {
+  EMPTY_AUDIT,
+  auditActionLabel,
+  auditCategoryLabel,
+  auditEntityLabel,
+  auditResourceHref,
+  buildAuditSearch,
+  type AuditUrlFilters,
+} from "@/lib/audit-ui";
 import { formatDateTimeBR } from "@/lib/format";
 
 export type AuditEventView = {
@@ -26,17 +35,24 @@ export type AuditEventView = {
 export function AuditView({
   events,
   companies,
+  filters = {},
 }: {
   events: AuditEventView[];
   companies: { id: string; name: string }[];
+  filters?: AuditUrlFilters;
 }) {
-  const [companyId, setCompanyId] = useState("");
-  const [category, setCategory] = useState("");
-  const [action, setAction] = useState("");
-  const [actor, setActor] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const router = useRouter();
+  const [companyId, setCompanyId] = useState(filters.empresa ?? "");
+  const [category, setCategory] = useState(filters.categoria ?? "");
+  const [action, setAction] = useState(filters.acao ?? "");
+  const [actor, setActor] = useState(filters.usuario ?? "");
+  const [from, setFrom] = useState(filters.de ?? "");
+  const [to, setTo] = useState(filters.ate ?? "");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  function persist(next: AuditUrlFilters) {
+    router.replace(buildAuditSearch(next), { scroll: false });
+  }
 
   const categories = useMemo(() => Array.from(new Set(events.map((item) => item.category))).sort(), [events]);
   const actions = useMemo(() => Array.from(new Set(events.map((item) => item.action))).sort(), [events]);
@@ -65,13 +81,37 @@ export function AuditView({
 
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Filter label="Período inicial">
-          <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="w-full bg-transparent text-[13px]" />
+          <input
+            type="date"
+            value={from}
+            onChange={(event) => {
+              setFrom(event.target.value);
+              persist({ empresa: companyId, categoria: category, acao: action, usuario: actor, de: event.target.value, ate: to });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          />
         </Filter>
         <Filter label="Período final">
-          <input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="w-full bg-transparent text-[13px]" />
+          <input
+            type="date"
+            value={to}
+            onChange={(event) => {
+              setTo(event.target.value);
+              persist({ empresa: companyId, categoria: category, acao: action, usuario: actor, de: from, ate: event.target.value });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          />
         </Filter>
         <Filter label="Empresa">
-          <select value={companyId} onChange={(event) => setCompanyId(event.target.value)} className="w-full bg-transparent text-[13px]">
+          <select
+            value={companyId}
+            aria-label="Empresa"
+            onChange={(event) => {
+              setCompanyId(event.target.value);
+              persist({ empresa: event.target.value, categoria: category, acao: action, usuario: actor, de: from, ate: to });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          >
             <option value="">Todas</option>
             {companies.map((company) => (
               <option key={company.id} value={company.id}>{company.name}</option>
@@ -79,7 +119,15 @@ export function AuditView({
           </select>
         </Filter>
         <Filter label="Usuário">
-          <select value={actor} onChange={(event) => setActor(event.target.value)} className="w-full bg-transparent text-[13px]">
+          <select
+            value={actor}
+            aria-label="Usuário"
+            onChange={(event) => {
+              setActor(event.target.value);
+              persist({ empresa: companyId, categoria: category, acao: action, usuario: event.target.value, de: from, ate: to });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          >
             <option value="">Todos</option>
             {actors.map((item) => (
               <option key={item} value={item}>{item}</option>
@@ -87,7 +135,15 @@ export function AuditView({
           </select>
         </Filter>
         <Filter label="Categoria">
-          <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full bg-transparent text-[13px]">
+          <select
+            value={category}
+            aria-label="Categoria"
+            onChange={(event) => {
+              setCategory(event.target.value);
+              persist({ empresa: companyId, categoria: event.target.value, acao: action, usuario: actor, de: from, ate: to });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          >
             <option value="">Todas</option>
             {categories.map((item) => (
               <option key={item} value={item}>{auditCategoryLabel(item)}</option>
@@ -95,7 +151,15 @@ export function AuditView({
           </select>
         </Filter>
         <Filter label="Ação">
-          <select value={action} onChange={(event) => setAction(event.target.value)} className="w-full bg-transparent text-[13px]">
+          <select
+            value={action}
+            aria-label="Ação"
+            onChange={(event) => {
+              setAction(event.target.value);
+              persist({ empresa: companyId, categoria: category, acao: event.target.value, usuario: actor, de: from, ate: to });
+            }}
+            className="w-full bg-transparent text-[13px]"
+          >
             <option value="">Todas</option>
             {actions.map((item) => (
               <option key={item} value={item}>{auditActionLabel(item)}</option>

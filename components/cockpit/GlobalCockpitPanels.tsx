@@ -17,6 +17,7 @@ import { assistantHref } from "@/lib/assistant-ui";
 import { PORTFOLIO_SHORTCUTS } from "@/lib/global-priority-engine";
 import { formatBRL, formatDateBR } from "@/lib/format";
 import { priorityLevelLabel, signalKindLabel } from "@/lib/cockpit-ui";
+import { dataHealthLabel, displaySegment } from "@/lib/company-ux";
 import { calculatePaybackMonths } from "@/lib/opportunity-score";
 import { displayEvidence, displayPaybackMonths } from "@/lib/opportunity-ui";
 import { displayRecordCount } from "@/lib/experiment-ui";
@@ -133,7 +134,7 @@ export function GlobalCockpitPanels({
                       <td className="px-3 py-2.5 font-bold">
                         <Link href={`/empresas/${row.company.id}`}>{row.company.name}</Link>
                       </td>
-                      <td className="px-3 py-2.5" style={{ color: "var(--text-2)" }}>{row.company.segment ?? "Não informado"}</td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--text-2)" }}>{displaySegment(row.company.segment)}</td>
                       <td className="px-3 py-2.5" title={row.health.explanation}>{row.health.level}</td>
                       <td className="px-3 py-2.5">{row.diagnosisScore ?? "Não informado"}</td>
                       <td className="px-3 py-2.5">{row.revenue == null ? "Não informado" : formatBRL(row.revenue)}</td>
@@ -152,7 +153,7 @@ export function GlobalCockpitPanels({
               {bundle.portfolio.map((row) => (
                 <article key={row.company.id} className="rounded-2xl border p-4" style={{ borderColor: "var(--border)" }}>
                   <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {row.company.segment ?? "Não informado"} · {row.health.level}
+                    {displaySegment(row.company.segment)} · {dataHealthLabel(row.health.level)}
                   </p>
                   <Link href={`/empresas/${row.company.id}`} className="mt-1 block text-[15px] font-bold">
                     {row.company.name}

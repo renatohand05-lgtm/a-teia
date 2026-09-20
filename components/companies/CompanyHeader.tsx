@@ -34,7 +34,7 @@ export function CompanyHeader({
             {nextCta ?? "Continuar"}
           </Link>
         ) : null}
-        <Link href="#cadastro" className="rounded-xl border px-4 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
+        <Link href={`/empresas/${company.id}/editar`} className="rounded-xl border px-4 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
           Editar
         </Link>
         <Link

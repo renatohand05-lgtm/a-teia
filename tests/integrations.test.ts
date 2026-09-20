@@ -73,6 +73,7 @@ describe("integrações — erros amigáveis", () => {
     expect(classifyHttpStatus("tavily", 403)).toBe("TAVILY_AUTH_ERROR");
     expect(classifyHttpStatus("tavily", 500)).toBe("TAVILY_PROVIDER_ERROR");
     expect(friendlyIntegrationMessage("OPENAI_MISSING")).toMatch(/credencial não configurada/);
-    expect(friendlyIntegrationMessage("TAVILY_AUTH_ERROR")).toMatch(/autenticação Tavily/);
+    expect(friendlyIntegrationMessage("TAVILY_AUTH_ERROR")).toMatch(/autenticação/);
+    expect(friendlyIntegrationMessage("TAVILY_AUTH_ERROR")).not.toMatch(/Tavily|OpenAI|Prisma/i);
   });
 });

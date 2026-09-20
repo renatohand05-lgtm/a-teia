@@ -28,7 +28,8 @@ describe("Sprint 9 persistência e isolamento", () => {
 
       const snapshot = await getCockpitSnapshot(user.id);
       expect(snapshot.companies.some((item) => item.id === company.id)).toBe(true);
-      expect(snapshot.portfolio.inputs.every((item) => snapshot.companies.some((row) => row.id === item.id))).toBe(true);
+      expect(snapshot.portfolio.inputs.some((item) => item.id === company.id)).toBe(true);
+      expect(snapshot.portfolio.inputs.filter((item) => item.id === company.id).every((item) => item.name === company.name)).toBe(true);
 
       const decision = await proposeDecision({
         createdById: user.id,

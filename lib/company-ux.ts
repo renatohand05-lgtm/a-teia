@@ -20,6 +20,17 @@ export const COVERAGE_LABELS: Record<CoverageLevel, string> = {
   COMPLETO: "Completo",
 };
 
+export const COMPANY_SEGMENT_OPTIONS = [
+  "Alimentação",
+  "Oficina",
+  "Varejo",
+  "Serviços",
+  "Saúde",
+  "Educação",
+  "Indústria",
+  "Outro",
+] as const;
+
 const SEGMENT_ALIASES: Record<string, string> = {
   alimentacao: "Alimentação",
   alimentação: "Alimentação",
@@ -51,6 +62,24 @@ export function displaySegment(value: string | null | undefined): string {
   }
   const trimmed = value.trim();
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
+export function segmentSelectValue(value: string | null | undefined): string {
+  if (!value?.trim()) return "";
+  const displayed = displaySegment(value);
+  if (displayed === "Não informado") return "";
+  return COMPANY_SEGMENT_OPTIONS.includes(displayed as (typeof COMPANY_SEGMENT_OPTIONS)[number]) && displayed !== "Outro"
+    ? displayed
+    : "Outro";
+}
+
+export function dataHealthLabel(level: string | null | undefined): string {
+  const labels: Record<string, string> = {
+    COMPLETO: "Completo",
+    PARCIAL: "Parcial",
+    INSUFICIENTE: "Insuficiente",
+  };
+  return level ? (labels[level] ?? level) : "—";
 }
 
 export function coverageFromFlags(flags: EssentialFlags): {

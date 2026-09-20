@@ -10,7 +10,7 @@ export default function LoginPage() {
       </p>
       <LoginForm />
       <p className="mt-8 text-center text-[12px] leading-relaxed" style={{ color: "var(--text-3)" }}>
-        Acesso restrito. Suas credenciais não são expostas no navegador.
+        Acesso restrito.
       </p>
     </div>
   );

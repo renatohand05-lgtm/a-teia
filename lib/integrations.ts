@@ -69,14 +69,14 @@ export function friendlyIntegrationMessage(code: IntegrationErrorCode): string {
     case "OPENAI_PROVIDER_ERROR":
       return "IA indisponível — falha do provedor.";
     case "TAVILY_MISSING":
-      return "Pesquisa externa indisponível — credencial Tavily não configurada.";
+      return "Pesquisa externa indisponível — credencial não configurada.";
     case "TAVILY_AUTH_ERROR":
-      return "Pesquisa externa indisponível — falha de autenticação Tavily.";
+      return "Pesquisa externa indisponível — falha de autenticação.";
     case "TAVILY_RATE_LIMIT":
-      return "Pesquisa externa indisponível — limite de uso Tavily atingido.";
+      return "Pesquisa externa indisponível — limite de uso atingido.";
     case "TAVILY_PROVIDER_ERROR":
     default:
-      return "Pesquisa externa indisponível — falha do provedor Tavily.";
+      return "Pesquisa externa indisponível — falha do provedor.";
   }
 }
 

@@ -129,6 +129,47 @@ export function pathForModuleQuery(modulo: string | undefined, companyId: string
   return item ? item.href(companyId) : null;
 }
 
+export type CompanyCrumb = { href?: string; label: string };
+
+export function companyBreadcrumbTrail(
+  pathname: string,
+  companyId: string,
+  companyName: string,
+  pageTitle: string,
+): CompanyCrumb[] {
+  const crumbs: CompanyCrumb[] = [
+    { href: "/empresas", label: "Empresas" },
+    { href: `/empresas/${companyId}`, label: companyName },
+  ];
+  if (pathname === `/empresas/${companyId}` || pathname === `/empresas/${companyId}/`) {
+    return crumbs;
+  }
+  if (pathname === `/empresas/${companyId}/editar`) {
+    return [...crumbs, { label: "Cadastro" }];
+  }
+  if (pathname.includes("/oportunidades/") && pathname.includes("/editar")) {
+    crumbs.push({ href: `/empresas/${companyId}/oportunidades`, label: "Oportunidades" });
+    crumbs.push({ label: "Editar" });
+    return crumbs;
+  }
+  if (pathname.includes("/financeiro/")) {
+    crumbs.push({ href: `/empresas/${companyId}/financeiro`, label: "Financeiro" });
+    if (pathname.includes("/dre")) crumbs.push({ label: "DRE" });
+    else if (pathname.includes("/fluxo-caixa")) crumbs.push({ label: "Fluxo de caixa" });
+    else if (pathname.includes("/metas")) crumbs.push({ label: "Metas" });
+    else if (pathname.includes("/cenarios")) crumbs.push({ label: "Cenários" });
+    return crumbs;
+  }
+  if (pathname.includes("/experimentos/") && pathname.split("/").length > 5) {
+    crumbs.push({ href: `/empresas/${companyId}/experimentos`, label: "Experimentos" });
+    crumbs.push({ label: pageTitle });
+    return crumbs;
+  }
+  const moduleItem = COMPANY_NAV.find((item) => item.match(pathname) && item.key !== "central");
+  crumbs.push({ label: moduleItem?.label ?? pageTitle });
+  return crumbs;
+}
+
 export function gestaoHref(companyId: string | null, key: string): string {
   if (companyId) return pathForModuleQuery(key, companyId) ?? `/empresas/${companyId}`;
   return `/empresas?modulo=${key}`;

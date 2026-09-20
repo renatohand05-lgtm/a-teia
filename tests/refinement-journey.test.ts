@@ -71,7 +71,8 @@ describe("Refinamento 8 — jornada e nomenclatura", () => {
     expect(chips.find((item) => item.key === "cadastro")?.value).toBe("✓");
     expect(chips.find((item) => item.key === "financeiro")?.value).toBe("✓");
     expect(chips.find((item) => item.key === "diagnostico")?.href).toBe("/empresas/emp-1/diagnostico");
-    expect(chips.every((item) => item.href && !item.href.includes("#") || item.key === "cadastro")).toBe(true);
+    expect(chips.find((item) => item.key === "cadastro")?.href).toBe("/empresas/emp-1/editar");
+    expect(chips.every((item) => item.href && !item.href.includes("#"))).toBe(true);
   });
 
   it("próxima ação determinística não inventa prioridade", () => {

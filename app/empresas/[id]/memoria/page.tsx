@@ -52,8 +52,8 @@ export default async function EmpresaMemoriaPage({
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
           <Mini label="Validados" value={summary.approved + summary.validated + summary.observations > 0 ? String(summary.validated) : "Sem dados"} />
           <Mini label="Observações" value={String(summary.observations)} />
-          <Mini label="Funcionou" value={String(summary.positive)} />
-          <Mini label="Não funcionou" value={String(summary.negative)} />
+          <Mini label="Resultado positivo" value={String(summary.positive)} />
+          <Mini label="Resultado negativo" value={String(summary.negative)} />
           <Mini label="Inconclusivos" value={String(summary.inconclusive)} />
           <Mini label="Propostas" value={String(summary.proposed)} />
           <Mini label="Aprovados" value={String(summary.approved)} />
@@ -100,8 +100,8 @@ export default async function EmpresaMemoriaPage({
           </select>
           <select name="resultado" defaultValue={filters.resultado ?? "ALL"} className="rounded-lg border bg-transparent px-2 py-2" style={{ borderColor: "var(--border)" }}>
             <option value="ALL">Todos os resultados</option>
-            <option value="POSITIVE">Funcionou</option>
-            <option value="NEGATIVE">Não funcionou</option>
+            <option value="POSITIVE">Resultado positivo</option>
+            <option value="NEGATIVE">Resultado negativo</option>
             <option value="INCONCLUSIVE">Inconclusivo</option>
           </select>
           <button className="rounded-lg border px-3 py-2 font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>Filtrar</button>

@@ -81,7 +81,7 @@ export function buildCompanyHubJourney(progress: CompanyProgress): JourneyChip[]
   const id = progress.companyId;
   const base = id ? `/empresas/${id}` : "/empresas/nova";
   const stages = [
-    { key: "cadastro", label: "Cadastro", href: id ? `${base}#cadastro` : "/empresas/nova" },
+    { key: "cadastro", label: "Cadastro", href: id ? `${base}/editar` : "/empresas/nova" },
     { key: "financeiro", label: "Financeiro", href: id ? `${base}/financeiro` : "/empresas?modulo=financeiro" },
     { key: "diagnostico", label: "Diagnóstico", href: id ? `${base}/diagnostico` : "/empresas?modulo=diagnostico" },
     { key: "oportunidades", label: "Oportunidades", href: id ? `${base}/oportunidades` : "/empresas?modulo=oportunidades" },

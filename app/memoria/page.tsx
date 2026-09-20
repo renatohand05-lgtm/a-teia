@@ -85,8 +85,8 @@ export default async function MemoriaGlobalPage({
           </select>
           <select name="resultado" defaultValue={filters.resultado ?? "ALL"} className="rounded-lg border bg-transparent px-2 py-2" style={{ borderColor: "var(--border)" }}>
             <option value="ALL">Todos os resultados</option>
-            <option value="POSITIVE">Funcionou</option>
-            <option value="NEGATIVE">Não funcionou</option>
+            <option value="POSITIVE">Resultado positivo</option>
+            <option value="NEGATIVE">Resultado negativo</option>
             <option value="INCONCLUSIVE">Inconclusivo</option>
           </select>
           <button className="rounded-lg border px-3 py-2 font-bold" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>Filtrar</button>

@@ -32,8 +32,8 @@ export const MEMORY_STATUS_LABELS: Record<MemoryStatus, string> = {
 };
 
 export const MEMORY_POLARITY_LABELS: Record<MemoryPolarity, string> = {
-  POSITIVE: "Funcionou",
-  NEGATIVE: "Não funcionou",
+  POSITIVE: "Resultado positivo",
+  NEGATIVE: "Resultado negativo",
   INCONCLUSIVE: "Inconclusivo",
 };
 

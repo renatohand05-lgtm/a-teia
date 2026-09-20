@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { COMPANY_NAV, companyIdFromPath, findCompanyNav } from "@/lib/company-nav";
+import { companyBreadcrumbTrail, companyIdFromPath } from "@/lib/company-nav";
 
 export function CompanyBreadcrumb({ title, subtitle }: { title: string; subtitle?: string }) {
   const pathname = usePathname();
@@ -30,31 +30,25 @@ export function CompanyBreadcrumb({ title, subtitle }: { title: string; subtitle
   }
 
   if (!companyId) return null;
-
-  const moduleLabel =
-    COMPANY_NAV.find((item) => item.match(pathname) && item.key !== "central")?.label ??
-    findCompanyNav(pathname.split("/").pop() ?? "")?.label ??
-    (pathname.endsWith("/onboarding") ? "Onboarding" : null);
-
-  const companyName = moduleLabel ? subtitle || title : title;
+  const companyName = subtitle && subtitle !== title ? subtitle : title;
+  const crumbs = companyBreadcrumbTrail(pathname, companyId, companyName, title);
 
   return (
     <nav className="flex flex-wrap items-center gap-1 px-4 pb-0 pt-2 text-[12px] lg:px-8" aria-label="Trilha">
-      <Link href="/empresas" style={{ color: "var(--gold-soft)" }}>
-        Empresas
-      </Link>
-      <span style={{ color: "var(--text-3)" }}>/</span>
-      <Link href={`/empresas/${companyId}`} className="truncate font-semibold">
-        {companyName}
-      </Link>
-      {moduleLabel ? (
-        <>
-          <span style={{ color: "var(--text-3)" }}>/</span>
-          <span className="truncate" style={{ color: "var(--text-2)" }}>
-            {title}
-          </span>
-        </>
-      ) : null}
+      {crumbs.map((item, index) => (
+        <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
+          {index > 0 ? <span style={{ color: "var(--text-3)" }}>/</span> : null}
+          {item.href && index < crumbs.length - 1 ? (
+            <Link href={item.href} className="truncate" style={{ color: index === 0 ? "var(--gold-soft)" : undefined }}>
+              {item.label}
+            </Link>
+          ) : (
+            <span className="truncate" style={{ color: index === crumbs.length - 1 ? "var(--text-2)" : undefined }}>
+              {item.label}
+            </span>
+          )}
+        </span>
+      ))}
     </nav>
   );
 }

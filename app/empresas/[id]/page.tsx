@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { updateCompanyAction } from "@/app/empresas/actions";
 import { ArchiveCompanyForm } from "@/components/companies/ArchiveCompanyForm";
 import { RestoreCompanyForm } from "@/components/companies/RestoreCompanyForm";
 import { CompanyCockpit } from "@/components/companies/CompanyCockpit";
-import { CompanyForm } from "@/components/companies/CompanyForm";
 import { CompanyHeader } from "@/components/companies/CompanyHeader";
 import { OpportunityOverview } from "@/components/companies/OpportunityOverview";
 import { AppShell } from "@/components/layout/AppShell";
@@ -46,7 +44,6 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
       }
     : null;
 
-  const boundUpdate = updateCompanyAction.bind(null, company.id);
   const next = nextCockpitAction({
     companyId: company.id,
     companyName: company.name,
@@ -146,24 +143,25 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
           </div>
         </section>
 
-        <section id="cadastro">
-          <h2 className="mb-3 text-[16px] font-bold">Editar cadastro</h2>
+        <section id="cadastro" className="rounded-2xl border p-5" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <h2 className="mb-2 text-[16px] font-bold">Cadastro</h2>
           <p className="mb-4 text-[13px]" style={{ color: "var(--text-2)" }}>
-            Complete os dados quando fizer sentido. O onboarding continua em rota própria.
+            Dados da empresa ficam na ficha de cadastro. Arquivar não apaga o histórico.
           </p>
-          {company.status === "ACTIVE" ? (
-            <div className="mb-4">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/empresas/${company.id}/editar`}
+              className="rounded-xl px-4 py-2 text-[12px] font-extrabold text-[#241a08]"
+              style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}
+            >
+              Editar cadastro
+            </Link>
+            {company.status === "ACTIVE" ? (
               <ArchiveCompanyForm companyId={company.id} />
-            </div>
-          ) : (
-            <div className="mb-4 space-y-2">
-              <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-                Empresa arquivada. Os dados foram preservados. Isto não é exclusão.
-              </p>
+            ) : (
               <RestoreCompanyForm companyId={company.id} />
-            </div>
-          )}
-          <CompanyForm company={company} action={boundUpdate} submitLabel="Salvar cadastro" />
+            )}
+          </div>
         </section>
       </div>
     </AppShell>
