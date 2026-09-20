@@ -68,6 +68,12 @@ Clique na linha/card abre drawer. Campos seguros + metadata sanitizada (sem senh
 
 333 testes / 44 arquivos. TypeScript, lint e build a registrar após a rodada.
 
+## Produção
+
+Vercel Production **Ready**: https://a-teia.vercel.app (`dpl_CZzZasn8EDwLDTuAzYkLeBypWbKL`)
+
+Health: status ok, release 1.0, version 1.0.0, openaiConfigured true, webSearchConfigured true, openaiExposed false, automationEngine ok, scheduler configured, database ok.
+
 ## Walkthrough
 
 Browser autenticado **não disponível**. Pendência não bloqueante.
