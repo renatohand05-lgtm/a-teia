@@ -2,7 +2,8 @@
 
 **Escopo:** Fechamento das pendências funcionais + UX residual  
 **Data:** 2026-09-19  
-**Commit:** a registrar  
+**Commit:** `feat: close refinement 10 functional UX leftovers`  
+**SHA:** `af99f33d22190e7ad4f6e996ee8e6b3abc10b035`  
 **Branch:** `main`  
 **Versão:** permanece **1.0.0**  
 **Migration:** `20260919213000_refinement10_decision_reason` (`Decision.humanReason` opcional)  
