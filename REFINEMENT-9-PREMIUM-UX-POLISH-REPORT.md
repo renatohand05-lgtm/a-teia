@@ -43,6 +43,12 @@ Drawer com ESC e `overflow` lock. Focus visível gold. Labels/`aria-label` em m�
 
 Testes, TypeScript, lint e build a registrar após a rodada. Sem migration. Sem alteração de engines, Prisma, Auth, OpenAI, Tavily ou cron.
 
+## Produção
+
+Vercel Production **Ready**: https://a-teia.vercel.app (`dpl_4wnHBon85vK4eBp3VuLrT6gdmajM`)
+
+Health: release 1.0, version 1.0.0, openaiConfigured true, webSearchConfigured true, openaiExposed false, automationEngine ok, scheduler configured, database ok.
+
 ## Walkthrough
 
 Browser autenticado **não disponível**. Pendência não bloqueante de QA visual em desktop/tablet/mobile.
