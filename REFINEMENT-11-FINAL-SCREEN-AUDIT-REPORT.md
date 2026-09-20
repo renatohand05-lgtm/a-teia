@@ -39,6 +39,12 @@ Justificativa obrigatória permanece **pendente de propósito**.
 
 Itens futuros (Conexões, Estratégia, heatmap, sons, builder) **não implementados**.
 
+## Produção
+
+Vercel Production **Ready**: https://a-teia.vercel.app
+
+Health: status ok, release 1.0, version 1.0.0.
+
 ## Walkthrough
 
 Browser autenticado **não disponível**. Pendência não bloqueante.
