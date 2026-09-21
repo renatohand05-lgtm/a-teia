@@ -51,5 +51,6 @@ export const SIDEBAR_HREFS = [
   "/memoria",
   "/conexoes",
   "/estrategias",
+  "/playbooks",
   "/assistente",
 ] as const;

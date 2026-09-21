@@ -69,7 +69,7 @@ Human-in-the-loop. IA não aprova decisão, não move capital, não valida evid�
 
 ## Módulos futuros
 
-- Playbooks visuais de estratégia
+- Heatmap visual de conexões
 - Canais externos (e-mail, WhatsApp, Slack)
 - Importação financeira/CRM
 - RBAC além de owner

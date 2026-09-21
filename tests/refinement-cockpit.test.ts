@@ -13,7 +13,7 @@ import { CENTRAL_NAV, FUTURE_NAV, INTELLIGENCE_NAV, PRIMARY_NAV } from "@/types"
 describe("Refinamento 1 — Cockpit e navegação", () => {
   it("sidebar publica rotas reais e em breve só o que não existe", () => {
     expect(PRIMARY_NAV.map((item) => item.href)).toEqual(["/cockpit", "/empresas"]);
-    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/assistente"]);
+    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/playbooks", "/assistente"]);
     expect(CENTRAL_NAV.map((item) => item.href)).toEqual([
       "/cockpit#cockpit-prioridades",
       "/cockpit#cockpit-decisoes",

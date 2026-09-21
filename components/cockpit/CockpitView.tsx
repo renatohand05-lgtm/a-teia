@@ -177,6 +177,27 @@ export function CockpitView({
         />
       </section>
 
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Kpi
+          href="/playbooks"
+          label="Playbooks validados"
+          value={active.length ? String(snapshot.playbooks.validated) : "Sem dados"}
+          hint="Registro suportado por evidência"
+        />
+        <Kpi
+          href="/playbooks"
+          label="Reutilizações ativas"
+          value={active.length ? String(snapshot.playbooks.testing) : "Sem dados"}
+          hint="Em teste em outra empresa"
+        />
+        <Kpi
+          href="/playbooks"
+          label="Playbooks"
+          value={active.length ? "Abrir biblioteca" : "Sem dados"}
+          hint="Aprendizado reutilizável, não certeza"
+        />
+      </section>
+
       <ConnectionsPreview companies={active.map((company) => ({ id: company.id, name: company.name }))} />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

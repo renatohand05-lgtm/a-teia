@@ -76,6 +76,7 @@ function context(overrides: Partial<ExecutiveContext> = {}): ExecutiveContext {
     evidence: [],
     memories: [],
     connections: [],
+    playbooks: [],
     ...overrides,
   };
 }

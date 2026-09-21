@@ -21,6 +21,7 @@ import { getRecentMarketIntel, type MarketIntelSummary } from "@/services/resear
 import { getAllocationCockpitSummary, type AllocationCockpitSummary } from "@/services/allocationService";
 import { getAutomationCockpitSummary, type AutomationCockpitSummary } from "@/services/automationService";
 import { getCockpitConnectionSummary } from "@/services/connectionService";
+import { getCockpitPlaybookSummary } from "@/services/playbookService";
 import { loadPortfolioBundle, type PortfolioBundle, type PortfolioFilters } from "@/services/portfolioService";
 
 export type CockpitCounts = {
@@ -71,6 +72,11 @@ export type CockpitSnapshot = {
     analysis: number;
     testing: number;
     transferable: number;
+  };
+  playbooks: {
+    validated: number;
+    testing: number;
+    companies: number;
   };
 };
 
@@ -245,12 +251,13 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
 
   if (!focus) {
     const progress = emptyCompanyProgress();
-    const [marketIntel, portfolioBundle, allocation, automation, connections] = await Promise.all([
+    const [marketIntel, portfolioBundle, allocation, automation, connections, playbooks] = await Promise.all([
       getRecentMarketIntel(ownerId),
       loadPortfolioBundle(ownerId, filters),
       getAllocationCockpitSummary(ownerId),
       getAutomationCockpitSummary(ownerId),
       getCockpitConnectionSummary(ownerId),
+      getCockpitPlaybookSummary(ownerId),
     ]);
     return {
       companies,
@@ -265,10 +272,11 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
       allocation,
       automation,
       connections,
+      playbooks,
     };
   }
 
-  const [portfolio, focusCounts, briefing, marketIntel, portfolioBundle, allocation, automation, connections] = await Promise.all([
+  const [portfolio, focusCounts, briefing, marketIntel, portfolioBundle, allocation, automation, connections, playbooks] = await Promise.all([
     countPortfolio(ownerId),
     countPortfolio(ownerId, focus.id),
     loadBriefing(ownerId, focus),
@@ -277,6 +285,7 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
     getAllocationCockpitSummary(ownerId),
     getAutomationCockpitSummary(ownerId),
     getCockpitConnectionSummary(ownerId),
+    getCockpitPlaybookSummary(ownerId),
   ]);
 
   const progress = progressFromCounts(focus, focusCounts, ranked[0]?.zone === "critical");
@@ -293,5 +302,6 @@ export async function getCockpitSnapshot(ownerId: string, filters: PortfolioFilt
     allocation,
     automation,
     connections,
+    playbooks,
   };
 }

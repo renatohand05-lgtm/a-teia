@@ -17,6 +17,7 @@ import {
   displayConnectionScore,
 } from "@/lib/connection-engine";
 import { getConnection, getConnectionRelated } from "@/services/connectionService";
+import { listRelatedPlaybooksForConnection } from "@/services/playbookService";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,13 @@ export default async function ConnectionDetailPage({ params }: { params: Promise
     notFound();
   }
   const related = await getConnectionRelated(session.user.id, connection);
+  const playbooks = await listRelatedPlaybooksForConnection(session.user.id, {
+    fromId: connection.fromId,
+    toId: connection.toId,
+    fromSegment: connection.fromSegment,
+    toSegment: connection.toSegment,
+    type: connection.type,
+  });
   const score = displayConnectionScore(connection.score, connection.scorePartial);
   const destEvidence = related.evidence.filter((item) => item.companyId === connection.toId);
   const originEvidence = related.evidence.filter((item) => item.companyId === connection.fromId);
@@ -66,6 +74,11 @@ export default async function ConnectionDetailPage({ params }: { params: Promise
             : "Nenhuma fonte externa nesta conexão."}
         </Block>
         <Block title="Limitações">{connection.limitations}</Block>
+        <Block title="Playbooks relacionados">
+          {playbooks.length
+            ? playbooks.map((item) => `${item.title} — ${item.label}`).join(" | ")
+            : "Nenhum playbook relacionado persistido."}
+        </Block>
         <Block title="Estratégias possíveis">Criar uma estratégia estruturada permanece hipótese até o teste.</Block>
         <Block title="Próxima ação">{connection.nextAction}</Block>
 

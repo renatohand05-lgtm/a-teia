@@ -177,6 +177,8 @@ const AUDIT_ENTITY_HREF: Record<string, (companyId: string | null, entityId: str
   CompanyOnboarding: (companyId) => (companyId ? `/empresas/${companyId}/onboarding` : null),
   Connection: (_companyId, entityId) => (entityId ? `/conexoes/${entityId}` : "/conexoes"),
   Strategy: (_companyId, entityId) => (entityId ? `/estrategias/${entityId}` : "/estrategias"),
+  Playbook: (_companyId, entityId) => (entityId ? `/playbooks/${entityId}` : "/playbooks"),
+  PlaybookApplication: (_companyId, entityId) => (entityId ? `/playbooks/${entityId}` : "/playbooks"),
 };
 
 export function auditResourceHref(input: {
@@ -217,6 +219,8 @@ export function auditEntityLabel(entity: string | null | undefined): string {
     CompanyOnboarding: "Onboarding",
     Connection: "Conexão",
     Strategy: "Estratégia",
+    Playbook: "Playbook",
+    PlaybookApplication: "Aplicação de playbook",
   };
   if (!entity) return "Recurso";
   return labels[entity] ?? entity;

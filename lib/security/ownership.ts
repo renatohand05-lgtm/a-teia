@@ -20,7 +20,9 @@ export type OwnedResourceKind =
   | "conversation"
   | "research"
   | "connection"
-  | "strategy";
+  | "strategy"
+  | "playbook"
+  | "playbookApplication";
 
 export type OwnedResource = {
   id: string;
@@ -147,6 +149,20 @@ async function resolveOwner(kind: OwnedResourceKind, id: string): Promise<OwnedR
         select: { id: true, ownerId: true, companyId: true },
       });
       return row ? { id: row.id, ownerId: row.ownerId, companyId: row.companyId, kind } : null;
+    }
+    case "playbook": {
+      const row = await prisma.playbook.findUnique({
+        where: { id },
+        select: { id: true, ownerId: true, originCompanyId: true },
+      });
+      return row ? { id: row.id, ownerId: row.ownerId, companyId: row.originCompanyId, kind } : null;
+    }
+    case "playbookApplication": {
+      const row = await prisma.playbookApplication.findUnique({
+        where: { id },
+        select: { id: true, ownerId: true, destinationCompanyId: true },
+      });
+      return row ? { id: row.id, ownerId: row.ownerId, companyId: row.destinationCompanyId, kind } : null;
     }
     default:
       return null;

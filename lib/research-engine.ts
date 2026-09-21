@@ -210,6 +210,8 @@ function isPureInternalQuestion(q: string, intent: QuestionIntent): boolean {
     "EXPERIMENTS",
     "EVIDENCE",
     "MEMORY",
+    "CONNECTION",
+    "PLAYBOOK",
     "RISKS",
   ];
   return internalIntents.includes(intent) && !EXTERNAL_CUES.test(q);

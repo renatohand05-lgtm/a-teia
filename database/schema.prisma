@@ -123,6 +123,29 @@ enum OpportunityOrigin {
   SUGGESTED
   MANUAL
   STRATEGY
+  PLAYBOOK
+}
+
+enum PlaybookStatus {
+  RASCUNHO
+  EM_REVISAO
+  VALIDADO
+  ARQUIVADO
+}
+
+enum PlaybookOriginKind {
+  MEMORY
+  STRATEGY
+  EXPERIMENT
+  MANUAL
+}
+
+enum PlaybookApplicationStatus {
+  PROPOSTA
+  CONFIRMADA
+  REJEITADA
+  EM_TESTE
+  ARQUIVADA
 }
 
 enum ConnectionStatus {
@@ -353,6 +376,11 @@ model User {
   ownedStrategies     Strategy[]   @relation("StrategyOwner")
   assignedStrategies  Strategy[]   @relation("StrategyAssignee")
   approvedStrategies  Strategy[]   @relation("StrategyApprover")
+  ownedPlaybooks      Playbook[]   @relation("PlaybookOwner")
+  createdPlaybooks    Playbook[]   @relation("PlaybookAuthor")
+  reviewedPlaybooks   Playbook[]   @relation("PlaybookReviewer")
+  approvedPlaybooks   Playbook[]   @relation("PlaybookApprover")
+  playbookApplications PlaybookApplication[] @relation("PlaybookApplicationOwner")
 }
 
 model Company {
@@ -399,6 +427,8 @@ model Company {
   automations        Automation[]
   automationAlerts   AutomationAlert[]
   auditLogs          AuditLog[]
+  originPlaybooks    Playbook[]            @relation("PlaybookOrigin")
+  playbookApplications PlaybookApplication[] @relation("PlaybookApplicationDestination")
 
   @@index([ownerId, status])
   @@index([name])
@@ -593,6 +623,7 @@ model Connection {
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
   strategies           Strategy[]
+  playbooks            Playbook[]
 
   @@unique([ownerId, fromId, toId, type])
   @@index([ownerId, status])
@@ -640,6 +671,8 @@ model Opportunity {
   evidence    Evidence[]
   memories    StrategicMemory[]
   strategies  Strategy[]
+  playbooks   Playbook[]
+  playbookApplications PlaybookApplication[]
 
   @@index([companyId, status])
   @@index([companyId, score])
@@ -691,11 +724,118 @@ model Strategy {
   decisions   Decision[]
   experiments Experiment[]
   memories    StrategicMemory[]
+  playbooks   Playbook[]
 
   @@index([ownerId, status])
   @@index([companyId])
   @@index([destinationCompanyId])
   @@index([connectionId])
+}
+
+/// Playbook registra o que foi feito, em qual contexto e com qual resultado. Não é garantia.
+model Playbook {
+  id                      String             @id @default(cuid())
+  ownerId                 String
+  owner                   User               @relation("PlaybookOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  originCompanyId         String
+  originCompany           Company            @relation("PlaybookOrigin", fields: [originCompanyId], references: [id], onDelete: Cascade)
+  strategyId              String?
+  strategy                Strategy?          @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  opportunityId           String?
+  opportunity             Opportunity?       @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  experimentId            String?
+  experiment              Experiment?        @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  evidenceId              String?
+  evidence                Evidence?          @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  memoryId                String?
+  memory                  StrategicMemory?   @relation(fields: [memoryId], references: [id], onDelete: SetNull)
+  connectionId            String?
+  connection              Connection?        @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  createdById             String?
+  createdBy               User?              @relation("PlaybookAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedById            String?
+  reviewedBy              User?              @relation("PlaybookReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  approvedById            String?
+  approvedBy              User?              @relation("PlaybookApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  title                   String
+  family                  String?
+  description             String?
+  problem                 String?
+  originSegment           String?
+  scenario                String?
+  preconditions           String?
+  audience                String?
+  limitations             String?
+  risks                   String?
+  steps                   Json?
+  durationDays            Int?
+  resources               String?
+  observedInvestment      Decimal?           @db.Decimal(14, 2)
+  suggestedOwner          String?
+  dependencies            String?
+  primaryKpi              String?
+  secondaryKpis           Json?
+  baseline                Decimal?           @db.Decimal(14, 4)
+  target                  Decimal?           @db.Decimal(14, 4)
+  observedResult          Decimal?           @db.Decimal(14, 4)
+  observedResultText      String?
+  confidence              Int?
+  originKind              PlaybookOriginKind @default(MANUAL)
+  status                  PlaybookStatus     @default(RASCUNHO)
+  compatibleSegments      Json?
+  requiredConditions      String?
+  recommendedAdaptations  String?
+  contrarySignals         String?
+  reviewedAt              DateTime?
+  approvedAt              DateTime?
+  archivedAt              DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  applications            PlaybookApplication[]
+
+  @@index([ownerId, status])
+  @@index([originCompanyId])
+  @@index([family, originSegment])
+  @@index([memoryId])
+  @@index([strategyId])
+  @@index([evidenceId])
+}
+
+model PlaybookApplication {
+  id                   String                     @id @default(cuid())
+  ownerId              String
+  owner                User                       @relation("PlaybookApplicationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  playbookId           String
+  playbook             Playbook                   @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  destinationCompanyId String
+  destination          Company                    @relation("PlaybookApplicationDestination", fields: [destinationCompanyId], references: [id], onDelete: Cascade)
+  opportunityId        String?
+  opportunity          Opportunity?               @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  status               PlaybookApplicationStatus  @default(PROPOSTA)
+  compatibilityScore   Int?
+  scorePartial         Boolean                    @default(true)
+  scoreVersion         String?
+  scoredAt             DateTime?
+  factorsUsed          Json?
+  factorsMissing       Json?
+  favorable            Json?
+  contrary             Json?
+  limitations          String?
+  adaptedHypothesis    String?
+  kpi                  String?
+  horizonDays          Int?
+  investment           Decimal?                   @db.Decimal(14, 2)
+  classification       KnowledgeKind              @default(HYPOTHESIS)
+  proposedAt           DateTime                   @default(now())
+  confirmedAt          DateTime?
+  rejectedAt           DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  @@unique([playbookId, destinationCompanyId])
+  @@index([ownerId, status])
+  @@index([destinationCompanyId])
+  @@index([opportunityId])
 }
 
 /// Ações propostas pela IA jamais executam sozinhas — status inicia em PENDING_HUMAN_APPROVAL quando origem = AI.
@@ -800,6 +940,7 @@ model Experiment {
   results  ExperimentResult[]
   evidence Evidence[]
   memories StrategicMemory[]
+  playbooks Playbook[]
 
   @@index([companyId, status])
   @@index([opportunityId])
@@ -841,6 +982,7 @@ model Evidence {
   updatedAt      DateTime                   @updatedAt
 
   memories StrategicMemory[]
+  playbooks Playbook[]
 
   @@index([companyId, kind])
   @@index([experimentId])
@@ -886,6 +1028,8 @@ model StrategicMemory {
   approvedAt      DateTime?
   createdAt       DateTime                   @default(now())
   updatedAt       DateTime                   @updatedAt
+
+  playbooks Playbook[]
 
   @@index([companyId, createdAt])
   @@index([companyId, status])

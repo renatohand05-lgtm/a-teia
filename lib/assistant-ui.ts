@@ -50,6 +50,11 @@ export const PRIMARY_ASSISTANT_SHORTCUTS = [
   { label: "Que estratégia funcionou em outra empresa?", prompt: "Que estratégia funcionou em outra empresa?" },
   { label: "Quais conexões ainda são apenas hipótese?", prompt: "Quais conexões ainda são apenas hipótese?" },
   { label: "Quais conexões possuem evidência?", prompt: "Quais conexões possuem evidência?" },
+  { label: "Existe algum playbook para este problema?", prompt: "Existe algum playbook para este problema?" },
+  { label: "O que já funcionou em outra empresa?", prompt: "O que já funcionou em outra empresa?" },
+  { label: "Que estratégia posso testar aqui?", prompt: "Que estratégia posso testar aqui?" },
+  { label: "Quais playbooks possuem evidência?", prompt: "Quais playbooks possuem evidência?" },
+  { label: "Quais aprendizados podem ser reutilizados?", prompt: "Quais aprendizados podem ser reutilizados?" },
   { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 

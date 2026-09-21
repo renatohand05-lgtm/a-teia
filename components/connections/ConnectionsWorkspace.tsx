@@ -12,6 +12,7 @@ import {
   connectionTypeLabel,
   displayConnectionScore,
 } from "@/lib/connection-engine";
+import { prepareConnectionMap, mapScaleForCount } from "@/lib/connection-map";
 import type { ConnectionDTO } from "@/services/connectionService";
 
 export type ConnectionNode = {
@@ -57,9 +58,23 @@ export function ConnectionsWorkspace({
   const [mode, setMode] = useState<"mapa" | "lista">("mapa");
   const [nodeId, setNodeId] = useState<string | null>(null);
   const [edgeId, setEdgeId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [hideLow, setHideLow] = useState(true);
+  const [zoom, setZoom] = useState(1);
   const node = companies.find((item) => item.id === nodeId) ?? null;
   const edge = connections.find((item) => item.id === edgeId) ?? null;
   const persistedIds = useMemo(() => new Set(connections.map((item) => item.id)), [connections]);
+  const prepared = useMemo(
+    () =>
+      prepareConnectionMap({
+        companies,
+        connections: connections.filter((item) => persistedIds.has(item.id)),
+        focusId: filters.empresa && filters.empresa !== "ALL" ? filters.empresa : null,
+        search,
+        hideLowRelevance: hideLow,
+      }),
+    [companies, connections, filters.empresa, hideLow, persistedIds, search],
+  );
 
   return (
     <div className="space-y-5">
@@ -112,25 +127,45 @@ export function ConnectionsWorkspace({
         </button>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => setMode("mapa")} className="rounded-full px-3 py-1.5 text-[12px] font-bold" style={mode === "mapa" ? goldChip : ghostChip}>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => setMode("mapa")} className="hidden rounded-full px-3 py-1.5 text-[12px] font-bold md:inline" style={mode === "mapa" ? goldChip : ghostChip}>
           Mapa
         </button>
         <button type="button" onClick={() => setMode("lista")} className="rounded-full px-3 py-1.5 text-[12px] font-bold" style={mode === "lista" ? goldChip : ghostChip}>
           Lista
         </button>
-      </div>
-
-      {mode === "mapa" ? (
-        <NetworkMap
-          companies={companies}
-          connections={connections.filter((item) => persistedIds.has(item.id))}
-          onNode={setNodeId}
-          onEdge={setEdgeId}
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar empresa ou segmento"
+          className="min-w-[180px] flex-1 rounded-lg border bg-transparent px-3 py-2 text-[12px]"
+          style={{ borderColor: "var(--border)" }}
         />
-      ) : (
+        <label className="flex items-center gap-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+          <input type="checkbox" checked={hideLow} onChange={(event) => setHideLow(event.target.checked)} />
+          Esconder baixa relevância
+        </label>
+      </div>
+      <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{prepared.hint}</p>
+
+      <div className="md:hidden">
         <ConnectionTable connections={connections} />
-      )}
+      </div>
+      <div className="hidden md:block">
+        {mode === "mapa" ? (
+          <NetworkMap
+            companies={prepared.nodes.map((item) => companies.find((company) => company.id === item.id)).filter((item): item is ConnectionNode => Boolean(item))}
+            clusters={prepared.clusters}
+            connections={prepared.edges.map((item) => connections.find((row) => row.id === item.id)).filter((item): item is ConnectionDTO => Boolean(item))}
+            zoom={zoom}
+            onZoom={setZoom}
+            onNode={setNodeId}
+            onEdge={setEdgeId}
+          />
+        ) : (
+          <ConnectionTable connections={connections} />
+        )}
+      </div>
 
       <Drawer open={Boolean(node)} title={node?.name ?? "Empresa"} onClose={() => setNodeId(null)}>
         {node ? (
@@ -179,24 +214,35 @@ function Kpi({ label, value }: { label: string; value: number }) {
 
 function NetworkMap({
   companies,
+  clusters,
   connections,
+  zoom,
+  onZoom,
   onNode,
   onEdge,
 }: {
   companies: ConnectionNode[];
+  clusters: Array<{ key: string; label: string; count: number }>;
   connections: ConnectionDTO[];
+  zoom: number;
+  onZoom: (value: number) => void;
   onNode: (id: string) => void;
   onEdge: (id: string) => void;
 }) {
-  const size = 560;
+  const scale = mapScaleForCount(companies.length + clusters.length);
+  const size = scale.size;
   const cx = size / 2;
   const cy = size / 2;
-  const radius = Math.min(210, 80 + companies.length * 12);
-  const points = companies.map((company, index) => {
-    const angle = (Math.PI * 2 * index) / Math.max(companies.length, 1) - Math.PI / 2;
-    return { ...company, x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius };
+  const markers = [
+    ...companies.map((company) => ({ kind: "company" as const, ...company })),
+    ...clusters.map((cluster) => ({ kind: "cluster" as const, id: `cluster-${cluster.key}`, name: `${cluster.label} (${cluster.count})`, segment: cluster.label, bottleneck: null, diagnosisScore: null, opportunities: [], memories: [] })),
+  ];
+  const radius = markers.length <= 1 ? 0 : scale.radius;
+  const points = markers.map((item, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(markers.length, 1) - Math.PI / 2;
+    return { ...item, x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius };
   });
-  const byId = new Map(points.map((item) => [item.id, item]));
+  const byId = new Map(points.filter((item) => item.kind === "company").map((item) => [item.id, item]));
 
   if (!companies.length) {
     return (
@@ -207,44 +253,52 @@ function NetworkMap({
   }
 
   return (
-    <div className="overflow-x-auto rounded-[22px] border p-3" style={{ borderColor: "rgba(232,191,122,.2)", background: "radial-gradient(circle at 50% 45%, rgba(232,191,122,.08), #09090c 62%)" }}>
-      <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-auto w-full max-w-[720px]" role="img" aria-label="Mapa persistido de conexões">
-        {connections.map((item) => {
-          const from = byId.get(item.fromId);
-          const to = byId.get(item.toId);
-          if (!from || !to) return null;
-          return (
-            <g key={item.id}>
-              <line
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-                stroke={STATUS_TONE[item.status] ?? "rgba(232,191,122,.45)"}
-                strokeWidth={item.status === "VALIDADA" ? 3 : 1.6}
-                strokeDasharray={item.status === "SUGERIDA" ? "6 6" : undefined}
-              />
-              <circle
-                cx={(from.x + to.x) / 2}
-                cy={(from.y + to.y) / 2}
-                r={8}
-                fill="#0c0d10"
-                stroke={STATUS_TONE[item.status] ?? "var(--gold-soft)"}
-                className="cursor-pointer"
-                onClick={() => onEdge(item.id)}
-              />
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2 text-[12px]">
+        <button type="button" className="rounded-lg border px-2 py-1" style={{ borderColor: "var(--border)" }} onClick={() => onZoom(Math.min(2.2, zoom + 0.2))}>Zoom +</button>
+        <button type="button" className="rounded-lg border px-2 py-1" style={{ borderColor: "var(--border)" }} onClick={() => onZoom(Math.max(0.6, zoom - 0.2))}>Zoom −</button>
+        <button type="button" className="rounded-lg border px-2 py-1" style={{ borderColor: "var(--border)" }} onClick={() => onZoom(1)}>Fit</button>
+        <button type="button" className="rounded-lg border px-2 py-1" style={{ borderColor: "var(--border)" }} onClick={() => onZoom(1)}>Reset</button>
+      </div>
+      <div className="overflow-auto rounded-[22px] border p-3" style={{ borderColor: "rgba(232,191,122,.2)", background: "radial-gradient(circle at 50% 45%, rgba(232,191,122,.08), #09090c 62%)" }}>
+        <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-auto w-full max-w-[720px]" style={{ transform: `scale(${zoom})`, transformOrigin: "center" }} role="img" aria-label="Mapa persistido de conexões">
+          {connections.map((item) => {
+            const from = byId.get(item.fromId);
+            const to = byId.get(item.toId);
+            if (!from || !to) return null;
+            return (
+              <g key={item.id}>
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke={STATUS_TONE[item.status] ?? "rgba(232,191,122,.45)"}
+                  strokeWidth={item.status === "VALIDADA" ? 3 : 1.6}
+                  strokeDasharray={item.status === "SUGERIDA" ? "6 6" : undefined}
+                />
+                <circle
+                  cx={(from.x + to.x) / 2}
+                  cy={(from.y + to.y) / 2}
+                  r={8}
+                  fill="#0c0d10"
+                  stroke={STATUS_TONE[item.status] ?? "var(--gold-soft)"}
+                  className="cursor-pointer"
+                  onClick={() => onEdge(item.id)}
+                />
+              </g>
+            );
+          })}
+          {points.map((item) => (
+            <g key={item.id} className="cursor-pointer" onClick={() => item.kind === "company" ? onNode(item.id) : undefined}>
+              <circle cx={item.x} cy={item.y} r={item.kind === "cluster" ? 22 : scale.nodeRadius} fill="#14151a" stroke="var(--gold)" strokeWidth="1.5" />
+              <text x={item.x} y={item.y + 32} textAnchor="middle" fill="var(--text-1)" fontSize="11" fontWeight="700">
+                {item.name.slice(0, 18)}
+              </text>
             </g>
-          );
-        })}
-        {points.map((item) => (
-          <g key={item.id} className="cursor-pointer" onClick={() => onNode(item.id)}>
-            <circle cx={item.x} cy={item.y} r={18} fill="#14151a" stroke="var(--gold)" strokeWidth="1.5" />
-            <text x={item.x} y={item.y + 32} textAnchor="middle" fill="var(--text-1)" fontSize="11" fontWeight="700">
-              {item.name.slice(0, 18)}
-            </text>
-          </g>
-        ))}
-      </svg>
+          ))}
+        </svg>
+      </div>
     </div>
   );
 }

@@ -160,7 +160,7 @@ describe("Sprint 14 — motor de conexões", () => {
 
   it("navegação tira Conexões e Estratégias do em breve", () => {
     expect(FUTURE_NAV).toEqual([]);
-    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/assistente"]);
+    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/playbooks", "/assistente"]);
   });
 
   it("pesquisa externa distingue configurado, disponível e falha", () => {

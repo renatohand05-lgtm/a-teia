@@ -18,6 +18,7 @@ export const ORIGIN_LABELS: Record<string, string> = {
   SUGGESTED: "Sugerida",
   MANUAL: "Manual",
   STRATEGY: "Estratégia cruzada",
+  PLAYBOOK: "Playbook",
 };
 
 export const PRIORITY_WEIGHTS = {

@@ -38,6 +38,14 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "strategy.approved": "Estratégia aprovada",
   "strategy.rejected": "Estratégia rejeitada",
   "strategy.converted_to_opportunity": "Estratégia convertida em oportunidade",
+  "playbook.created": "Playbook criado",
+  "playbook.updated": "Playbook atualizado",
+  "playbook.submitted": "Playbook enviado para revisão",
+  "playbook.approved": "Playbook validado",
+  "playbook.archived": "Playbook arquivado",
+  "playbook.application.proposed": "Aplicação de playbook proposta",
+  "playbook.application.confirmed": "Aplicação de playbook confirmada",
+  "playbook.application.rejected": "Aplicação de playbook rejeitada",
 };
 
 export const AUDIT_CATEGORY_LABELS: Record<string, string> = {
@@ -53,6 +61,7 @@ export const AUDIT_CATEGORY_LABELS: Record<string, string> = {
   memory: "Memória",
   connection: "Conexão",
   strategy: "Estratégia",
+  playbook: "Playbook",
   ai: "Assistente",
   research: "Pesquisa",
   company: "Empresa",

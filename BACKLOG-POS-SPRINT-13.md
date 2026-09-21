@@ -26,7 +26,8 @@ Histórico detalhado permanece nos relatórios `REFINEMENT-1` a `REFINEMENT-12`.
 
 ## C. FUTURO DO PRODUTO
 
-- Playbooks visuais e heatmap de conexões
+- Conexões e estratégias cruzadas (Sprint 14)
+- Playbooks estratégicos reutilizáveis (Sprint 15)
 - Drag-and-drop, gráficos decorativos, sons
 - Builder visual de automações
 - Virtualização de tabelas grandes

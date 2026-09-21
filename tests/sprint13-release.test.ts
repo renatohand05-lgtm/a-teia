@@ -36,7 +36,7 @@ describe("Release 1.0 — jornada e health", () => {
     expect(CENTRAL_NAV.every((item) => item.enabled)).toBe(true);
     expect(FUTURE_NAV).toEqual([]);
     expect(INTELLIGENCE_NAV.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["Memória Estratégica", "Conexões", "Estratégias", "Assistente IA"]),
+      expect.arrayContaining(["Memória Estratégica", "Conexões", "Estratégias", "Playbooks", "Assistente IA"]),
     );
   });
 

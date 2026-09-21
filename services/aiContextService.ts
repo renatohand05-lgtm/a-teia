@@ -13,6 +13,7 @@ import { getFinancialMiniSummary } from "@/services/financialService";
 import { listCompanyMemories } from "@/services/memoryService";
 import { getOnboarding } from "@/services/onboardingService";
 import { listOwnerConnections } from "@/services/connectionService";
+import { listOwnerPlaybooksForAi } from "@/services/playbookService";
 import { listOpportunities } from "@/services/opportunityService";
 
 export async function getExecutiveContext(ownerId: string, companyId: string): Promise<ExecutiveContext> {
@@ -21,7 +22,7 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
     throw new Error("Empresa não encontrada.");
   }
 
-  const [diagnosis, opportunities, plans, finance, experiments, memories, onboarding, connections] = await Promise.all([
+  const [diagnosis, opportunities, plans, finance, experiments, memories, onboarding, connections, playbooks] = await Promise.all([
     getLatestDiagnosis(ownerId, companyId),
     listOpportunities(ownerId, companyId, { status: "ALL" }),
     listExecutionPlans(ownerId, companyId),
@@ -30,6 +31,7 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
     listCompanyMemories(ownerId, companyId, { status: "APPROVED" }),
     getOnboarding(ownerId, companyId),
     listOwnerConnections(ownerId, { companyId }),
+    listOwnerPlaybooksForAi(ownerId, companyId),
   ]);
 
   const evidence: ExecutiveEvidence[] = experiments.flatMap((item) =>
@@ -148,6 +150,15 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
       score: item.score,
       scorePartial: item.scorePartial,
       hypothesis: item.hypothesis,
+    })),
+    playbooks: playbooks.map((item) => ({
+      title: item.title,
+      family: item.family,
+      status: item.status,
+      originName: item.originCompany.name,
+      originSegment: item.originSegment,
+      problem: item.problem,
+      kpi: item.primaryKpi,
     })),
   };
 }

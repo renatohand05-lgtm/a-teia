@@ -39,6 +39,9 @@ export function ConnectionsPreview({ companies }: { companies: Array<{ id: strin
           <Link href="/estrategias" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
             Estratégias
           </Link>
+          <Link href="/playbooks" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>
+            Playbooks
+          </Link>
         </div>
       )}
     </section>

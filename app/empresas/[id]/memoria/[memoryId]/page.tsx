@@ -13,8 +13,10 @@ import { formatBRL, formatDateBR } from "@/lib/format";
 import { memoryOriginCopy } from "@/lib/journey-ui";
 import { PendingButton } from "@/components/ui/PendingButton";
 import { calculateTransferability, detectConflictingMemories, familyLabel } from "@/lib/memory-engine";
+import { playbookEligibilityFromMemory } from "@/lib/playbook-engine";
 import { displayMemoryConfidence, memoryValidationLabel, transferabilityCopy } from "@/lib/memory-ui";
 import { approveMemoryAction, rejectMemoryAction } from "@/app/empresas/memory-actions";
+import { createPlaybookFromMemoryAction } from "@/app/playbooks/actions";
 import { getMemory, listOwnerMemories } from "@/services/memoryService";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +61,14 @@ export default async function MemoriaDetalhePage({
     }))
     .filter((entry) => entry.transfer.score >= 40)
     .slice(0, 6);
+
+  const playbookEligible = playbookEligibilityFromMemory({
+    status: memory.status,
+    validated: memory.validated,
+    evidenceId: memory.evidenceId,
+    measuredResult: memory.measuredResult,
+    classification: memory.classification,
+  });
 
   return (
     <AppShell title="Aprendizado" subtitle={company.name} userName={name}>
@@ -164,6 +174,20 @@ export default async function MemoriaDetalhePage({
             </div>
           )}
         </section>
+
+        {playbookEligible.eligible ? (
+          <form action={createPlaybookFromMemoryAction}>
+            <input type="hidden" name="companyId" value={id} />
+            <input type="hidden" name="memoryId" value={memory.id} />
+            <PendingButton className="rounded-xl px-4 py-3 text-[12px] font-black" style={{ background: "var(--gold)", color: "#111" }} pendingLabel="Criando...">
+              Criar playbook
+            </PendingButton>
+          </form>
+        ) : memory.status === "APPROVED" ? (
+          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+            Playbook exige evidência suficiente. {playbookEligible.reasons.join(" · ")}.
+          </p>
+        ) : null}
 
         {memory.status === "PROPOSED" ? (
           <div className="flex flex-wrap gap-2">

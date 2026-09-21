@@ -76,6 +76,7 @@ const briefingBase = buildExecutiveBriefing(
     evidence: [],
     memories: [],
     connections: [],
+    playbooks: [],
   },
   "Meu CMV está bom comparado ao mercado?",
 );

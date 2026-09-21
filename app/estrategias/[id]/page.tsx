@@ -12,7 +12,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { connectionClassLabel } from "@/lib/connection-engine";
 import { formatBRL } from "@/lib/format";
 import { STRATEGY_EFFORT_LABELS, STRATEGY_RISK_LABELS, strategyStatusLabel } from "@/lib/strategy-engine";
+import { playbookEligibilityFromStrategy } from "@/lib/playbook-engine";
 import { getStrategy, previewStrategyOpportunity } from "@/services/strategyService";
+import { getPlaybookForStrategy } from "@/services/playbookService";
+import { createPlaybookFromStrategyAction } from "@/app/playbooks/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +38,11 @@ export default async function StrategyDetailPage({
   }
   const review = previewStrategyOpportunity(strategy);
   const converting = query.converter === "1";
+  const relatedPlaybook = await getPlaybookForStrategy(session.user.id, strategy.id);
+  const playbookEligible = playbookEligibilityFromStrategy({
+    status: strategy.status,
+    evidenceCount: strategy.evidenceIds.length,
+  });
 
   return (
     <AppShell title="Estratégia cruzada" subtitle={`${strategy.originName} → ${strategy.destinationName ?? "Portfólio"}`} userName={session.user.name}>
@@ -57,6 +65,18 @@ export default async function StrategyDetailPage({
           <p><b>Esforço:</b> {STRATEGY_EFFORT_LABELS[strategy.effort]}</p>
           <p><b>Prazo de teste:</b> {strategy.testHorizonDays == null ? "Sem dados" : `${strategy.testHorizonDays} dias`}</p>
           <p><b>Risco:</b> {STRATEGY_RISK_LABELS[strategy.risk]}</p>
+        </section>
+        <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
+          <p className="font-bold" style={{ color: "var(--text-1)" }}>Playbook relacionado</p>
+          {relatedPlaybook ? (
+            <Link href={`/playbooks/${relatedPlaybook.id}`} className="mt-2 inline-flex font-bold" style={{ color: "var(--gold-soft)" }}>
+              {relatedPlaybook.title}
+            </Link>
+          ) : playbookEligible.eligible ? (
+            <p className="mt-2">Há resultado medido na origem. Criar playbook nasce como rascunho — a IA não valida.</p>
+          ) : (
+            <p className="mt-2">Strategy sem resultado medido não vira playbook validado. {playbookEligible.reasons.join(" · ")}</p>
+          )}
         </section>
 
         {converting ? (
@@ -97,6 +117,9 @@ export default async function StrategyDetailPage({
               Ver oportunidade
             </Link>
           )}
+          {!relatedPlaybook && playbookEligible.eligible ? (
+            <ConfirmForm action={createPlaybookFromStrategyAction} hidden={{ strategyId: strategy.id }} label="Criar playbook" message="Criar playbook a partir desta estratégia? Ele nascerá como rascunho, não validado pela IA." />
+          ) : null}
         </div>
       </div>
     </AppShell>

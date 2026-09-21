@@ -25,6 +25,7 @@ export const INTELLIGENCE_NAV: NavItem[] = [
   { href: "/memoria", label: "Memória Estratégica", enabled: true, group: "Inteligência" },
   { href: "/conexoes", label: "Conexões", enabled: true, group: "Inteligência" },
   { href: "/estrategias", label: "Estratégias", enabled: true, group: "Inteligência" },
+  { href: "/playbooks", label: "Playbooks", enabled: true, group: "Inteligência" },
   { href: "/assistente", label: "Assistente IA", enabled: true, group: "Inteligência" },
 ];
 
