@@ -63,6 +63,18 @@ export const COMPANY_NAV: CompanyNavItem[] = [
     match: (pathname) => pathname.includes("/memoria"),
   },
   {
+    key: "conexoes",
+    label: "Conexões",
+    href: (id) => `/empresas/${id}/conexoes`,
+    match: (pathname) => pathname.includes("/conexoes"),
+  },
+  {
+    key: "estrategias",
+    label: "Estratégias",
+    href: (id) => `/empresas/${id}/estrategias`,
+    match: (pathname) => pathname.includes("/estrategias"),
+  },
+  {
     key: "assistente",
     label: "Assistente IA",
     href: (id) => `/empresas/${id}/assistente`,
@@ -94,6 +106,8 @@ export const COMPANY_MODULE_TABS: Array<{ key: string; label: string }> = [
   { key: "financeiro", label: "Financeiro" },
   { key: "experimentos", label: "Experimentos" },
   { key: "memoria", label: "Memória Estratégica" },
+  { key: "conexoes", label: "Conexões" },
+  { key: "estrategias", label: "Estratégias" },
   { key: "assistente", label: "Assistente IA" },
 ];
 
@@ -110,6 +124,8 @@ export const MODULE_PICKER_LABELS: Record<string, string> = {
   experimentos: "Experimentos",
   evidencias: "Evidências",
   memoria: "Memória estratégica",
+  conexoes: "Conexões",
+  estrategias: "Estratégias",
   assistente: "Assistente IA",
 };
 

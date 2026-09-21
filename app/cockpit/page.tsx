@@ -5,8 +5,7 @@ import { CockpitView } from "@/components/cockpit/CockpitView";
 import { ErrorState } from "@/components/ui/States";
 import { parseCockpitPeriod } from "@/lib/cockpit-period";
 import { getCockpitSnapshot } from "@/services/cockpitService";
-import { writeAudit } from "@/services/auditService";
-import { AuditSource } from "@prisma/client";
+import { writeCockpitViewed } from "@/services/auditService";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +27,7 @@ export default async function CockpitPage({
 
   try {
     const snapshot = await getCockpitSnapshot(session.user.id, filters);
-    await writeAudit({
-      actorId: session.user.id,
-      action: "cockpit.viewed",
-      entity: "Cockpit",
-      origin: AuditSource.USER,
-    });
+    await writeCockpitViewed(session.user.id);
     return (
       <AppShell
         title="Meu Cockpit"

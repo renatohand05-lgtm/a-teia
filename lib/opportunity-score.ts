@@ -17,6 +17,7 @@ export const EVIDENCE_LABELS: Record<string, string> = {
 export const ORIGIN_LABELS: Record<string, string> = {
   SUGGESTED: "Sugerida",
   MANUAL: "Manual",
+  STRATEGY: "Estratégia cruzada",
 };
 
 export const PRIORITY_WEIGHTS = {

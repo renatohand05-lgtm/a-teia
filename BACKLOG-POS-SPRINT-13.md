@@ -26,9 +26,8 @@ Histórico detalhado permanece nos relatórios `REFINEMENT-1` a `REFINEMENT-12`.
 
 ## C. FUTURO DO PRODUTO
 
-- Conexões entre empresas (schema existe; sem motor/UI operacional)
-- Estratégia cruzada / playbooks (schema existe; sem motor/UI operacional)
-- Drag-and-drop, heatmap, gráficos decorativos, sons
+- Playbooks visuais e heatmap de conexões
+- Drag-and-drop, gráficos decorativos, sons
 - Builder visual de automações
 - Virtualização de tabelas grandes
 - Atalhos globais de teclado

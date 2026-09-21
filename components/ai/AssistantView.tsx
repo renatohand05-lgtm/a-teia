@@ -50,6 +50,9 @@ export function AssistantView({
   conversationId,
   providerReady,
   webSearchReady,
+  webSearchConfigured,
+  webSearchLastFailed,
+
   initialPrompt,
 }: {
   companies: CompanyOption[];
@@ -63,6 +66,8 @@ export function AssistantView({
   conversationId?: string;
   providerReady: boolean;
   webSearchReady: boolean;
+  webSearchConfigured?: boolean;
+  webSearchLastFailed?: boolean;
   initialPrompt?: string;
 }) {
   const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
@@ -197,7 +202,7 @@ export function AssistantView({
             {providerStatusCopy(providerReady)}
           </p>
           <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
-            {webStatusCopy(webSearchReady)}
+            {webStatusCopy(webSearchReady, webSearchConfigured, webSearchLastFailed)}
           </p>
         </section>
 

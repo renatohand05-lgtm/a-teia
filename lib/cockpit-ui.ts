@@ -49,5 +49,7 @@ export const SIDEBAR_HREFS = [
   "/alertas",
   "/auditoria",
   "/memoria",
+  "/conexoes",
+  "/estrategias",
   "/assistente",
 ] as const;

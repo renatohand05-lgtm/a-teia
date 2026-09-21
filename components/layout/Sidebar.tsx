@@ -105,11 +105,21 @@ export function Sidebar({
         <GroupLabel>Inteligência</GroupLabel>
         {INTELLIGENCE_NAV.map((item) => {
           const href =
-            item.href === "/assistente" && companyId ? `/empresas/${companyId}/assistente` : item.href;
+            item.href === "/assistente" && companyId
+              ? `/empresas/${companyId}/assistente`
+              : item.href === "/conexoes" && companyId
+                ? `/empresas/${companyId}/conexoes`
+                : item.href === "/estrategias" && companyId
+                  ? `/empresas/${companyId}/estrategias`
+                  : item.href;
           const active =
             item.href === "/assistente"
               ? pathname.includes("/assistente")
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              : item.href === "/conexoes"
+                ? pathname.includes("/conexoes")
+                : item.href === "/estrategias"
+                  ? pathname.includes("/estrategias")
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return <NavLink key={`intel-${item.href}`} href={href} active={active} label={item.label} onNavigate={onNavigate} />;
         })}
 
@@ -124,19 +134,21 @@ export function Sidebar({
           />
         ))}
 
-        <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--border-soft)" }}>
-          <GroupLabel>Em breve</GroupLabel>
-          {FUTURE_NAV.map((item) => (
-            <span
-              key={item.label}
-              className="mb-0.5 block cursor-not-allowed rounded-xl px-3 py-1.5 text-[11px] font-medium opacity-35"
-              style={{ color: "var(--text-3)" }}
-              title="Ainda não disponível"
-            >
-              {item.label}
-            </span>
-          ))}
-        </div>
+        {FUTURE_NAV.length ? (
+          <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--border-soft)" }}>
+            <GroupLabel>Em breve</GroupLabel>
+            {FUTURE_NAV.map((item) => (
+              <span
+                key={item.label}
+                className="mb-0.5 block cursor-not-allowed rounded-xl px-3 py-1.5 text-[11px] font-medium opacity-35"
+                style={{ color: "var(--text-3)" }}
+                title="Ainda não disponível"
+              >
+                {item.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </nav>
     </aside>
   );

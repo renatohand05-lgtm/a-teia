@@ -34,7 +34,10 @@ describe("Release 1.0 — jornada e health", () => {
     expect(PRIMARY_NAV.every((item) => item.enabled)).toBe(true);
     expect(INTELLIGENCE_NAV.every((item) => item.enabled)).toBe(true);
     expect(CENTRAL_NAV.every((item) => item.enabled)).toBe(true);
-    expect(FUTURE_NAV.map((item) => item.label)).toEqual(["Conexões", "Estratégia"]);
+    expect(FUTURE_NAV).toEqual([]);
+    expect(INTELLIGENCE_NAV.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["Memória Estratégica", "Conexões", "Estratégias", "Assistente IA"]),
+    );
   });
 
   it("status de alocação e decisão aparecem em português", () => {

@@ -504,6 +504,9 @@ export async function sendAllocationToDecision(input: {
 }) {
   const proposal = await ownedProposal(input.ownerId, input.proposalId);
   requireFresh(proposal, input.expectedUpdatedAt);
+  if (proposal.status === AllocationStatus.SENT_TO_DECISION && proposal.decisionId) {
+    return { proposal, decisionId: proposal.decisionId };
+  }
   if (proposal.status === AllocationStatus.APPROVED) {
     throw new Error("Decisão aprovada não é substituída por nova simulação.");
   }

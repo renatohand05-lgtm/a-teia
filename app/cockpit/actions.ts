@@ -55,10 +55,6 @@ export async function openPriorityAction(priorityId: string) {
 
 export async function recordCockpitViewAction() {
   const actorId = await actor();
-  await writeAudit({
-    actorId,
-    action: "cockpit.viewed",
-    entity: "Cockpit",
-    origin: AuditSource.USER,
-  });
+  const { writeCockpitViewed } = await import("@/services/auditService");
+  await writeCockpitViewed(actorId);
 }

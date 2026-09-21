@@ -30,6 +30,8 @@ O Cockpit responde: carteira, empresa prioritária, por quê, próxima ação, d
 | Financeiro | `/empresas/[id]/financeiro` | Statement, Cash, Goals | company.owner | dre/cash |
 | Experimentos | `/empresas/[id]/experimentos` | Experiment, Evidence | company.owner | completed/validated |
 | Memória | `/memoria`, `/empresas/[id]/memoria` | StrategicMemory | company.owner | created/promoted |
+| Conexões | `/conexoes`, `/conexoes/[id]` | Connection | ownerId | proposed/approved |
+| Estratégias | `/estrategias`, `/estrategias/[id]` | Strategy | ownerId | created/converted |
 | Assistente IA | `/assistente` | AIConversation | userId | question/answer |
 | Pesquisa externa | via Assistente | ResearchSession | userId | started/completed |
 | Alocação | `/alocacao` | ResourceBudget, AllocationProposal | ownerId | simulated/approved |
@@ -39,7 +41,7 @@ O Cockpit responde: carteira, empresa prioritária, por quê, próxima ação, d
 
 ## Módulos parciais
 
-Nenhum módulo do núcleo acima é apresentado como concluído se faltar persistência. Conexões e Estratégia têm schema (`Connection`, `Strategy`) sem motor nem UI operacional.
+Nenhum módulo do núcleo acima é apresentado como concluído se faltar persistência. O mapa de conexões só mostra relações gravadas.
 
 ## Motores
 
@@ -49,6 +51,8 @@ Nenhum módulo do núcleo acima é apresentado como concluído se faltar persist
 - Financeiro gerencial (realizado / projeção / cenário)
 - Experimento e classificação de evidência
 - Memória estratégica com promoção humana
+- Conexões entre empresas (hipótese; score de prioridade de análise)
+- Estratégias cruzadas com conversão humana em oportunidade
 - Alocação de capital e tempo (simulação ≠ aprovado)
 - Automações determinísticas
 - IA executiva + pesquisa Tavily
@@ -65,8 +69,7 @@ Human-in-the-loop. IA não aprova decisão, não move capital, não valida evid�
 
 ## Módulos futuros
 
-- Conexões entre empresas
-- Estratégia cruzada / playbooks
+- Playbooks visuais de estratégia
 - Canais externos (e-mail, WhatsApp, Slack)
 - Importação financeira/CRM
 - RBAC além de owner

@@ -365,7 +365,7 @@ function DecisionCenter({ decisions }: { decisions: CockpitSnapshot["portfolio"]
             <li key={item.id} className="rounded-xl border px-3 py-3" style={{ borderColor: "var(--border)" }}>
               <p className="text-[13px] font-bold">{item.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                {item.companyName ?? "Sem empresa"} · {statusLabel(item.status, DECISION_STATUS_LABELS)}
+                {item.companyName ?? "Portfólio"} · {statusLabel(item.status, DECISION_STATUS_LABELS)}
                 {item.opportunityTitle ? ` · ${item.opportunityTitle}` : ""}
                 {isAllocationDecisionTitle(item.title) && scenarioFromDecisionTitle(item.title) ? ` · ${scenarioFromDecisionTitle(item.title)}` : ""}
                 {` · ${formatDateBR(item.createdAt)}`}

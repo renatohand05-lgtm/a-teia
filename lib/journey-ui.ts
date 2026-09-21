@@ -13,6 +13,8 @@ export const RELEASE_NOMENCLATURE = {
   evidencia: "Evidência",
   memoria: "Memória Estratégica",
   alocacao: "Alocação",
+  conexao: "Conexão",
+  estrategia: "Estratégia",
   automacao: "Automação",
   alerta: "Alerta",
   auditoria: "Auditoria",
@@ -26,6 +28,7 @@ export const STAGE_CONFUSION = [
   "RESULTADO ≠ EVIDÊNCIA VALIDADA",
   "EVIDÊNCIA ≠ MEMÓRIA",
   "MEMÓRIA TRANSFERÍVEL ≠ VERDADE UNIVERSAL",
+  "SIMILARIDADE ≠ TRANSFERÊNCIA COMPROVADA",
   "PESQUISA EXTERNA ≠ EVIDÊNCIA DA EMPRESA",
   "IA ≠ AUTORIDADE DE DECISÃO",
 ] as const;
@@ -172,6 +175,8 @@ const AUDIT_ENTITY_HREF: Record<string, (companyId: string | null, entityId: str
   ResearchSession: (companyId) => (companyId ? `/empresas/${companyId}/assistente` : "/assistente"),
   Cockpit: () => "/cockpit",
   CompanyOnboarding: (companyId) => (companyId ? `/empresas/${companyId}/onboarding` : null),
+  Connection: (_companyId, entityId) => (entityId ? `/conexoes/${entityId}` : "/conexoes"),
+  Strategy: (_companyId, entityId) => (entityId ? `/estrategias/${entityId}` : "/estrategias"),
 };
 
 export function auditResourceHref(input: {
@@ -210,6 +215,8 @@ export function auditEntityLabel(entity: string | null | undefined): string {
     ResearchSession: "Pesquisa externa",
     Cockpit: "Cockpit",
     CompanyOnboarding: "Onboarding",
+    Connection: "Conexão",
+    Strategy: "Estratégia",
   };
   if (!entity) return "Recurso";
   return labels[entity] ?? entity;

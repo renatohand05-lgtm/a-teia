@@ -12,6 +12,7 @@ import {
   parseOpenAISummary,
   sliceExecutiveContext,
   emptyResearchFields,
+  emptyExecutiveContext,
   type ExecutiveAnswer,
   type ProposedAction,
 } from "@/lib/ai-executive-engine";
@@ -193,19 +194,7 @@ export async function askExecutiveAssistant(input: {
       origin: AuditSource.AI,
     });
   }
-  let answer = buildExecutiveBriefing(
-    context ?? {
-      company: null,
-      diagnosis: null,
-      opportunities: [],
-      plans: [],
-      finance: null,
-      experiments: [],
-      evidence: [],
-      memories: [],
-    },
-    input.message,
-  );
+  let answer = buildExecutiveBriefing(context ?? emptyExecutiveContext(), input.message);
   if (automation) {
     const proposal = await proposedRule;
     answer = {
@@ -320,16 +309,7 @@ export async function askExecutiveAssistant(input: {
       const parsed = parseOpenAISummary(narrative);
       const known = new Set([
         ...extractKnownNumbers(
-          sliced ?? {
-            company: null,
-            diagnosis: null,
-            opportunities: [],
-            plans: [],
-            finance: null,
-            experiments: [],
-            evidence: [],
-            memories: [],
-          },
+          sliced ?? emptyExecutiveContext(),
         ),
         ...extractResearchNumbers(research.sources),
       ]);

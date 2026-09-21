@@ -122,6 +122,51 @@ enum EvidenceLevel {
 enum OpportunityOrigin {
   SUGGESTED
   MANUAL
+  STRATEGY
+}
+
+enum ConnectionStatus {
+  SUGERIDA
+  EM_ANALISE
+  APROVADA
+  EM_TESTE
+  VALIDADA
+  REJEITADA
+  ARQUIVADA
+}
+
+enum ConnectionClassification {
+  DADO_INTERNO
+  INFERENCIA
+  HIPOTESE
+  EVIDENCIA
+  MEMORIA_VALIDADA
+  FONTE_EXTERNA
+  RECOMENDACAO
+}
+
+enum StrategyStatus {
+  RASCUNHO
+  PROPOSTA
+  APROVADA
+  EM_TESTE
+  VALIDADA
+  REJEITADA
+  ARQUIVADA
+}
+
+enum StrategyEffort {
+  BAIXO
+  MEDIO
+  ALTO
+  INDETERMINADO
+}
+
+enum StrategyRisk {
+  BAIXO
+  MODERADO
+  ALTO
+  INDETERMINADO
 }
 
 enum MemoryOrigin {
@@ -302,6 +347,12 @@ model User {
   automationRuns      AutomationExecution[]
   automationAlerts    AutomationAlert[]
   notifications       AppNotification[]
+  ownedConnections    Connection[] @relation("ConnectionOwner")
+  reviewedConnections Connection[] @relation("ConnectionReviewer")
+  approvedConnections Connection[] @relation("ConnectionApprover")
+  ownedStrategies     Strategy[]   @relation("StrategyOwner")
+  assignedStrategies  Strategy[]   @relation("StrategyAssignee")
+  approvedStrategies  Strategy[]   @relation("StrategyApprover")
 }
 
 model Company {
@@ -329,10 +380,11 @@ model Company {
   financialStatements  FinancialStatement[]
   financialGoals       FinancialGoal[]
   diagnoses            Diagnosis[]
-  connectionsFrom    Connection[]      @relation("ConnectionFrom")
-  connectionsTo      Connection[]      @relation("ConnectionTo")
-  opportunities      Opportunity[]
-  strategies         Strategy[]
+  connectionsFrom         Connection[]      @relation("ConnectionFrom")
+  connectionsTo           Connection[]      @relation("ConnectionTo")
+  opportunities           Opportunity[]
+  strategies              Strategy[]        @relation("StrategyOrigin")
+  destinationStrategies   Strategy[]        @relation("StrategyDestination")
   decisions          Decision[]
   actionPlans        ActionPlan[]
   experiments        Experiment[]
@@ -500,17 +552,50 @@ model DiagnosisDimension {
 }
 
 model Connection {
-  id          String   @id @default(cuid())
-  fromId      String
-  toId        String
-  from        Company  @relation("ConnectionFrom", fields: [fromId], references: [id], onDelete: Cascade)
-  to          Company  @relation("ConnectionTo", fields: [toId], references: [id], onDelete: Cascade)
-  type        String
-  strength    Int?
-  note        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                   String                   @id @default(cuid())
+  ownerId              String
+  owner                User                     @relation("ConnectionOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  fromId               String
+  toId                 String
+  from                 Company                  @relation("ConnectionFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to                   Company                  @relation("ConnectionTo", fields: [toId], references: [id], onDelete: Cascade)
+  type                 String
+  strength             Int?
+  note                 String?
+  status               ConnectionStatus         @default(SUGERIDA)
+  classification       ConnectionClassification @default(HIPOTESE)
+  mechanism            String?
+  hypothesis           String?
+  justification        String?
+  limitations          String?
+  nextAction           String?
+  score                Int?
+  scorePartial         Boolean                  @default(true)
+  scoreReasons         Json?
+  scoreFactorsUsed     Json?
+  scoreFactorsMissing  Json?
+  scoreVersion         String?
+  scoredAt             DateTime?
+  potential            Decimal?                 @db.Decimal(14, 2)
+  usedCompanyFields    Json?
+  usedMemoryIds        Json?
+  usedEvidenceIds      Json?
+  usedExternalSourceIds Json?
+  discoveryKey         String?                  @unique
+  reviewedAt           DateTime?
+  reviewedById         String?
+  reviewedBy           User?                    @relation("ConnectionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  approvedAt           DateTime?
+  approvedById         String?
+  approvedBy           User?                    @relation("ConnectionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedAt           DateTime?
+  archivedAt           DateTime?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  strategies           Strategy[]
 
+  @@unique([ownerId, fromId, toId, type])
+  @@index([ownerId, status])
   @@index([fromId])
   @@index([toId])
 }
@@ -554,6 +639,7 @@ model Opportunity {
   experiments Experiment[]
   evidence    Evidence[]
   memories    StrategicMemory[]
+  strategies  Strategy[]
 
   @@index([companyId, status])
   @@index([companyId, score])
@@ -561,21 +647,55 @@ model Opportunity {
 }
 
 model Strategy {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  horizon     String?
-  status      String   @default("draft")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String                   @id @default(cuid())
+  ownerId               String
+  owner                 User                     @relation("StrategyOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  companyId             String
+  company               Company                  @relation("StrategyOrigin", fields: [companyId], references: [id], onDelete: Cascade)
+  destinationCompanyId  String?
+  destination           Company?                 @relation("StrategyDestination", fields: [destinationCompanyId], references: [id], onDelete: SetNull)
+  connectionId          String?
+  connection            Connection?              @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  opportunityId         String?                  @unique
+  opportunity           Opportunity?             @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  title                 String
+  description           String?
+  horizon               String?
+  status                StrategyStatus           @default(RASCUNHO)
+  mechanism             String?
+  problem               String?
+  hypothesis            String?
+  audience              String?
+  valueProposition      String?
+  primaryKpi            String?
+  secondaryKpi          String?
+  estimatedInvestment   Decimal?                 @db.Decimal(14, 2)
+  effort                StrategyEffort           @default(INDETERMINADO)
+  testHorizonDays       Int?
+  risk                  StrategyRisk             @default(INDETERMINADO)
+  recommendationOrigin  ConnectionClassification @default(HIPOTESE)
+  internalSources       Json?
+  externalSources       Json?
+  evidenceIds           Json?
+  memoryIds             Json?
+  assigneeId            String?
+  assignee              User?                    @relation("StrategyAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  reviewedAt            DateTime?
+  approvedAt            DateTime?
+  approvedById          String?
+  approvedBy            User?                    @relation("StrategyApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  convertedAt           DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
 
   decisions   Decision[]
   experiments Experiment[]
   memories    StrategicMemory[]
 
+  @@index([ownerId, status])
   @@index([companyId])
+  @@index([destinationCompanyId])
+  @@index([connectionId])
 }
 
 /// Ações propostas pela IA jamais executam sozinhas — status inicia em PENDING_HUMAN_APPROVAL quando origem = AI.

@@ -44,6 +44,12 @@ export const PRIMARY_ASSISTANT_SHORTCUTS = [
   { label: "Quais experimentos precisam de atenção?", prompt: "Quais experimentos precisam de atenção?" },
   { label: "O que já aprendemos nesta empresa?", prompt: "O que aprendemos?" },
   { label: "Existe aprendizado de outra empresa que pode ser aplicado aqui?", prompt: "Existe aprendizado de outra empresa que pode ser aplicado aqui?" },
+  { label: "Quais empresas podem se conectar?", prompt: "Quais empresas podem se conectar?" },
+  { label: "Que aprendizado posso levar para outra empresa?", prompt: "Que aprendizado posso levar para outra empresa?" },
+  { label: "Onde existe oportunidade de cross-sell?", prompt: "Onde existe oportunidade de cross-sell?" },
+  { label: "Que estratégia funcionou em outra empresa?", prompt: "Que estratégia funcionou em outra empresa?" },
+  { label: "Quais conexões ainda são apenas hipótese?", prompt: "Quais conexões ainda são apenas hipótese?" },
+  { label: "Quais conexões possuem evidência?", prompt: "Quais conexões possuem evidência?" },
   { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 
@@ -156,10 +162,14 @@ export function providerStatusCopy(ready: boolean): string {
     : "A inteligência generativa está temporariamente indisponível. Os dados internos continuam disponíveis.";
 }
 
-export function webStatusCopy(ready: boolean): string {
-  return ready
-    ? "Pesquisa web opcional para mercado, benchmark e referências."
-    : "A pesquisa externa está temporariamente indisponível.";
+export function webStatusCopy(ready: boolean, configured?: boolean, lastFailed?: boolean): string {
+  if (ready && lastFailed) {
+    return "Pesquisa externa configurada. A última consulta falhou e não vira evidência interna.";
+  }
+  if (ready) return "Pesquisa web opcional para mercado, benchmark e referências.";
+  if (configured === false) return "Pesquisa externa não configurada neste ambiente.";
+  if (lastFailed) return "Pesquisa externa configurada, mas a última consulta falhou. Isso não é evidência interna.";
+  return "A pesquisa externa está temporariamente indisponível.";
 }
 
 export function experimentWorkedCopy(hasMeasuredResult: boolean): string {

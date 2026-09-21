@@ -6,6 +6,7 @@ import { displaySegment } from "@/lib/company-ux";
 import { isOpenAIConfigured, isWebSearchConfigured } from "@/lib/env";
 import { getConversation, listConversations } from "@/services/aiService";
 import { getExecutiveContext } from "@/services/aiContextService";
+import { lastWebSearchFailed } from "@/services/researchService";
 import { listCompanies } from "@/services/companyService";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +21,11 @@ export default async function EmpresaAssistentePage({
   const { id } = await params;
   const query = (await searchParams) ?? {};
   const { userId, name, company } = await requireOwnedCompany(id);
-  const [companies, conversations, context] = await Promise.all([
+  const [companies, conversations, context, webFailed] = await Promise.all([
     listCompanies(userId),
     listConversations(userId, id),
     getExecutiveContext(userId, id),
+    lastWebSearchFailed(userId),
   ]);
 
   let history = null;
@@ -53,6 +55,8 @@ export default async function EmpresaAssistentePage({
         initialMessages={history?.messages}
         providerReady={isOpenAIConfigured()}
         webSearchReady={isWebSearchConfigured()}
+        webSearchConfigured={isWebSearchConfigured()}
+        webSearchLastFailed={webFailed}
         initialPrompt={query.pergunta}
       />
     </AppShell>

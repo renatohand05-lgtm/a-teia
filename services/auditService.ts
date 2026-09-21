@@ -118,6 +118,21 @@ export async function listOwnerAudit(ownerId: string, filters: AuditListFilters 
     }));
 }
 
+export async function writeCockpitViewed(actorId: string): Promise<void> {
+  const windowStart = new Date(Date.now() - 15 * 60 * 1000);
+  const recent = await prisma.auditLog.findFirst({
+    where: { actorId, action: "cockpit.viewed", createdAt: { gte: windowStart } },
+    select: { id: true },
+  });
+  if (recent) return;
+  await writeAudit({
+    actorId,
+    action: "cockpit.viewed",
+    entity: "Cockpit",
+    origin: AuditSource.USER,
+  });
+}
+
 export async function getOwnerAuditEvent(ownerId: string, eventId: string) {
   const events = await listOwnerAudit(ownerId, { limit: 200 });
   return events.find((item) => item.id === eventId) ?? null;

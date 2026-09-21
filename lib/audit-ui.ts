@@ -28,6 +28,16 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "experiment.completed": "Experimento concluído",
   "evidence.created": "Evidência registrada",
   "memory.promoted": "Memória promovida",
+  "connection.proposed": "Conexão sugerida",
+  "connection.reviewed": "Conexão revisada",
+  "connection.approved": "Conexão aprovada",
+  "connection.rejected": "Conexão rejeitada",
+  "connection.archived": "Conexão arquivada",
+  "strategy.created": "Estratégia criada",
+  "strategy.reviewed": "Estratégia revisada",
+  "strategy.approved": "Estratégia aprovada",
+  "strategy.rejected": "Estratégia rejeitada",
+  "strategy.converted_to_opportunity": "Estratégia convertida em oportunidade",
 };
 
 export const AUDIT_CATEGORY_LABELS: Record<string, string> = {
@@ -41,6 +51,8 @@ export const AUDIT_CATEGORY_LABELS: Record<string, string> = {
   experiment: "Experimento",
   evidence: "Evidência",
   memory: "Memória",
+  connection: "Conexão",
+  strategy: "Estratégia",
   ai: "Assistente",
   research: "Pesquisa",
   company: "Empresa",

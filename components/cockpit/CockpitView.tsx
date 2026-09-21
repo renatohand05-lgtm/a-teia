@@ -156,6 +156,27 @@ export function CockpitView({
 
       <GlobalCockpitPanels snapshot={snapshot} filters={filters ?? {}} />
 
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Kpi
+          href="/conexoes"
+          label="Conexões prioritárias"
+          value={active.length ? String(snapshot.connections.suggested) : "Sem dados"}
+          hint="Sugeridas para análise"
+        />
+        <Kpi
+          href="/estrategias"
+          label="Estratégias em análise"
+          value={active.length ? String(snapshot.connections.analysis) : "Sem dados"}
+          hint="Rascunho ou proposta"
+        />
+        <Kpi
+          href="/conexoes"
+          label="Aprendizados transferíveis"
+          value={active.length ? String(snapshot.connections.transferable) : "Sem dados"}
+          hint="Ainda hipótese no destino"
+        />
+      </section>
+
       <ConnectionsPreview companies={active.map((company) => ({ id: company.id, name: company.name }))} />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

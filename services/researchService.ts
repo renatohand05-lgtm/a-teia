@@ -73,6 +73,15 @@ export async function getResearchSession(userId: string, sessionId: string) {
   return session;
 }
 
+export async function lastWebSearchFailed(ownerId: string): Promise<boolean> {
+  const row = await prisma.researchSession.findFirst({
+    where: { userId: ownerId, usedWeb: true },
+    orderBy: { createdAt: "desc" },
+    select: { status: true },
+  });
+  return row?.status === ResearchStatus.FAILED;
+}
+
 export async function getRecentMarketIntel(ownerId: string): Promise<MarketIntelSummary> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const sessions = await prisma.researchSession.findMany({

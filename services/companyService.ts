@@ -2,6 +2,7 @@ import "server-only";
 
 import { CompanyStatus, Prisma } from "@prisma/client";
 import { coverageFromFlags, listingPriorityLabel, nextActionForCompany, type EssentialFlags } from "@/lib/company-ux";
+import { priorityLevelLabel } from "@/lib/cockpit-ui";
 import { toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import type { CompanyInput } from "@/lib/validations";
@@ -216,6 +217,10 @@ export async function listCompanyDirectory(ownerId: string, includeArchived = tr
     planByCompany.set(item.companyId, (planByCompany.get(item.companyId) ?? 0) + 1);
   }
 
+  const { loadPortfolioBundle } = await import("@/services/portfolioService");
+  const bundle = await loadPortfolioBundle(ownerId);
+  const operational = new Map(bundle.portfolio.map((item) => [item.company.id, item.topPriority?.level ?? null]));
+
   return companies.map((company) => {
     const flags: EssentialFlags = {
       cadastro: Boolean(company.segment?.trim()),
@@ -244,7 +249,9 @@ export async function listCompanyDirectory(ownerId: string, includeArchived = tr
       ...company,
       coverage: coverageFromFlags(flags),
       nextAction,
-      priorityLabel: listingPriorityLabel(company),
+      priorityLabel: operational.get(company.id)
+        ? priorityLevelLabel(operational.get(company.id))
+        : listingPriorityLabel(company),
     };
   });
 }
