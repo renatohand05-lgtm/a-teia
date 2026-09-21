@@ -34,6 +34,9 @@ Owner isolation em conexão e estratégia (`requireOwnedResource`). ID manipulad
 - Lint: passou
 - Testes: 351/351 (47 arquivos)
 - Build: passou
+- Commit: `d05fa43`
+- Vercel Production: **Ready** — https://a-teia.vercel.app (`dpl_9apk26q97mD7BB6CMdbapXXWbtZj`)
+- Health: status ok, release 1.0, version 1.0.0, openaiExposed false, webSearchConfigured true, automationEngine ok, scheduler configured, database ok
 
 ## QA real
 
