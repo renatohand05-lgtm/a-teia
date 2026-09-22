@@ -345,7 +345,7 @@ export function playbookNeverBornValidated(): PlaybookLifecycle {
 }
 
 export function isActiveApplicationStatus(status: string): boolean {
-  return status === "PROPOSTA" || status === "CONFIRMADA" || status === "EM_TESTE";
+  return !["REJEITADA", "CANCELADA", "ARQUIVADA", "CONCLUIDA"].includes(status);
 }
 
 export function applicationIdempotencyKey(playbookId: string, companyId: string): string {

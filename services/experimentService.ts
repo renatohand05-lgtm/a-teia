@@ -523,6 +523,31 @@ export async function completeExperiment(ownerId: string, input: ExperimentResul
     where: { id: existing.id, companyId: input.companyId, company: { ownerId } },
     include: experimentInclude,
   });
+
+  const linked = await prisma.playbookApplication.findFirst({
+    where: { experimentId: existing.id, destinationCompanyId: input.companyId, ownerId },
+    select: { id: true, playbook: { select: { originCompanyId: true } } },
+  });
+  if (linked && input.companyId !== linked.playbook.originCompanyId) {
+    await prisma.playbookApplication.updateMany({
+      where: { id: linked.id, resultingEvidenceId: null },
+      data: {
+        resultingEvidenceId: updated.evidenceId,
+        status: "MEDIDA",
+        classification: "EVIDENCE",
+      },
+    });
+    await writeAudit({
+      actorId: ownerId,
+      companyId: input.companyId,
+      action: "playbook.application.result.recorded",
+      entity: "PlaybookApplication",
+      entityId: linked.id,
+      newValue: { resultingEvidenceId: updated.evidenceId, local: true },
+      origin: "USER",
+    });
+  }
+
   return toDTO(row);
 }
 

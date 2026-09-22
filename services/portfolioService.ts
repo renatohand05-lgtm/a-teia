@@ -106,6 +106,7 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
     records,
     audits,
     decisions,
+    applications,
   ] = await Promise.all([
     prisma.diagnosis.findMany({
       where: { companyId: { in: ids }, company: { ownerId } },
@@ -173,6 +174,18 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
       select: { id: true, action: true, createdAt: true, entityId: true },
     }),
     listOwnerDecisions(ownerId),
+    prisma.playbookApplication.findMany({
+      where: { ownerId, destinationCompanyId: { in: ids } },
+      select: {
+        id: true,
+        destinationCompanyId: true,
+        status: true,
+        scorePartial: true,
+        kpi: true,
+        playbook: { select: { title: true } },
+        experiment: { select: { plannedEndAt: true, finalValue: true } },
+      },
+    }),
   ]);
 
   const period = parseCockpitPeriod(filters.period);
@@ -312,6 +325,15 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
         })),
       memories: memories.filter((item) => item.companyId === company.id).map((item) => ({ id: item.id, title: item.title, validated: item.validated })),
       evidence: [],
+      playbookTransfers: applications
+        .filter((item) => item.destinationCompanyId === company.id)
+        .map((item) => ({
+          id: item.id,
+          title: item.playbook.title,
+          status: item.status,
+          overdue: Boolean(item.experiment?.plannedEndAt && item.experiment.plannedEndAt < now && item.experiment.finalValue == null),
+          missingData: item.scorePartial || !item.kpi,
+        })),
     };
   });
 

@@ -76,6 +76,8 @@ export type CockpitSnapshot = {
   playbooks: {
     validated: number;
     testing: number;
+    awaitingDecision: number;
+    pendingResults: number;
     companies: number;
   };
 };

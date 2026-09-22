@@ -253,6 +253,13 @@ export type ExecutivePlaybook = {
   originSegment: string | null;
   problem: string | null;
   kpi: string | null;
+  applications?: Array<{
+    destinationName: string;
+    destinationSegment: string | null;
+    status: string;
+    classification: string;
+    hasLocalEvidence: boolean;
+  }>;
 };
 
 export type ExecutiveContext = {
@@ -345,7 +352,11 @@ export function detectQuestionIntent(question: string): QuestionIntent {
   if (/oportun.*extern|extern.*oportun|oportunidades externas/.test(q)) return "EXTERNAL_OPPORTUNITY";
   if (/alocar|aloca[cç][aã]o|distribu|decis[aã]o de investimento|capital demais|menos capital|adiar na aloca/.test(q)) return "ALLOCATION";
   if (/alerta|automa[cç]|briefing di[aá]rio|resumo semanal|me avise se/.test(q)) return "AUTOMATION";
-  if (/playbook|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa/.test(q)) {
+  if (
+    /playbook|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa|playbooks est[aã]o sendo testad|funcionou em mais de uma empresa|aprendizado foi transfer|aplica[cç][aã]o precisa de decis[aã]o|testes ainda n[aã]o t[eê]m resultado|evid[eê]ncia em quantas empresas|diferen[cç]as existem entre origem/.test(
+      q,
+    )
+  ) {
     return "PLAYBOOK";
   }
   if (/conex|conect|cross-sell|cross sell|estrat[eé]gia cruz|aprendizado posso levar/.test(q)) {
@@ -678,19 +689,44 @@ export function buildPlaybookSummary(playbooks: ExecutivePlaybook[] = []): Class
   if (!playbooks.length) {
     return [stmt("DADO", "Não há playbooks persistidos neste recorte.", "Playbook")];
   }
+  const applications = playbooks.flatMap((item) => item.applications ?? []);
+  const testing = applications.filter((item) => !["REJEITADA", "CANCELADA", "ARQUIVADA", "CONCLUIDA"].includes(item.status));
+  const awaiting = applications.filter((item) => item.status === "AGUARDANDO_APROVACAO");
+  const withoutResult = applications.filter((item) => item.status === "EM_TESTE" || item.status === "PLANEJADA");
+  const localEvidence = applications.filter((item) => item.hasLocalEvidence);
+  const multiCompany = playbooks.filter((item) => (item.applications ?? []).filter((app) => app.hasLocalEvidence).length >= 1);
   const rows: ClassifiedStatement[] = [
     stmt("DADO", `${playbooks.length} playbook(s) persistido(s). Validado descreve o registro, não garante resultado em outra empresa.`, "Playbook"),
   ];
+  if (testing.length) {
+    rows.push(stmt("DADO", `${testing.length} aplicação(ões) em teste. No destino continuam hipótese até medição local.`, "Playbook"));
+  }
+  if (awaiting.length) {
+    rows.push(stmt("DADO", `${awaiting.length} aplicação(ões) aguardando decisão humana. A IA não aprova.`, "Playbook"));
+  }
+  if (withoutResult.length) {
+    rows.push(stmt("DADO", `${withoutResult.length} teste(s) ainda sem resultado medido.`, "Playbook"));
+  }
+  if (localEvidence.length) {
+    rows.push(stmt("EVIDENCIA", `${localEvidence.length} evidência(s) local(is) no destino. Evidência da origem não foi transferida.`, "Playbook"));
+  }
+  if (multiCompany.length) {
+    rows.push(stmt("DADO", `${multiCompany.length} playbook(s) com evidência local em empresa destino. Isso é cobertura, não probabilidade.`, "Playbook"));
+  }
   for (const item of playbooks.slice(0, 6)) {
+    const dest = (item.applications ?? [])
+      .slice(0, 3)
+      .map((app) => `${app.destinationName} (${app.status}${app.hasLocalEvidence ? ", evidência local" : ""})`)
+      .join("; ");
     rows.push(
       stmt(
         item.status === "VALIDADO" ? "EVIDENCIA" : "HIPOTESE",
-        `${item.title} · ${item.originName}${item.originSegment ? ` · ${item.originSegment}` : ""} · ${item.status} · KPI ${item.kpi ?? "não informado"}. ${item.problem ?? ""} Aplicar em outra empresa permanece hipótese.`,
+        `${item.title} · ${item.originName}${item.originSegment ? ` · ${item.originSegment}` : ""} · ${item.status} · KPI ${item.kpi ?? "não informado"}. ${item.problem ?? ""} ${dest ? `Aplicações: ${dest}.` : "Sem aplicação."} Aplicar em outra empresa permanece hipótese.`,
         "Playbook",
       ),
     );
   }
-  rows.push(stmt("INFERENCIA", "A IA não valida playbook e não transforma fonte externa em evidência interna.", "Playbook"));
+  rows.push(stmt("INFERENCIA", "A IA não valida playbook, não transfere evidência e não aprova aplicação.", "Playbook"));
   return rows;
 }
 
@@ -1002,8 +1038,12 @@ export function buildExecutiveBriefing(context: ExecutiveContext, question: stri
       : "Não há conexões persistidas. Similaridade não inventa ligação.";
   } else if (intent === "PLAYBOOK") {
     const list = context.playbooks ?? [];
+    const apps = list.flatMap((item) => item.applications ?? []);
+    const testing = apps.filter((item) => ["CONFIRMADA", "APROVADA", "PLANEJADA", "EM_TESTE"].includes(item.status)).length;
+    const awaiting = apps.filter((item) => item.status === "AGUARDANDO_APROVACAO").length;
+    const measured = apps.filter((item) => item.hasLocalEvidence).length;
     summary = list.length
-      ? `${list.length} playbook(s) no recorte. Aplicar em outra empresa permanece hipótese. A IA não valida playbook.`
+      ? `${list.length} playbook(s) no recorte. ${testing} em teste. ${awaiting} aguardando decisão. ${measured} com evidência local no destino. Aplicar em outra empresa permanece hipótese. A IA não valida playbook nem transfere evidência.`
       : "Não há playbooks persistidos. Experiência de uma empresa não vira certeza em outra.";
   } else if (intent === "EXPERIMENTS") {
     const done = context.experiments.filter((item) => item.status === "COMPLETED");

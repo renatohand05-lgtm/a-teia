@@ -44,8 +44,18 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "playbook.approved": "Playbook validado",
   "playbook.archived": "Playbook arquivado",
   "playbook.application.proposed": "Aplicação de playbook proposta",
+  "playbook.application.created": "Aplicação de playbook criada",
+  "playbook.application.compatibility.calculated": "Compatibilidade de aplicação calculada",
+  "playbook.application.reviewed": "Aplicação de playbook revisada",
   "playbook.application.confirmed": "Aplicação de playbook confirmada",
+  "playbook.application.approved": "Aplicação de playbook aprovada",
   "playbook.application.rejected": "Aplicação de playbook rejeitada",
+  "playbook.application.plan.created": "Plano de aplicação criado",
+  "playbook.application.experiment.created": "Experimento de transferência criado",
+  "playbook.application.result.recorded": "Resultado de transferência registrado",
+  "playbook.application.evidence.created": "Evidência local de transferência criada",
+  "playbook.application.memory.proposed": "Memória local de transferência proposta",
+  "playbook.application.completed": "Ciclo de transferência concluído",
 };
 
 export const AUDIT_CATEGORY_LABELS: Record<string, string> = {

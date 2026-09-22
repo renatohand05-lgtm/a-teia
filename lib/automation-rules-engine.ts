@@ -45,6 +45,9 @@ export type CompanyFacts = {
   highScoreOpportunityWithoutPlan: number;
   allocationPendingDays: number | null;
   financeAgeDays: number | null;
+  playbookAwaitingDecision?: number;
+  playbookAwaitingResult?: number;
+  playbookTransferOverdue?: number;
 };
 
 export type EvaluationHit = {
@@ -189,6 +192,36 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
     condition: { metric: "allocationPendingDays", operator: "gte", threshold: 1, entity: "allocation" },
   },
   {
+    key: "playbook_awaiting_decision",
+    kind: "REVISAO",
+    title: "Aplicação de playbook aguardando decisão",
+    description: "Somente alerta. A IA não aprova e não move a aplicação.",
+    frequency: "DAILY",
+    cooldownHours: 24,
+    priority: "ALTO",
+    condition: { metric: "playbookAwaitingDecision", operator: "gt", threshold: 0, entity: "playbook" },
+  },
+  {
+    key: "playbook_awaiting_result",
+    kind: "FOLLOW_UP",
+    title: "Aplicação de playbook aguardando resultado",
+    description: "Teste de transferência sem resultado registrado. Não conclui falha.",
+    frequency: "DAILY",
+    cooldownHours: 48,
+    priority: "MEDIO",
+    condition: { metric: "playbookAwaitingResult", operator: "gt", threshold: 0, entity: "playbook" },
+  },
+  {
+    key: "playbook_transfer_overdue",
+    kind: "CHECK",
+    title: "Experimento de transferência vencido",
+    description: "Prazo do teste venceu sem resultado. Não afirma fracasso.",
+    frequency: "DAILY",
+    cooldownHours: 24,
+    priority: "ALTO",
+    condition: { metric: "playbookTransferOverdue", operator: "gt", threshold: 0, entity: "playbook" },
+  },
+  {
     key: "daily_briefing",
     kind: "RESUMO",
     title: "Briefing diário",
@@ -279,6 +312,9 @@ export function metricValue(facts: CompanyFacts, metric: string): number | null 
     highScoreOpportunityWithoutPlan: facts.highScoreOpportunityWithoutPlan,
     allocationPendingDays: facts.allocationPendingDays,
     financeAgeDays: facts.financeAgeDays,
+    playbookAwaitingDecision: facts.playbookAwaitingDecision ?? 0,
+    playbookAwaitingResult: facts.playbookAwaitingResult ?? 0,
+    playbookTransferOverdue: facts.playbookTransferOverdue ?? 0,
     briefing: 1,
     weekly: 1,
   };
@@ -473,6 +509,27 @@ export function parseAutomationPrompt(question: string): {
       requiresConfirmation: true,
     };
   }
+  if (/aplica[cç].*aguardando (resultado|decis)/.test(q) || /playbooks? aguardando/.test(q)) {
+    return {
+      templateKey: /resultado/.test(q) ? "playbook_awaiting_result" : "playbook_awaiting_decision",
+      title: /resultado/.test(q) ? "Avisar aplicações aguardando resultado" : "Avisar aplicações aguardando decisão",
+      condition: {
+        metric: /resultado/.test(q) ? "playbookAwaitingResult" : "playbookAwaitingDecision",
+        operator: "gt",
+        threshold: 0,
+        entity: "playbook",
+      },
+      requiresConfirmation: true,
+    };
+  }
+  if (/transfer[eê]ncia vencid|experimentos de transfer/.test(q)) {
+    return {
+      templateKey: "playbook_transfer_overdue",
+      title: "Avisar experimentos de transferência vencidos",
+      condition: { metric: "playbookTransferOverdue", operator: "gt", threshold: 0, entity: "playbook" },
+      requiresConfirmation: true,
+    };
+  }
   if (/tarefa vencid/.test(q)) {
     return {
       templateKey: "task_overdue",
@@ -532,6 +589,7 @@ function defaultHref(template: AutomationTemplate, companyId: string) {
   if (template.condition.entity === "decision") return "/cockpit#cockpit-decisoes";
   if (template.condition.entity === "allocation") return "/alocacao";
   if (template.condition.entity === "opportunity") return `/empresas/${companyId}/oportunidades`;
+  if (template.condition.entity === "playbook") return "/playbooks";
   return `/empresas/${companyId}`;
 }
 

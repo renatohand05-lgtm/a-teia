@@ -69,9 +69,14 @@ export default async function StrategyDetailPage({
         <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
           <p className="font-bold" style={{ color: "var(--text-1)" }}>Playbook relacionado</p>
           {relatedPlaybook ? (
-            <Link href={`/playbooks/${relatedPlaybook.id}`} className="mt-2 inline-flex font-bold" style={{ color: "var(--gold-soft)" }}>
-              {relatedPlaybook.title}
-            </Link>
+            <>
+              <Link href={`/playbooks/${relatedPlaybook.id}`} className="mt-2 inline-flex font-bold" style={{ color: "var(--gold-soft)" }}>
+                {relatedPlaybook.title}
+              </Link>
+              {relatedPlaybook.multiContextNote ? (
+                <p className="mt-2">{relatedPlaybook.multiContextNote}</p>
+              ) : null}
+            </>
           ) : playbookEligible.eligible ? (
             <p className="mt-2">Há resultado medido na origem. Criar playbook nasce como rascunho — a IA não valida.</p>
           ) : (

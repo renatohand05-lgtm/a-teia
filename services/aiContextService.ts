@@ -159,6 +159,13 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
       originSegment: item.originSegment,
       problem: item.problem,
       kpi: item.primaryKpi,
+      applications: item.applications.map((app) => ({
+        destinationName: app.destination.name,
+        destinationSegment: app.destination.segment,
+        status: app.status,
+        classification: app.classification,
+        hasLocalEvidence: Boolean(app.resultingEvidenceId),
+      })),
     })),
   };
 }

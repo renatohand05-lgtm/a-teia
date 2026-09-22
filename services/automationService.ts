@@ -129,7 +129,7 @@ async function ownedAutomation(ownerId: string, automationId: string) {
 }
 
 export async function loadCompanyFacts(ownerId: string): Promise<CompanyFacts[]> {
-  const [portfolio, decisions, experiments, allocations] = await Promise.all([
+  const [portfolio, decisions, experiments, allocations, applications] = await Promise.all([
     loadPortfolioBundle(ownerId),
     prisma.decision.findMany({
       where: {
@@ -153,6 +153,14 @@ export async function loadCompanyFacts(ownerId: string): Promise<CompanyFacts[]>
       select: { updatedAt: true },
       take: 1,
       orderBy: { updatedAt: "desc" },
+    }),
+    prisma.playbookApplication.findMany({
+      where: { ownerId },
+      select: {
+        destinationCompanyId: true,
+        status: true,
+        experiment: { select: { plannedEndAt: true, finalValue: true } },
+      },
     }),
   ]);
 
@@ -190,6 +198,12 @@ export async function loadCompanyFacts(ownerId: string): Promise<CompanyFacts[]>
       highScoreOpportunityWithoutPlan: company.opportunities.filter((item) => (item.score ?? 0) >= 80 && !item.hasPlan).length,
       allocationPendingDays,
       financeAgeDays: company.finance.periodLabel ? ageDays(company.updatedAt, now) : null,
+      playbookAwaitingDecision: applications.filter((item) => item.destinationCompanyId === company.id && item.status === "AGUARDANDO_APROVACAO").length,
+      playbookAwaitingResult: applications.filter((item) => item.destinationCompanyId === company.id && (item.status === "EM_TESTE" || item.status === "PLANEJADA")).length,
+      playbookTransferOverdue: applications.filter((item) => {
+        if (item.destinationCompanyId !== company.id) return false;
+        return Boolean(item.experiment?.plannedEndAt && item.experiment.plannedEndAt.getTime() < now && item.experiment.finalValue == null);
+      }).length,
     };
   });
 }

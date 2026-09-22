@@ -177,24 +177,30 @@ export function CockpitView({
         />
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi
+          href="/playbooks"
+          label="Playbooks em teste"
+          value={active.length ? String(snapshot.playbooks.testing) : "Sem dados"}
+          hint="Aplicações ativas no destino"
+        />
+        <Kpi
+          href="/playbooks"
+          label="Aplicações aguardando decisão"
+          value={active.length ? String(snapshot.playbooks.awaitingDecision) : "Sem dados"}
+          hint="A IA não aprova"
+        />
+        <Kpi
+          href="/playbooks"
+          label="Resultados pendentes"
+          value={active.length ? String(snapshot.playbooks.pendingResults) : "Sem dados"}
+          hint="Teste sem medição local"
+        />
         <Kpi
           href="/playbooks"
           label="Playbooks validados"
           value={active.length ? String(snapshot.playbooks.validated) : "Sem dados"}
-          hint="Registro suportado por evidência"
-        />
-        <Kpi
-          href="/playbooks"
-          label="Reutilizações ativas"
-          value={active.length ? String(snapshot.playbooks.testing) : "Sem dados"}
-          hint="Em teste em outra empresa"
-        />
-        <Kpi
-          href="/playbooks"
-          label="Playbooks"
-          value={active.length ? "Abrir biblioteca" : "Sem dados"}
-          hint="Aprendizado reutilizável, não certeza"
+          hint="Registro, não probabilidade"
         />
       </section>
 

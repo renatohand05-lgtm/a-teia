@@ -55,6 +55,9 @@ export const PRIMARY_ASSISTANT_SHORTCUTS = [
   { label: "Que estratégia posso testar aqui?", prompt: "Que estratégia posso testar aqui?" },
   { label: "Quais playbooks possuem evidência?", prompt: "Quais playbooks possuem evidência?" },
   { label: "Quais aprendizados podem ser reutilizados?", prompt: "Quais aprendizados podem ser reutilizados?" },
+  { label: "Quais playbooks estão sendo testados?", prompt: "Quais playbooks estão sendo testados?" },
+  { label: "Qual aplicação precisa de decisão?", prompt: "Qual aplicação precisa de decisão?" },
+  { label: "Quais testes ainda não têm resultado?", prompt: "Quais testes ainda não têm resultado?" },
   { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 

@@ -63,6 +63,13 @@ export type PortfolioCompanyInput = {
   }>;
   memories: Array<{ id: string; title: string; validated: boolean }>;
   evidence: Array<{ id: string; title: string; classification: string }>;
+  playbookTransfers?: Array<{
+    id: string;
+    title: string;
+    status: string;
+    overdue: boolean;
+    missingData: boolean;
+  }>;
 };
 
 export type PriorityItem = {
@@ -408,6 +415,64 @@ export function collectSignals(company: PortfolioCompanyInput): PriorityItem[] {
           limitations: ["Validação não transfere automaticamente de segmento."],
           missingData: missing,
           href: `/empresas/${company.id}/experimentos/${experiment.id}`,
+        }),
+      );
+    }
+  }
+
+  for (const transfer of company.playbookTransfers ?? []) {
+    if (transfer.status === "AGUARDANDO_APROVACAO") {
+      items.push(
+        signal(company, {
+          category: "OPPORTUNITY",
+          situation: "Aplicação de playbook aguardando decisão",
+          score: 71,
+          reason: `${transfer.title} aguarda aprovação humana. A IA não aprova.`,
+          impact: "Teste de transferência parado até decisão.",
+          urgency: "Alta — decisão pendente.",
+          evidenceAvailable: "Hipótese no destino",
+          nextAction: "Revisar e decidir a aplicação do playbook.",
+          factors: ["playbook_aguardando_decisao"],
+          sourceRefs: [`playbookApplication:${transfer.id}`],
+          limitations: ["Não afirma probabilidade de sucesso."],
+          missingData: transfer.missingData ? ["dados da empresa destino"] : [],
+          href: `/playbooks`,
+        }),
+      );
+    } else if (transfer.overdue || transfer.status === "EM_TESTE") {
+      items.push(
+        signal(company, {
+          category: "EXPERIMENT",
+          situation: transfer.overdue ? "Experimento de transferência com prazo vencido" : "Teste de transferência sem resultado",
+          score: transfer.overdue ? 73 : 58,
+          reason: `${transfer.title}: condição detectada. Isso não prova falha.`,
+          impact: "Aprendizado transversal ainda não pode ser medido.",
+          urgency: transfer.overdue ? "Alta — registrar resultado." : "Média.",
+          evidenceAvailable: "Sem evidência local",
+          nextAction: "Registrar o resultado medido na empresa destino.",
+          factors: ["playbook_transferencia_sem_resultado", `status:${transfer.status}`],
+          sourceRefs: [`playbookApplication:${transfer.id}`],
+          limitations: ["Alerta é condição detectada, não conclusão de fracasso."],
+          missingData: ["resultado do experimento de transferência"],
+          href: `/playbooks`,
+        }),
+      );
+    } else if (transfer.missingData) {
+      items.push(
+        signal(company, {
+          category: "DATA_GAP",
+          situation: "Aplicação de playbook com dados ausentes",
+          score: 46,
+          reason: `${transfer.title} tem compatibilidade parcial por falta de dados.`,
+          impact: "Score de teste fica parcial.",
+          urgency: "Informar dados do destino.",
+          evidenceAvailable: "Nenhuma",
+          nextAction: "Completar diagnóstico, KPI ou capacidade da empresa destino.",
+          factors: ["playbook_dados_ausentes"],
+          sourceRefs: [`playbookApplication:${transfer.id}`],
+          limitations: ["Ausência de dado não vira nota positiva."],
+          missingData: ["dados da empresa destino"],
+          href: `/playbooks`,
         }),
       );
     }

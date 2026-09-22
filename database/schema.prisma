@@ -142,9 +142,16 @@ enum PlaybookOriginKind {
 
 enum PlaybookApplicationStatus {
   PROPOSTA
+  REVISADA
+  AGUARDANDO_APROVACAO
+  APROVADA
   CONFIRMADA
-  REJEITADA
+  PLANEJADA
   EM_TESTE
+  MEDIDA
+  CONCLUIDA
+  REJEITADA
+  CANCELADA
   ARQUIVADA
 }
 
@@ -826,6 +833,21 @@ model PlaybookApplication {
   horizonDays          Int?
   investment           Decimal?                   @db.Decimal(14, 2)
   classification       KnowledgeKind              @default(HYPOTHESIS)
+  decisionId           String?
+  decision             Decision?                  @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  actionPlanId         String?
+  actionPlan           ActionPlan?                @relation(fields: [actionPlanId], references: [id], onDelete: SetNull)
+  experimentId         String?
+  experiment           Experiment?                @relation("ApplicationExperiment", fields: [experimentId], references: [id], onDelete: SetNull)
+  resultingEvidenceId  String?
+  resultingEvidence    Evidence?                  @relation("ApplicationEvidence", fields: [resultingEvidenceId], references: [id], onDelete: SetNull)
+  resultingMemoryId    String?
+  resultingMemory      StrategicMemory?           @relation("ApplicationMemory", fields: [resultingMemoryId], references: [id], onDelete: SetNull)
+  adaptations          Json?
+  differences          Json?
+  proposedTarget       Decimal?                   @db.Decimal(14, 4)
+  reviewedAt           DateTime?
+  completedAt          DateTime?
   proposedAt           DateTime                   @default(now())
   confirmedAt          DateTime?
   rejectedAt           DateTime?
@@ -864,6 +886,7 @@ model Decision {
   actionPlans          ActionPlan[]
   researchSessions     ResearchSession[]
   allocationProposals  AllocationProposal[]
+  playbookApplications PlaybookApplication[]
 
   @@index([companyId, status])
 }
@@ -886,6 +909,7 @@ model ActionPlan {
 
   tasks       Task[]
   experiments Experiment[]
+  playbookApplications PlaybookApplication[]
 }
 
 model Task {
@@ -941,6 +965,7 @@ model Experiment {
   evidence Evidence[]
   memories StrategicMemory[]
   playbooks Playbook[]
+  playbookApplications PlaybookApplication[] @relation("ApplicationExperiment")
 
   @@index([companyId, status])
   @@index([opportunityId])
@@ -983,6 +1008,7 @@ model Evidence {
 
   memories StrategicMemory[]
   playbooks Playbook[]
+  playbookApplications PlaybookApplication[] @relation("ApplicationEvidence")
 
   @@index([companyId, kind])
   @@index([experimentId])
@@ -1030,6 +1056,7 @@ model StrategicMemory {
   updatedAt       DateTime                   @updatedAt
 
   playbooks Playbook[]
+  playbookApplications PlaybookApplication[] @relation("ApplicationMemory")
 
   @@index([companyId, createdAt])
   @@index([companyId, status])
