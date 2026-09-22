@@ -56,3 +56,14 @@ Limite 24 nós, clustering por segmento, busca, foco, esconder baixa relevância
 - Lint: passou
 - Testes: 363/363 (49 arquivos)
 - Build: passou
+- Commit: `49a1ea8`
+- Vercel Production: **Ready** — https://a-teia.vercel.app (`dpl_6AJevDcmZFCygbS3cTqTAGDUwVuL`)
+- Health: status ok, release 1.0, version 1.0.0, openaiExposed false, webSearchConfigured true, automationEngine ok, scheduler configured, database ok
+
+## Pendências reais
+
+Walkthrough autenticado visual (biblioteca, detalhe, aplicação e mapa em 1920–mobile) pelo Renato.
+
+## Próximo Sprint recomendado
+
+Sprint 16 — ciclo playbook → experimento → evidência no destino e endurecimento visual leve, **somente com autorização**.
