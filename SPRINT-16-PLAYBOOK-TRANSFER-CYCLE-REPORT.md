@@ -130,15 +130,15 @@ Passou (`npm run build`).
 
 ## 32. Commit
 
-A registrar no fechamento.
+`f6dfb20` — feat: close playbook transfer cycle without moving evidence
 
 ## 33. Vercel
 
-A registrar após o deploy.
+Production Ready — https://a-teia.vercel.app (`dpl_AzzCSUeFkWUpbQaoqb867EiKUZgF`)
 
 ## 34. Health
 
-Esperado 1.0.0, sem aumentar versão.
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 35. Pendências reais
 
