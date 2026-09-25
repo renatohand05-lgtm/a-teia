@@ -268,17 +268,15 @@ Nenhuma. Sem reset, drop, truncate ou apagamento de produção.
 
 ## 38. Commit SHA
 
-Preenchido após o commit deste Sprint.
+`3d922a3` — fix: harden operational integrity after portfolio audit
 
 ## 39. Vercel
 
-Preenchido após o deploy Production.
+Production Ready — https://a-teia.vercel.app (`dpl_CBTZJfsK5cJFttBefu7WxUAYw8by`)
 
 ## 40. Health
 
-Pré-deploy (produção vigente): status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok.
-
-Pós-deploy: revalidar `/api/health`.
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 41. Pendências reais
 
