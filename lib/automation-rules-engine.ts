@@ -589,7 +589,12 @@ function defaultHref(template: AutomationTemplate, companyId: string) {
   if (template.condition.entity === "decision") return "/cockpit#cockpit-decisoes";
   if (template.condition.entity === "allocation") return "/alocacao";
   if (template.condition.entity === "opportunity") return `/empresas/${companyId}/oportunidades`;
-  if (template.condition.entity === "playbook") return "/aplicacoes";
+  if (template.condition.entity === "playbook") {
+    if (template.key === "playbook_awaiting_decision") return "/aplicacoes?status=AGUARDANDO_APROVACAO";
+    if (template.key === "playbook_awaiting_result") return "/aplicacoes?resultado=pendente";
+    if (template.key === "playbook_transfer_overdue") return "/aplicacoes?status=EM_TESTE";
+    return "/aplicacoes";
+  }
   return `/empresas/${companyId}`;
 }
 

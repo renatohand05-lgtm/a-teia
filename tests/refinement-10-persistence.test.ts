@@ -90,7 +90,7 @@ describe("Refinamento 10 — persistência e isolamento", () => {
       const acknowledged = await acknowledgeAlert({ ownerId: user.id, alertId: alert.id });
       expect(acknowledged.status).toBe(AlertStatus.ACKNOWLEDGED);
 
-      const ownAudit = await listOwnerAudit(user.id, { limit: 40 });
+      const ownAudit = await listOwnerAudit(user.id, { companyId: company.id, limit: 80 });
       expect(ownAudit.some((item) => item.action === "company.restore" && item.entityId === company.id)).toBe(true);
       expect(
         ownAudit.some(

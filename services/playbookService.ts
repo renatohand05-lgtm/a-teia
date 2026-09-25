@@ -1789,7 +1789,7 @@ export async function getApplicationAudit(ownerId: string, applicationId: string
     where: {
       entity: "PlaybookApplication",
       entityId: applicationId,
-      action: { not: { contains: "viewed" } },
+      action: { not: { endsWith: ".viewed" } },
       OR: [{ actorId: ownerId }, { companyId: current.destinationCompanyId }],
     },
     select: {

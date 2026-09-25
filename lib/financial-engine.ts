@@ -155,7 +155,7 @@ export function calculateDRE(input: DreInput): DreResult {
   if (!informed.grossRevenue) missing.push("receita bruta");
 
   const netRevenue = informed.grossRevenue ? moneyOrZero(input.grossRevenue) - moneyOrZero(input.deductions) : null;
-  const grossMargin = netRevenue != null ? netRevenue - moneyOrZero(input.cogs) : null;
+  const grossMargin = netRevenue != null && informed.cogs ? netRevenue - moneyOrZero(input.cogs) : null;
   const variableCosts =
     moneyOrZero(input.deductions) + moneyOrZero(input.cogs) + moneyOrZero(input.marketing) + moneyOrZero(input.delivery);
   const fixedCosts = FIXED_DRE_KEYS.reduce((sum, key) => sum + moneyOrZero(input[key]), 0);

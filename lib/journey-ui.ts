@@ -152,7 +152,7 @@ const AUDIT_ENTITY_HREF: Record<string, (companyId: string | null, entityId: str
   Diagnosis: (companyId) => (companyId ? `/empresas/${companyId}/diagnostico` : null),
   Opportunity: (companyId, entityId) =>
     companyId && entityId ? `/empresas/${companyId}/oportunidades/${entityId}` : companyId ? `/empresas/${companyId}/oportunidades` : null,
-  Decision: (companyId) => (companyId ? `/empresas/${companyId}` : "/cockpit#cockpit-decisoes"),
+  Decision: () => "/cockpit#cockpit-decisoes",
   ActionPlan: (companyId, entityId) =>
     companyId && entityId ? `/empresas/${companyId}/execucao/${entityId}` : companyId ? `/empresas/${companyId}/execucao` : null,
   Task: (companyId) => (companyId ? `/empresas/${companyId}/execucao` : null),

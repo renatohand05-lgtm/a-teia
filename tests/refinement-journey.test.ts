@@ -166,7 +166,7 @@ describe("Refinamento 8 — contexto, auditoria e isolamento", () => {
   });
 
   it("auditoria só gera link quando há empresa segura", () => {
-    expect(auditResourceHref({ entity: "Decision", companyId: "emp-1", entityId: "dec-1" })).toBe("/empresas/emp-1");
+    expect(auditResourceHref({ entity: "Decision", companyId: "emp-1", entityId: "dec-1" })).toBe("/cockpit#cockpit-decisoes");
     expect(auditResourceHref({ entity: "Opportunity", companyId: "emp-1", entityId: "op-1" })).toBe(
       "/empresas/emp-1/oportunidades/op-1",
     );

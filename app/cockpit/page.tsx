@@ -5,7 +5,6 @@ import { CockpitView } from "@/components/cockpit/CockpitView";
 import { ErrorState } from "@/components/ui/States";
 import { parseCockpitPeriod } from "@/lib/cockpit-period";
 import { getCockpitSnapshot } from "@/services/cockpitService";
-import { writeCockpitViewed } from "@/services/auditService";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +26,6 @@ export default async function CockpitPage({
 
   try {
     const snapshot = await getCockpitSnapshot(session.user.id, filters);
-    await writeCockpitViewed(session.user.id);
     return (
       <AppShell
         title="Meu Cockpit"

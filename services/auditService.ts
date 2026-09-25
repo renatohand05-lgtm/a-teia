@@ -2,6 +2,7 @@ import "server-only";
 
 import { AuditSource, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isNoisyAuditAction } from "@/lib/audit-ui";
 import { categoryFromAction, sanitizeAuditValue } from "@/lib/security/sanitize";
 
 type AuditInput = {
@@ -82,7 +83,15 @@ export async function listOwnerAudit(ownerId: string, filters: AuditListFilters 
           : {},
         filters.companyId ? { companyId: filters.companyId } : {},
         filters.category ? { category: filters.category } : {},
-        filters.action ? { action: filters.action } : {},
+        filters.action
+          ? { action: filters.action }
+          : {
+              AND: [
+                { action: { not: { endsWith: ".viewed" } } },
+                { action: { not: { endsWith: ".refresh" } } },
+                { action: { not: { endsWith: ".render" } } },
+              ],
+            },
         typeof filters.success === "boolean" ? { success: filters.success } : {},
       ],
     },
@@ -98,6 +107,7 @@ export async function listOwnerAudit(ownerId: string, filters: AuditListFilters 
     .filter((row) => {
       if (row.company && row.company.ownerId !== ownerId) return false;
       if (row.actorId && row.actorId !== ownerId && row.company?.ownerId !== ownerId) return false;
+      if (!filters.action && isNoisyAuditAction(row.action)) return false;
       return true;
     })
     .map((row) => ({

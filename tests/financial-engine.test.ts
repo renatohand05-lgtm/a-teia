@@ -65,6 +65,13 @@ describe("DRE e indicadores", () => {
     expect(empty.informed.grossRevenue).toBe(false);
     expect(empty.missing).toContain("receita bruta");
   });
+
+  it("não calcula margem bruta quando CMV não foi informado", () => {
+    const withoutCogs = calculateDRE({ ...emptyDreInput(), grossRevenue: 100_000, deductions: 10_000 });
+    expect(withoutCogs.netRevenue).toBe(90_000);
+    expect(withoutCogs.grossMargin).toBeNull();
+    expect(withoutCogs.ebitda).toBeNull();
+  });
 });
 
 describe("margem de contribuição, break-even e faturamento necessário", () => {

@@ -169,7 +169,7 @@ describe("Sprint 17 — central de aplicações", () => {
         playbookAwaitingDecision: 1,
       } satisfies CompanyFacts,
     );
-    expect(hit?.href).toBe("/aplicacoes");
+    expect(hit?.href).toBe("/aplicacoes?status=AGUARDANDO_APROVACAO");
     expect(detectQuestionIntent("Quais playbooks estão em teste?")).toBe("PLAYBOOK");
     expect(detectQuestionIntent("Quais resultados estão pendentes?")).toBe("PLAYBOOK");
     expect(detectQuestionIntent("Que aprendizado foi transferido?")).toBe("PLAYBOOK");

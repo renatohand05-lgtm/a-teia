@@ -275,6 +275,7 @@ export async function archiveCompany(ownerId: string, id: string, ip?: string): 
     action: "company.archive",
     entity: "Company",
     entityId: row.id,
+    companyId: row.id,
     previousValue: { status: existing.status },
     newValue: { status: row.status },
     origin: "USER",

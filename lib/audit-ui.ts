@@ -81,6 +81,15 @@ export const AUDIT_CATEGORY_LABELS: Record<string, string> = {
   opportunity: "Oportunidade",
 };
 
+const NOISY_AUDIT_ACTIONS = new Set(["cockpit.viewed", "page.viewed", "page.refresh", "page.render"]);
+
+/** Visualização, refresh e render não entram na trilha operacional. `reviewed` permanece. */
+export function isNoisyAuditAction(action: string | null | undefined): boolean {
+  if (!action) return false;
+  if (NOISY_AUDIT_ACTIONS.has(action)) return true;
+  return action.endsWith(".viewed") || action.endsWith(".refresh") || action.endsWith(".render");
+}
+
 export function auditActionLabel(action: string | null | undefined): string {
   if (!action) return "Evento";
   return AUDIT_ACTION_LABELS[action] ?? action.replace(/[._]/g, " ");

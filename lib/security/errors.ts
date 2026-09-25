@@ -52,6 +52,9 @@ function looksTechnical(message: string): boolean {
     message.includes("\n") ||
     message.includes("Prisma") ||
     message.includes("SQL") ||
+    /P20\d{2}/.test(message) ||
+    /Unique constraint|Foreign key constraint|Record to update not found/i.test(message) ||
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(message) ||
     /at\s+\S+\s+\(/.test(message) ||
     message.includes("ECONN") ||
     message.toLowerCase().includes("stack")

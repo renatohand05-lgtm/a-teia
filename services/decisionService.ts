@@ -53,6 +53,18 @@ export async function proposeDecision(input: {
 
   const requiresHumanApproval = true;
 
+  const existingPending = await prisma.decision.findFirst({
+    where: {
+      createdById: input.createdById,
+      companyId: input.companyId ?? null,
+      opportunityId: input.opportunityId ?? null,
+      title: input.title,
+      status: { in: [DecisionStatus.PENDING_HUMAN_APPROVAL, DecisionStatus.DEFERRED] },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  if (existingPending) return existingPending;
+
   const decision = await prisma.decision.create({
     data: {
       createdById: input.createdById,
