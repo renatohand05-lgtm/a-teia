@@ -60,7 +60,7 @@ export function getApplicationNextAction(input: {
   }
   if (status === "PROPOSTA") return { key: "review_fit", label: "Revisar compatibilidade" };
   if (status === "REVISADA") return { key: "request_decision", label: "Enviar para decisão" };
-  if (status === "AGUARDANDO_APROVACAO") return { key: "decide", label: "Aprovar/rejeitar aplicação" };
+  if (status === "AGUARDANDO_APROVACAO") return { key: "decide", label: "Aprovar teste" };
   if (!input.actionPlanId && (status === "APROVADA" || status === "CONFIRMADA")) {
     return { key: "create_plan", label: "Criar plano" };
   }
@@ -70,7 +70,7 @@ export function getApplicationNextAction(input: {
   if (input.resultingMemoryId && input.memoryStatus !== "APPROVED") {
     return { key: "review_memory", label: "Revisar memória" };
   }
-  if (status === "MEDIDA") return { key: "complete", label: "Concluído" };
+  if (status === "MEDIDA") return { key: "complete", label: "Concluir aplicação" };
   if (!input.experimentId) return { key: "create_experiment", label: "Criar experimento" };
   if (input.experimentId && !input.experimentStarted && status !== "EM_TESTE") {
     return { key: "start_experiment", label: "Iniciar experimento" };
@@ -231,7 +231,8 @@ export function displayCenterKpi(value: number | null, hasCoverage: boolean): st
   return String(value ?? 0);
 }
 
-export type OperationalStep = { key: string; label: string; done: boolean };
+export type OperationalStepState = "done" | "current" | "pending" | "blocked";
+export type OperationalStep = { key: string; label: string; done: boolean; state: OperationalStepState };
 
 export function buildOperationalTimeline(input: {
   proposedAt?: string | null;
@@ -247,7 +248,7 @@ export function buildOperationalTimeline(input: {
   memoryApproved?: boolean;
   completedAt?: string | null;
 }): OperationalStep[] {
-  return [
+  const base = [
     { key: "selected", label: "Playbook selecionado", done: Boolean(input.proposedAt) },
     { key: "compat", label: "Compatibilidade calculada", done: Boolean(input.scored) },
     { key: "reviewed", label: "Aplicação revisada", done: Boolean(input.reviewedAt) },
@@ -261,6 +262,21 @@ export function buildOperationalTimeline(input: {
     { key: "memoryApproved", label: "Memória aprovada", done: Boolean(input.memoryApproved) },
     { key: "completed", label: "Aplicação concluída", done: Boolean(input.completedAt) },
   ];
+  return decorateTimelineStates(base);
+}
+
+export function decorateTimelineStates<T extends { done: boolean }>(steps: T[]): Array<T & { state: OperationalStepState }> {
+  let currentAssigned = false;
+  return steps.map((step, index) => {
+    if (step.done) return { ...step, state: "done" as const };
+    const previous = steps[index - 1];
+    if (previous && !previous.done) return { ...step, state: "blocked" as const };
+    if (!currentAssigned) {
+      currentAssigned = true;
+      return { ...step, state: "current" as const };
+    }
+    return { ...step, state: "pending" as const };
+  });
 }
 
 export function operationalProgress(steps: OperationalStep[]): { done: number; total: number; caption: string } {

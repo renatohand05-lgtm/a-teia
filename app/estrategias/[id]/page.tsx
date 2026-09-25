@@ -45,7 +45,7 @@ export default async function StrategyDetailPage({
   });
 
   return (
-    <AppShell title="Estratégia cruzada" subtitle={`${strategy.originName} → ${strategy.destinationName ?? "Portfólio"}`} userName={session.user.name}>
+    <AppShell title={strategy.title} subtitle={`${strategy.originName} → ${strategy.destinationName ?? "Portfólio"}`} userName={session.user.name}>
       <div className="mx-auto max-w-[880px] space-y-5">
         <section className="surface-card p-5">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.1em]" style={{ color: "var(--gold-soft)" }}>{strategyStatusLabel(strategy.status)}</p>
@@ -65,6 +65,24 @@ export default async function StrategyDetailPage({
           <p><b>Esforço:</b> {STRATEGY_EFFORT_LABELS[strategy.effort]}</p>
           <p><b>Prazo de teste:</b> {strategy.testHorizonDays == null ? "Sem dados" : `${strategy.testHorizonDays} dias`}</p>
           <p><b>Risco:</b> {STRATEGY_RISK_LABELS[strategy.risk]}</p>
+        </section>
+        <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
+          <p className="font-bold" style={{ color: "var(--text-1)" }}>Relações</p>
+          {strategy.connectionId ? (
+            <p className="mt-2">
+              <Link href={`/conexoes/${strategy.connectionId}`} style={{ color: "var(--gold-soft)" }}>Abrir conexão de origem</Link>
+            </p>
+          ) : null}
+          {strategy.opportunityId ? (
+            <p className="mt-2">
+              <Link href={`/empresas/${strategy.destinationCompanyId ?? strategy.companyId}/oportunidades/${strategy.opportunityId}`} style={{ color: "var(--gold-soft)" }}>
+                Abrir oportunidade
+              </Link>
+            </p>
+          ) : null}
+          {!strategy.connectionId && !strategy.opportunityId && !relatedPlaybook ? (
+            <p className="mt-2">Nenhuma relação persistida além desta estratégia.</p>
+          ) : null}
         </section>
         <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
           <p className="font-bold" style={{ color: "var(--text-1)" }}>Playbook relacionado</p>

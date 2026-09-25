@@ -59,7 +59,9 @@ export function mapScaleForCount(count: number): { size: number; radius: number;
   if (count <= 1) return { size: 420, radius: 0, nodeRadius: 22 };
   if (count <= 5) return { size: 520, radius: 150, nodeRadius: 18 };
   if (count <= 20) return { size: 640, radius: 220, nodeRadius: 14 };
-  return { size: 720, radius: 250, nodeRadius: 11 };
+  if (count <= 50) return { size: 720, radius: 250, nodeRadius: 11 };
+  if (count <= 100) return { size: 800, radius: 280, nodeRadius: 8 };
+  return { size: 840, radius: 300, nodeRadius: 7 };
 }
 
 export function shouldPreferList(totalCompanies: number): boolean {

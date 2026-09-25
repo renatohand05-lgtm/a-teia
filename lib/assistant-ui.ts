@@ -64,6 +64,10 @@ export const PRIMARY_ASSISTANT_SHORTCUTS = [
   { label: "O que mudou entre origem e destino?", prompt: "O que mudou entre origem e destino?" },
   { label: "Quais resultados estão pendentes?", prompt: "Quais resultados estão pendentes?" },
   { label: "Que aprendizado foi transferido?", prompt: "Que aprendizado foi transferido?" },
+  { label: "Qual aplicação precisa de atenção?", prompt: "Qual aplicação precisa de atenção?" },
+  { label: "O que já foi replicado?", prompt: "O que já foi replicado?" },
+  { label: "O que ainda é hipótese?", prompt: "O que ainda é hipótese?" },
+  { label: "Qual evidência existe no destino?", prompt: "Qual evidência existe no destino?" },
   { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 

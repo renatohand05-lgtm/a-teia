@@ -455,7 +455,7 @@ export function humanMustConfirmOpportunity(): boolean {
 }
 
 export const CONNECTION_EMPTY = {
-  title: "Nenhuma conexão persistida",
+  title: "Nenhuma conexão identificada.",
   body: "O mapa só mostra relações gravadas. Similaridade não inventa ligação.",
 };
 

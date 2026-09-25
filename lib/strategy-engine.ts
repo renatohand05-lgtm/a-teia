@@ -124,6 +124,6 @@ export function strategyClassificationCopy(origin: string | null | undefined): s
 }
 
 export const STRATEGY_EMPTY = {
-  title: "Nenhuma estratégia cruzada",
+  title: "Nenhuma estratégia criada.",
   body: "Estratégia nasce de uma conexão analisada. Nada entra em execução sem confirmação humana.",
 };

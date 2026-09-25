@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  PLAYBOOK_EMPTY,
   PLAYBOOK_FAMILIES,
   PLAYBOOK_STATUSES,
   VALIDATED_PLAYBOOK_COPY,
@@ -127,7 +128,7 @@ export function PlaybookLibrary({
 
       {!playbooks.length ? (
         <div className="surface-card p-6">
-          <p className="font-bold">Nenhum playbook ainda</p>
+          <p className="font-bold">{PLAYBOOK_EMPTY.title}</p>
           <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
             Playbook nasce de aprendizado com evidência. Ele registra o que foi feito — não garante resultado em outra empresa.
           </p>

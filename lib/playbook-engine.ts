@@ -405,7 +405,7 @@ export function relatedPlaybooksForConnection(input: {
 }
 
 export const PLAYBOOK_EMPTY = {
-  title: "Nenhum playbook ainda",
+  title: "Nenhum playbook disponível.",
   body: "Playbook nasce de aprendizado com evidência. Ele registra o que foi feito — não garante resultado em outra empresa.",
 };
 

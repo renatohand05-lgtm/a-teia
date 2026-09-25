@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { strategyStatusLabel } from "@/lib/strategy-engine";
+import { STRATEGY_EMPTY, strategyStatusLabel } from "@/lib/strategy-engine";
 import { listOwnerStrategies } from "@/services/strategyService";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +29,8 @@ export default async function EstrategiasPage({
           </p>
           {items.length === 0 ? (
             <EmptyState
-              title="Nenhuma estratégia cruzada"
-              body="Estratégia nasce de uma conexão analisada. Nada entra em execução sem confirmação humana."
+              title={STRATEGY_EMPTY.title}
+              body={STRATEGY_EMPTY.body}
               action={
                 <Link href="/conexoes" className="inline-flex rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
                   Ver conexões

@@ -73,13 +73,14 @@ describe("Sprint 17 — central de aplicações", () => {
     expect(getApplicationNextAction({ status: "PROPOSTA", scorePartial: true }).label).toBe("Completar dados");
     expect(getApplicationNextAction({ status: "PROPOSTA", kpi: "clientes" }).label).toBe("Revisar compatibilidade");
     expect(getApplicationNextAction({ status: "REVISADA", kpi: "clientes" }).label).toBe("Enviar para decisão");
-    expect(getApplicationNextAction({ status: "AGUARDANDO_APROVACAO" }).label).toBe("Aprovar/rejeitar aplicação");
+    expect(getApplicationNextAction({ status: "AGUARDANDO_APROVACAO" }).label).toBe("Aprovar teste");
     expect(getApplicationNextAction({ status: "APROVADA" }).label).toBe("Criar plano");
     expect(getApplicationNextAction({ status: "CONFIRMADA", actionPlanId: "p1" }).label).toBe("Criar experimento");
     expect(getApplicationNextAction({ status: "PLANEJADA", experimentId: "x1" }).label).toBe("Iniciar experimento");
     expect(getApplicationNextAction({ status: "EM_TESTE", experimentId: "x1", experimentStarted: true }).label).toBe("Registrar resultado");
     expect(getApplicationNextAction({ status: "MEDIDA", resultingEvidenceId: "e1" }).label).toBe("Avaliar evidência");
     expect(getApplicationNextAction({ status: "MEDIDA", resultingEvidenceId: "e1", resultingMemoryId: "m1", memoryStatus: "PROPOSED" }).label).toBe("Revisar memória");
+    expect(getApplicationNextAction({ status: "MEDIDA", resultingEvidenceId: "e1", resultingMemoryId: "m1", memoryStatus: "APPROVED" }).label).toBe("Concluir aplicação");
     expect(getApplicationNextAction({ status: "CONCLUIDA" }).label).toBe("Concluído");
   });
 

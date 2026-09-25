@@ -310,7 +310,7 @@ function ConnectionTable({ connections }: { connections: ConnectionDTO[] }) {
   if (!connections.length) {
     return (
       <div className="surface-card p-6">
-        <p className="font-bold">Nenhuma conexão persistida</p>
+        <p className="font-bold">Nenhuma conexão identificada.</p>
         <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>
           O mapa só mostra relações gravadas. Similaridade não inventa ligação.
         </p>

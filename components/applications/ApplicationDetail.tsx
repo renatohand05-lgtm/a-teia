@@ -12,9 +12,11 @@ import {
   reviewPlaybookApplicationAction,
 } from "@/app/playbooks/actions";
 import { ConfirmForm } from "@/components/connections/ConfirmForm";
-import { APPLICATION_EMPTY, applicationStatusLabel, memoryStateLabel, operationalProgress } from "@/lib/application-center";
+import { APPLICATION_EMPTY, applicationStatusLabel, memoryStateLabel, operationalProgress, type OperationalStep } from "@/lib/application-center";
 import { auditActionLabel } from "@/lib/audit-ui";
+import { displayExperimentStatus } from "@/lib/experiment-ui";
 import { formatBRL } from "@/lib/format";
+import { TIMELINE_STATE_LABELS } from "@/lib/intelligence-nav";
 import type { getApplicationAudit, getPlaybookApplicationWorkspace } from "@/services/playbookService";
 
 type Workspace = Awaited<ReturnType<typeof getPlaybookApplicationWorkspace>>;
@@ -26,7 +28,7 @@ export function ApplicationDetailView({
   audit,
 }: {
   workspace: Workspace;
-  steps: Array<{ key: string; label: string; done: boolean }>;
+  steps: OperationalStep[];
   audit: AuditRow[];
 }) {
   const { playbook, application, learning, destEvidence, destExperiment, originEvidence, nextAction } = workspace;
@@ -47,12 +49,13 @@ export function ApplicationDetailView({
       </section>
 
       <section className="surface-card p-5">
-        <h2 className="m-0 text-[14px] font-bold">Progresso operacional</h2>
-        <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>{progress.caption}</p>
+        <h2 className="m-0 text-[14px] font-bold">Ciclo operacional</h2>
+        <p className="mt-2 text-[13px]" style={{ color: "var(--text-2)" }}>{progress.caption}. Progresso operacional — não é chance de sucesso.</p>
         <ol className="mt-3 grid gap-2 text-[12px]">
           {steps.map((item) => (
-            <li key={item.key} style={{ color: item.done ? "var(--text-1)" : "var(--text-3)" }}>
-              {item.done ? "●" : "○"} {item.label}
+            <li key={item.key} style={{ color: item.state === "done" || item.state === "current" ? "var(--text-1)" : "var(--text-3)" }}>
+              {item.state === "done" ? "●" : item.state === "current" ? "◉" : "○"} {item.label}
+              <span className="ml-2 text-[10px] uppercase tracking-[0.08em]">{TIMELINE_STATE_LABELS[item.state]}</span>
             </li>
           ))}
         </ol>
@@ -66,8 +69,8 @@ export function ApplicationDetailView({
       <Block title="Empresa destino">{application.destinationName}{application.destinationSegment ? ` · ${application.destinationSegment}` : ""}</Block>
 
       <section className="surface-card space-y-2 p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
-        <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Compatibilidade</h2>
-        <p>Score: {score == null ? "Sem dados" : `${score}/100`}</p>
+        <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Compatibilidade para teste</h2>
+        <p>Compatibilidade para teste: {score == null ? "Sem dados" : `${score}/100`}. Prioridade para teste — não é chance de sucesso.</p>
         <p>Cobertura: {application.scorePartial ? "Parcial" : "Completa"}</p>
         <p>Fatores favoráveis: {application.favorable.join(" · ") || "Sem dados"}</p>
         <p>Diferenças: {application.differences.join(" · ") || application.contrary.join(" · ") || "Sem dados"}</p>
@@ -134,7 +137,7 @@ export function ApplicationDetailView({
             <p>A IA não aprova.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ConfirmForm action={decidePlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id, decision: "approve" }} label="Aprovar" message="Aprovar o teste nesta empresa?" />
+            <ConfirmForm action={decidePlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id, decision: "approve" }} label="Aprovar teste" message="Aprovar o teste nesta empresa?" />
             <ConfirmForm action={decidePlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id, decision: "reject" }} label="Rejeitar" message="Rejeitar esta aplicação?" tone="danger" />
             <form action={reviewPlaybookApplicationAction}>
               <input type="hidden" name="applicationId" value={application.id} />
@@ -163,7 +166,13 @@ export function ApplicationDetailView({
           <form action={createPlaybookApplicationPlanAction}>
             <input type="hidden" name="applicationId" value={application.id} />
             <input type="hidden" name="playbookId" value={playbook.id} />
-            <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>Criar plano</button>
+            <button
+              type="submit"
+              className="rounded-xl px-3 py-2 text-[12px] font-extrabold"
+              style={nextAction.key === "create_plan" ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08" } : { border: "1px solid var(--border)" }}
+            >
+              Criar plano
+            </button>
           </form>
         )}
       </section>
@@ -178,7 +187,7 @@ export function ApplicationDetailView({
         <p>Investimento planejado: {destExperiment?.investment != null ? formatBRL(Number(destExperiment.investment)) : application.investment == null ? "Sem dados" : formatBRL(application.investment)}</p>
         <p>Investimento realizado: {destExperiment?.realizedInvestment != null ? formatBRL(Number(destExperiment.realizedInvestment)) : "Sem dados"}</p>
         <p>Responsável: {workspace.ownerName || "Sem dados"}</p>
-        <p>Status: {destExperiment?.status ?? (application.experimentId ? "Criado" : "Sem experimento")}</p>
+        <p>Status: {destExperiment?.status ? displayExperimentStatus(destExperiment.status) : application.experimentId ? "Criado" : "Sem experimento"}</p>
         {application.experimentId ? (
           <Link href={`/empresas/${application.destinationCompanyId}/experimentos/${application.experimentId}`} style={{ color: "var(--gold-soft)" }}>
             Abrir experimento
@@ -187,7 +196,13 @@ export function ApplicationDetailView({
           <form action={createPlaybookApplicationExperimentAction}>
             <input type="hidden" name="applicationId" value={application.id} />
             <input type="hidden" name="playbookId" value={playbook.id} />
-            <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>Criar experimento</button>
+            <button
+              type="submit"
+              className="rounded-xl px-3 py-2 text-[12px] font-extrabold"
+              style={nextAction.key === "create_experiment" ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08" } : { border: "1px solid var(--border)" }}
+            >
+              Criar experimento
+            </button>
           </form>
         )}
       </section>
@@ -206,7 +221,15 @@ export function ApplicationDetailView({
               Investimento realizado
               <input name="realizedInvestment" type="number" step="0.01" className="mt-1 w-full rounded-lg border bg-transparent px-2 py-2" style={{ borderColor: "var(--border)" }} />
             </label>
-            <button type="submit" className="rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08] sm:col-span-2" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
+            <button
+              type="submit"
+              className="rounded-xl px-3 py-2 text-[12px] font-extrabold sm:col-span-2"
+              style={
+                nextAction.key === "record_result"
+                  ? { background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))", color: "#241a08" }
+                  : { border: "1px solid var(--border)", color: "var(--text-1)" }
+              }
+            >
               Registrar resultado
             </button>
           </form>
@@ -217,22 +240,29 @@ export function ApplicationDetailView({
         </Block>
       )}
 
-      <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
-        <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Evidência local — empresa destino</h2>
-        {destEvidence ? (
-          <>
-            <p>Origem: Experimento</p>
-            <p>{destEvidence.title}</p>
-            <p>A evidência da origem ({originEvidence?.title ?? "sem título"}) continua na empresa de origem.</p>
-          </>
-        ) : (
-          <p>{APPLICATION_EMPTY.evidence}</p>
-        )}
+      <section className="surface-card grid gap-4 p-5 text-[13px] md:grid-cols-2" style={{ color: "var(--text-2)" }}>
+        <div>
+          <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Evidência de origem</h2>
+          <p className="mt-2">{originEvidence ? `${originEvidence.title} — permanece em ${playbook.originCompanyName}.` : "Sem evidência vinculada na origem."}</p>
+        </div>
+        <div>
+          <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Evidência local</h2>
+          {destEvidence ? (
+            <p className="mt-2">{destEvidence.title} — nasceu do experimento em {application.destinationName}. Não é evidência transferida.</p>
+          ) : (
+            <p className="mt-2">{APPLICATION_EMPTY.evidence} Evidência local só existe após resultado medido no destino.</p>
+          )}
+        </div>
       </section>
 
       <section className="surface-card space-y-3 p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
         <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Memória</h2>
-        <p>{memoryStateLabel(workspace.memoryStatus, workspace.memoryValidated)}</p>
+        <p>Aprendizado validado em {playbook.originCompanyName}.</p>
+        <p>
+          {application.status === "CONCLUIDA"
+            ? `Memória local em ${application.destinationName}: ${memoryStateLabel(workspace.memoryStatus, workspace.memoryValidated)}.`
+            : `Aplicação nesta empresa ainda está em teste. ${memoryStateLabel(workspace.memoryStatus, workspace.memoryValidated)}.`}
+        </p>
         {application.resultingEvidenceId && !application.resultingMemoryId ? (
           <form action={proposePlaybookApplicationMemoryAction}>
             <input type="hidden" name="applicationId" value={application.id} />
@@ -240,8 +270,8 @@ export function ApplicationDetailView({
             <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>Propor memória local</button>
           </form>
         ) : null}
-        {application.resultingEvidenceId && application.status === "MEDIDA" ? (
-          <ConfirmForm action={completePlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Concluir ciclo" message="Concluir com evidência local?" />
+        {application.resultingEvidenceId && application.status === "MEDIDA" && nextAction.key === "complete" ? (
+          <ConfirmForm action={completePlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Concluir aplicação" message="Concluir com evidência local?" />
         ) : null}
       </section>
 
@@ -272,13 +302,20 @@ export function ApplicationDetailView({
       </section>
 
       <div className="flex flex-wrap gap-2">
-        <ConfirmForm action={confirmPlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Criar oportunidade" message="Criar oportunidade no destino como hipótese?" />
-        <form action={requestPlaybookDecisionAction}>
-          <input type="hidden" name="applicationId" value={application.id} />
-          <input type="hidden" name="playbookId" value={playbook.id} />
-          <button type="submit" className="rounded-xl border px-3 py-2 text-[12px] font-bold" style={{ borderColor: "var(--border)" }}>Pedir decisão</button>
-        </form>
-        <ConfirmForm action={rejectPlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Rejeitar" message="Rejeitar esta aplicação?" tone="danger" />
+        {nextAction.key === "request_decision" ? (
+          <form action={requestPlaybookDecisionAction}>
+            <input type="hidden" name="applicationId" value={application.id} />
+            <input type="hidden" name="playbookId" value={playbook.id} />
+            <button type="submit" className="rounded-xl px-3 py-2 text-[12px] font-extrabold text-[#241a08]" style={{ background: "linear-gradient(135deg, var(--gold-soft), var(--gold-deep))" }}>
+              Enviar para decisão
+            </button>
+          </form>
+        ) : !application.opportunityId && (application.status === "PROPOSTA" || application.status === "REVISADA") ? (
+          <ConfirmForm action={confirmPlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Criar oportunidade" message="Criar oportunidade no destino como hipótese?" tone="neutral" />
+        ) : null}
+        {application.status !== "CONCLUIDA" && application.status !== "REJEITADA" && application.status !== "CANCELADA" && nextAction.key !== "decide" ? (
+          <ConfirmForm action={rejectPlaybookApplicationAction} hidden={{ applicationId: application.id, playbookId: playbook.id }} label="Rejeitar" message="Rejeitar esta aplicação?" tone="danger" />
+        ) : null}
       </div>
       <Link href="/aplicacoes" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>Voltar à central</Link>
     </div>

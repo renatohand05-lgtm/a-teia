@@ -44,7 +44,7 @@ export default async function ConnectionDetailPage({ params }: { params: Promise
   const originEvidence = related.evidence.filter((item) => item.companyId === connection.fromId);
 
   return (
-    <AppShell title="Conexão" subtitle={`${connection.fromName} → ${connection.toName}`} userName={session.user.name}>
+    <AppShell title={`${connection.fromName} → ${connection.toName}`} subtitle={connectionTypeLabel(connection.type)} userName={session.user.name}>
       <div className="mx-auto max-w-[980px] space-y-6">
         <section className="surface-card p-5">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.1em]" style={{ color: "var(--gold-soft)" }}>Resumo</p>
@@ -78,6 +78,13 @@ export default async function ConnectionDetailPage({ params }: { params: Promise
           {playbooks.length
             ? playbooks.map((item) => `${item.title} — ${item.label}`).join(" | ")
             : "Nenhum playbook relacionado persistido."}
+        </Block>
+        <Block title="Aplicações relacionadas">
+          {playbooks.some((item) => item.label === "Já testado neste destino")
+            ? "Há playbook já testado entre estas empresas. Abra a Central de Aplicações para o estágio e a próxima ação."
+            : "Nenhuma aplicação persistida entre estas empresas."}
+          {" "}
+          <Link href="/aplicacoes" style={{ color: "var(--gold-soft)" }}>Abrir aplicações</Link>
         </Block>
         <Block title="Estratégias possíveis">Criar uma estratégia estruturada permanece hipótese até o teste.</Block>
         <Block title="Próxima ação">{connection.nextAction}</Block>

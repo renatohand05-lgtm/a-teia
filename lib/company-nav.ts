@@ -197,6 +197,11 @@ export function companyBreadcrumbTrail(
     crumbs.push({ label: pageTitle });
     return crumbs;
   }
+  if (pathname.includes("/aplicacoes") && pageTitle && pageTitle !== "Aplicações") {
+    crumbs.push({ href: `/empresas/${companyId}/aplicacoes`, label: "Aplicações" });
+    crumbs.push({ label: pageTitle });
+    return crumbs;
+  }
   const moduleItem = COMPANY_NAV.find((item) => item.match(pathname) && item.key !== "central");
   crumbs.push({ label: moduleItem?.label ?? pageTitle });
   return crumbs;

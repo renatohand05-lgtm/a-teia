@@ -55,7 +55,7 @@ export default async function PlaybookDetailPage({
   const transfer = transferClassification();
 
   return (
-    <AppShell title="Playbook" subtitle={playbook.originCompanyName} userName={session.user.name}>
+    <AppShell title={playbook.title} subtitle={playbook.originCompanyName} userName={session.user.name}>
       <div className="mx-auto max-w-[920px] space-y-5">
         <section className="surface-card p-5">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.1em]" style={{ color: "var(--gold-soft)" }}>
@@ -123,7 +123,9 @@ export default async function PlaybookDetailPage({
                   <tbody>
                     {applications.map((item) => (
                       <tr key={item.id}>
-                        <td className="py-1">{item.destinationName}</td>
+                        <td className="py-1">
+                          <Link href={`/aplicacoes/${item.id}`} style={{ color: "var(--gold-soft)" }}>{item.destinationName}</Link>
+                        </td>
                         <td>{item.destinationSegment || "Sem dados"}</td>
                         <td>{TRANSFER_STATUS_LABELS[item.status as TransferStatus] ?? item.status}</td>
                         <td>{item.compatibilityScore == null ? "Sem dados" : `${item.compatibilityScore}/100${item.scorePartial ? " parcial" : ""}`}</td>
@@ -137,7 +139,9 @@ export default async function PlaybookDetailPage({
               <div className="mt-3 grid gap-2 md:hidden">
                 {applications.map((item) => (
                   <article key={item.id} className="rounded-xl border p-3 text-[13px]" style={{ borderColor: "var(--border)", color: "var(--text-2)" }}>
-                    <p className="font-bold" style={{ color: "var(--text-1)" }}>{item.destinationName}</p>
+                    <p className="font-bold" style={{ color: "var(--text-1)" }}>
+                      <Link href={`/aplicacoes/${item.id}`} style={{ color: "var(--gold-soft)" }}>{item.destinationName}</Link>
+                    </p>
                     <p>{item.destinationSegment || "Sem dados"} · {TRANSFER_STATUS_LABELS[item.status as TransferStatus] ?? item.status}</p>
                     <p>Compatibilidade: {item.compatibilityScore == null ? "Sem dados" : `${item.compatibilityScore}/100`}</p>
                     <p>Evidência: {item.resultingEvidenceId ? "Local" : TRANSFER_EMPTY.evidence}</p>
@@ -146,6 +150,17 @@ export default async function PlaybookDetailPage({
               </div>
             </>
           )}
+        </section>
+
+        <section className="surface-card p-5 text-[13px]" style={{ color: "var(--text-2)" }}>
+          <h2 className="m-0 text-[14px] font-bold" style={{ color: "var(--text-1)" }}>Próxima possibilidade de teste</h2>
+          <p className="mt-2">
+            {companies.filter((item) => item.id !== playbook.originCompanyId && !applications.some((app) => app.destinationCompanyId === item.id)).length
+              ? "Há empresa da carteira ainda sem aplicação deste playbook. Testar permanece hipótese até medição local."
+              : applications.length
+                ? "Todas as empresas da carteira já possuem aplicação ou são a origem. Sem ranking de melhor playbook."
+                : "Ainda não há teste em outra empresa."}
+          </p>
         </section>
 
         <p className="text-[12px]" style={{ color: "var(--text-3)" }}>

@@ -31,7 +31,7 @@ export default async function AplicacaoDetailPage({ params }: { params: Promise<
       completedAt: workspace.application.completedAt,
     });
     return (
-      <AppShell title="Aplicação" subtitle={workspace.application.destinationName} userName={session.user.name}>
+      <AppShell title={workspace.playbook.title} subtitle={workspace.application.destinationName} userName={session.user.name}>
         <ApplicationDetailView workspace={workspace} steps={steps} audit={audit} />
       </AppShell>
     );
