@@ -78,6 +78,7 @@ export type CockpitSnapshot = {
     testing: number;
     awaitingDecision: number;
     pendingResults: number;
+    completed: number;
     companies: number;
   };
 };

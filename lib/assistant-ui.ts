@@ -58,6 +58,12 @@ export const PRIMARY_ASSISTANT_SHORTCUTS = [
   { label: "Quais playbooks estão sendo testados?", prompt: "Quais playbooks estão sendo testados?" },
   { label: "Qual aplicação precisa de decisão?", prompt: "Qual aplicação precisa de decisão?" },
   { label: "Quais testes ainda não têm resultado?", prompt: "Quais testes ainda não têm resultado?" },
+  { label: "Quais aplicações aguardam decisão?", prompt: "Quais aplicações aguardam decisão?" },
+  { label: "Quais playbooks foram testados em mais de uma empresa?", prompt: "Quais playbooks foram testados em mais de uma empresa?" },
+  { label: "Quais aplicações têm dados insuficientes?", prompt: "Quais aplicações têm dados insuficientes?" },
+  { label: "O que mudou entre origem e destino?", prompt: "O que mudou entre origem e destino?" },
+  { label: "Quais resultados estão pendentes?", prompt: "Quais resultados estão pendentes?" },
+  { label: "Que aprendizado foi transferido?", prompt: "Que aprendizado foi transferido?" },
   { label: "Compare meu desempenho com referências de mercado.", prompt: "Compare meu desempenho com referências de mercado." },
 ] as const;
 

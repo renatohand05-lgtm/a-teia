@@ -151,6 +151,6 @@ describe("Sprint 15 — playbooks e reutilização", () => {
 
   it("navegação inclui Playbooks na inteligência", () => {
     expect(FUTURE_NAV).toEqual([]);
-    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/playbooks", "/assistente"]);
+    expect(INTELLIGENCE_NAV.map((item) => item.href)).toEqual(["/memoria", "/conexoes", "/estrategias", "/playbooks", "/aplicacoes", "/assistente"]);
   });
 });

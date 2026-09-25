@@ -52,9 +52,12 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "playbook.application.rejected": "Aplicação de playbook rejeitada",
   "playbook.application.plan.created": "Plano de aplicação criado",
   "playbook.application.experiment.created": "Experimento de transferência criado",
+  "playbook.application.experiment.started": "Experimento de transferência iniciado",
   "playbook.application.result.recorded": "Resultado de transferência registrado",
   "playbook.application.evidence.created": "Evidência local de transferência criada",
   "playbook.application.memory.proposed": "Memória local de transferência proposta",
+  "playbook.application.memory.approved": "Memória local de transferência aprovada",
+  "playbook.application.memory.rejected": "Memória local de transferência rejeitada",
   "playbook.application.completed": "Ciclo de transferência concluído",
 };
 

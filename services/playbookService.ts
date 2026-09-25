@@ -28,6 +28,13 @@ import {
   type CompatibilityCompany,
 } from "@/lib/playbook-engine";
 import {
+  APPLICATION_PAGE_SIZE,
+  filterApplicationRows,
+  getApplicationNextAction,
+  sortApplicationRows,
+  type ApplicationListRow,
+} from "@/lib/application-center";
+import {
   PLAYBOOK_TRANSFER_VERSION,
   alreadyTestingCopy,
   assertTransition,
@@ -96,6 +103,10 @@ export type PlaybookDTO = {
   recommendedAdaptations: string | null;
   contrarySignals: string | null;
   applicationCount: number;
+  measuredApplications: number;
+  testedCompanies: number;
+  testedSegments: number;
+  maturity: string;
   createdAt: string;
   updatedAt: string;
   reviewedAt: string | null;
@@ -149,6 +160,15 @@ function num(value: Prisma.Decimal | number | null | undefined): number | null {
 const includePlaybook = {
   originCompany: { select: { name: true, segment: true } },
   _count: { select: { applications: true } },
+  applications: {
+    select: {
+      destinationCompanyId: true,
+      status: true,
+      classification: true,
+      resultingEvidenceId: true,
+      destination: { select: { segment: true } },
+    },
+  },
 } as const;
 
 function toPlaybookDTO(row: {
@@ -196,7 +216,23 @@ function toPlaybookDTO(row: {
   approvedAt: Date | null;
   originCompany: { name: string; segment: string | null };
   _count: { applications: number };
+  applications?: Array<{
+    destinationCompanyId: string;
+    status: string;
+    classification: string | null;
+    resultingEvidenceId: string | null;
+    destination: { segment: string | null };
+  }>;
 }): PlaybookDTO {
+  const coverage = calculatePlaybookCoverage(
+    (row.applications ?? []).map((item) => ({
+      destinationCompanyId: item.destinationCompanyId,
+      destinationSegment: item.destination.segment,
+      status: item.status,
+      classification: item.classification,
+      resultingEvidenceId: item.resultingEvidenceId,
+    })),
+  );
   return {
     id: row.id,
     ownerId: row.ownerId,
@@ -238,6 +274,10 @@ function toPlaybookDTO(row: {
     recommendedAdaptations: row.recommendedAdaptations,
     contrarySignals: row.contrarySignals,
     applicationCount: row._count.applications,
+    measuredApplications: coverage.measured,
+    testedCompanies: coverage.companies,
+    testedSegments: coverage.segments,
+    maturity: coverage.maturity,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     reviewedAt: row.reviewedAt?.toISOString() ?? null,
@@ -329,7 +369,12 @@ export async function listPlaybooks(
     family?: string;
     kpi?: string;
     status?: string;
+    maturity?: string;
+    applications?: string;
+    companies?: string;
+    segments?: string;
     page?: number;
+    order?: string;
   } = {},
 ) {
   const rows = await prisma.playbook.findMany({
@@ -345,9 +390,20 @@ export async function listPlaybooks(
     if (filters.family && filters.family !== "ALL" && item.family !== filters.family) return false;
     if (filters.kpi && filters.kpi !== "ALL" && item.primaryKpi !== filters.kpi) return false;
     if (filters.status && filters.status !== "ALL" && item.status !== filters.status) return false;
+    if (filters.maturity && filters.maturity !== "ALL" && item.maturity !== filters.maturity) return false;
+    if (filters.applications === "com" && item.applicationCount === 0) return false;
+    if (filters.applications === "sem" && item.applicationCount > 0) return false;
+    if (filters.companies === "2+" && item.testedCompanies < 2) return false;
+    if (filters.segments === "2+" && item.testedSegments < 2) return false;
     return true;
   });
-  const page = paginateItems(visible, filters.page ?? 1, PLAYBOOK_PAGE_SIZE);
+  const ordered = [...visible].sort((a, b) => {
+    if (filters.order === "aplicados") return b.applicationCount - a.applicationCount;
+    if (filters.order === "cobertura") return b.measuredApplications - a.measuredApplications;
+    if (filters.order === "diversidade") return b.testedSegments - a.testedSegments;
+    return b.updatedAt.localeCompare(a.updatedAt);
+  });
+  const page = paginateItems(ordered, filters.page ?? 1, PLAYBOOK_PAGE_SIZE);
   const companies = [...new Set(mapped.map((item) => item.originCompanyId))];
   const families = [...new Set(mapped.map((item) => item.family).filter(Boolean))];
   const testing = await prisma.playbookApplication.count({
@@ -1027,12 +1083,15 @@ export async function getPlaybookForStrategy(ownerId: string, strategyId: string
     id: playbook.id,
     title: playbook.title,
     status: playbook.status,
+    applications: playbook.applications.length,
+    companies: coverage.companies,
+    measured: coverage.measured,
     multiContextNote: strategyMultiContextCopy(coverage.segments),
   };
 }
 
 export async function getCockpitPlaybookSummary(ownerId: string) {
-  const [validated, testing, awaitingDecision, pendingResults, companies] = await Promise.all([
+  const [validated, testing, awaitingDecision, pendingResults, completed, companies] = await Promise.all([
     prisma.playbook.count({ where: { ownerId, status: PlaybookStatus.VALIDADO } }),
     prisma.playbookApplication.count({
       where: {
@@ -1053,9 +1112,12 @@ export async function getCockpitPlaybookSummary(ownerId: string) {
     prisma.playbookApplication.count({
       where: { ownerId, status: { in: [PlaybookApplicationStatus.EM_TESTE, PlaybookApplicationStatus.PLANEJADA] } },
     }),
+    prisma.playbookApplication.count({
+      where: { ownerId, status: PlaybookApplicationStatus.CONCLUIDA },
+    }),
     prisma.company.count({ where: { ownerId, status: "ACTIVE" } }),
   ]);
-  return { validated, testing, awaitingDecision, pendingResults, companies };
+  return { validated, testing, awaitingDecision, pendingResults, completed, companies };
 }
 
 export async function listOwnerPlaybooksForAi(ownerId: string, companyId?: string) {
@@ -1093,7 +1155,7 @@ async function ownedApplication(ownerId: string, applicationId: string) {
   await requireOwnedResource(ownerId, "playbookApplication", applicationId);
   const row = await prisma.playbookApplication.findFirst({
     where: { id: applicationId, ownerId },
-    include: { ...includeApplication, playbook: true },
+    include: { ...includeApplication, playbook: true, owner: { select: { name: true } } },
   });
   if (!row) throw new AppError("NOT_FOUND");
   return row;
@@ -1494,6 +1556,12 @@ export async function getPlaybookApplicationWorkspace(ownerId: string, applicati
         select: { id: true, companyId: true, title: true, classification: true, body: true },
       })
     : null;
+  const destMemory = application.resultingMemoryId
+    ? await prisma.strategicMemory.findFirst({
+        where: { id: application.resultingMemoryId, company: { ownerId } },
+        select: { id: true, status: true, validated: true, evidenceId: true },
+      })
+    : null;
   const destExperiment = application.experimentId
     ? await prisma.experiment.findFirst({
         where: { id: application.experimentId, company: { ownerId } },
@@ -1507,6 +1575,9 @@ export async function getPlaybookApplicationWorkspace(ownerId: string, applicati
           investment: true,
           realizedInvestment: true,
           classification: true,
+          status: true,
+          startedAt: true,
+          plannedEndAt: true,
         },
       })
     : null;
@@ -1542,6 +1613,22 @@ export async function getPlaybookApplicationWorkspace(ownerId: string, applicati
     originEvidence,
     destEvidence,
     destExperiment,
+    destMemory,
+    ownerName: current.owner?.name ?? null,
+    memoryStatus: destMemory?.status ?? null,
+    memoryValidated: destMemory?.validated ?? null,
+    nextAction: getApplicationNextAction({
+      status: application.status,
+      scorePartial: application.scorePartial,
+      kpi: application.kpi,
+      decisionId: application.decisionId,
+      actionPlanId: application.actionPlanId,
+      experimentId: application.experimentId,
+      experimentStarted: Boolean(destExperiment?.startedAt || destExperiment?.status === "RUNNING"),
+      resultingEvidenceId: application.resultingEvidenceId,
+      resultingMemoryId: application.resultingMemoryId,
+      memoryStatus: destMemory?.status ?? null,
+    }),
     polarity: mapResultPolarity(destExperiment?.classification ?? destEvidence?.classification),
     evidenceStaysLocal: destEvidence?.companyId
       ? evidenceStaysLocal(playbook.originCompanyId, application.destinationCompanyId, destEvidence.companyId)
@@ -1594,12 +1681,127 @@ export async function listPlaybookTransferPriorities(ownerId: string) {
         playbookTitle: item.playbook.title,
         status: item.status,
         reason,
-        href: `/playbooks/${item.playbookId}`,
+        href: `/aplicacoes/${item.id}`,
         overdue,
         missingData,
       };
     })
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
+export async function listPlaybookApplications(
+  ownerId: string,
+  filters: {
+    originId?: string;
+    destinationId?: string;
+    playbookId?: string;
+    segment?: string;
+    status?: string;
+    compatibility?: string;
+    result?: string;
+    evidence?: string;
+    period?: string;
+    q?: string;
+    order?: string;
+    page?: number;
+  } = {},
+) {
+  const rows = await prisma.playbookApplication.findMany({
+    where: { ownerId },
+    select: {
+      id: true,
+      playbookId: true,
+      destinationCompanyId: true,
+      status: true,
+      compatibilityScore: true,
+      scorePartial: true,
+      classification: true,
+      kpi: true,
+      horizonDays: true,
+      decisionId: true,
+      actionPlanId: true,
+      experimentId: true,
+      resultingEvidenceId: true,
+      resultingMemoryId: true,
+      createdAt: true,
+      updatedAt: true,
+      playbook: {
+        select: {
+          title: true,
+          originCompanyId: true,
+          originCompany: { select: { name: true } },
+        },
+      },
+      destination: { select: { name: true, segment: true } },
+      experiment: { select: { status: true, startedAt: true, finalValue: true, classification: true } },
+      resultingMemory: { select: { status: true } },
+      owner: { select: { name: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 400,
+  });
+  const mapped: ApplicationListRow[] = rows.map((row) => ({
+    id: row.id,
+    playbookId: row.playbookId,
+    playbookTitle: row.playbook.title,
+    originCompanyId: row.playbook.originCompanyId,
+    originCompanyName: row.playbook.originCompany.name,
+    destinationCompanyId: row.destinationCompanyId,
+    destinationName: row.destination.name,
+    destinationSegment: row.destination.segment,
+    compatibilityScore: row.compatibilityScore,
+    scorePartial: row.scorePartial,
+    status: row.status,
+    kpi: row.kpi,
+    horizonDays: row.horizonDays,
+    experimentId: row.experimentId,
+    experimentStarted: Boolean(row.experiment?.startedAt || row.experiment?.status === "RUNNING"),
+    experimentStartedAt: row.experiment?.startedAt?.toISOString() ?? null,
+    hasResult: row.experiment?.finalValue != null,
+    hasLocalEvidence: Boolean(row.resultingEvidenceId),
+    classification: row.classification,
+    experimentClassification: row.experiment?.classification ?? null,
+    resultingMemoryId: row.resultingMemoryId,
+    memoryStatus: row.resultingMemory?.status ?? null,
+    decisionId: row.decisionId,
+    actionPlanId: row.actionPlanId,
+    ownerName: row.owner?.name ?? null,
+    updatedAt: row.updatedAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+  }));
+  const filtered = sortApplicationRows(filterApplicationRows(mapped, filters), filters.order);
+  const page = paginateItems(filtered, filters.page ?? 1, APPLICATION_PAGE_SIZE);
+  return {
+    ...page,
+    all: mapped,
+    filtered,
+  };
+}
+
+export async function getApplicationAudit(ownerId: string, applicationId: string) {
+  await requireOwnedResource(ownerId, "playbookApplication", applicationId);
+  const current = await prisma.playbookApplication.findFirst({
+    where: { id: applicationId, ownerId },
+    select: { destinationCompanyId: true },
+  });
+  if (!current) throw new AppError("NOT_FOUND");
+  return prisma.auditLog.findMany({
+    where: {
+      entity: "PlaybookApplication",
+      entityId: applicationId,
+      action: { not: { contains: "viewed" } },
+      OR: [{ actorId: ownerId }, { companyId: current.destinationCompanyId }],
+    },
+    select: {
+      id: true,
+      action: true,
+      createdAt: true,
+      success: true,
+      actor: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 40,
+  });
 }
 
 async function ensureKnowledgeTransferConnection(

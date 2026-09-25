@@ -353,7 +353,7 @@ export function detectQuestionIntent(question: string): QuestionIntent {
   if (/alocar|aloca[cç][aã]o|distribu|decis[aã]o de investimento|capital demais|menos capital|adiar na aloca/.test(q)) return "ALLOCATION";
   if (/alerta|automa[cç]|briefing di[aá]rio|resumo semanal|me avise se/.test(q)) return "AUTOMATION";
   if (
-    /playbook|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa|playbooks est[aã]o sendo testad|funcionou em mais de uma empresa|aprendizado foi transfer|aplica[cç][aã]o precisa de decis[aã]o|testes ainda n[aã]o t[eê]m resultado|evid[eê]ncia em quantas empresas|diferen[cç]as existem entre origem/.test(
+    /playbook|aplica[cç]|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa|playbooks est[aã]o (sendo )?testad|funcionou em mais de uma empresa|aprendizado foi transfer|aplica[cç][aã]o precisa de decis[aã]o|aguardam decis[aã]o|testes ainda n[aã]o t[eê]m resultado|resultados est[aã]o pendentes|evid[eê]ncia em quantas empresas|diferen[cç]as existem entre origem|dados insuficientes|mudou entre origem/.test(
       q,
     )
   ) {

@@ -177,31 +177,26 @@ export function CockpitView({
         />
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi
-          href="/playbooks"
-          label="Playbooks em teste"
-          value={active.length ? String(snapshot.playbooks.testing) : "Sem dados"}
-          hint="Aplicações ativas no destino"
-        />
-        <Kpi
-          href="/playbooks"
-          label="Aplicações aguardando decisão"
-          value={active.length ? String(snapshot.playbooks.awaitingDecision) : "Sem dados"}
-          hint="A IA não aprova"
-        />
-        <Kpi
-          href="/playbooks"
-          label="Resultados pendentes"
-          value={active.length ? String(snapshot.playbooks.pendingResults) : "Sem dados"}
-          hint="Teste sem medição local"
-        />
-        <Kpi
-          href="/playbooks"
-          label="Playbooks validados"
-          value={active.length ? String(snapshot.playbooks.validated) : "Sem dados"}
-          hint="Registro, não probabilidade"
-        />
+      <section className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.1em]" style={{ color: "var(--gold-soft)" }}>
+              Transferência de aprendizado
+            </p>
+            <p className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>
+              Testes de playbook em outra empresa. Evidência da origem não transfere.
+            </p>
+          </div>
+          <Link href="/aplicacoes" className="text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+            Abrir aplicações
+          </Link>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+          <Kpi href="/aplicacoes?status=EM_TESTE" label="Em teste" value={active.length ? String(snapshot.playbooks.testing) : "Sem dados"} hint="Aplicações ativas" />
+          <Kpi href="/aplicacoes?status=AGUARDANDO_APROVACAO" label="Aguardando decisão" value={active.length ? String(snapshot.playbooks.awaitingDecision) : "Sem dados"} hint="A IA não aprova" />
+          <Kpi href="/aplicacoes?resultado=pendente" label="Resultados pendentes" value={active.length ? String(snapshot.playbooks.pendingResults) : "Sem dados"} hint="Sem medição local" />
+          <Kpi href="/aplicacoes?status=CONCLUIDA" label="Concluídas" value={active.length ? String(snapshot.playbooks.completed) : "Sem dados"} hint="Ciclo encerrado" />
+        </div>
       </section>
 
       <ConnectionsPreview companies={active.map((company) => ({ id: company.id, name: company.name }))} />

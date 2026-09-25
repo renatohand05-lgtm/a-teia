@@ -436,7 +436,7 @@ export function collectSignals(company: PortfolioCompanyInput): PriorityItem[] {
           sourceRefs: [`playbookApplication:${transfer.id}`],
           limitations: ["Não afirma probabilidade de sucesso."],
           missingData: transfer.missingData ? ["dados da empresa destino"] : [],
-          href: `/playbooks`,
+          href: `/aplicacoes/${transfer.id}`,
         }),
       );
     } else if (transfer.overdue || transfer.status === "EM_TESTE") {
@@ -454,7 +454,7 @@ export function collectSignals(company: PortfolioCompanyInput): PriorityItem[] {
           sourceRefs: [`playbookApplication:${transfer.id}`],
           limitations: ["Alerta é condição detectada, não conclusão de fracasso."],
           missingData: ["resultado do experimento de transferência"],
-          href: `/playbooks`,
+          href: `/aplicacoes/${transfer.id}`,
         }),
       );
     } else if (transfer.missingData) {
@@ -472,7 +472,7 @@ export function collectSignals(company: PortfolioCompanyInput): PriorityItem[] {
           sourceRefs: [`playbookApplication:${transfer.id}`],
           limitations: ["Ausência de dado não vira nota positiva."],
           missingData: ["dados da empresa destino"],
-          href: `/playbooks`,
+          href: `/aplicacoes/${transfer.id}`,
         }),
       );
     }

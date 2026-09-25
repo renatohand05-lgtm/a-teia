@@ -113,7 +113,9 @@ export function Sidebar({
                   ? `/empresas/${companyId}/estrategias`
                   : item.href === "/playbooks" && companyId
                     ? `/empresas/${companyId}/playbooks`
-                    : item.href;
+                    : item.href === "/aplicacoes" && companyId
+                      ? `/empresas/${companyId}/aplicacoes`
+                      : item.href;
           const active =
             item.href === "/assistente"
               ? pathname.includes("/assistente")
@@ -123,7 +125,9 @@ export function Sidebar({
                   ? pathname.includes("/estrategias")
                   : item.href === "/playbooks"
                     ? pathname.includes("/playbooks")
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    : item.href === "/aplicacoes"
+                      ? pathname.includes("/aplicacoes")
+                      : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return <NavLink key={`intel-${item.href}`} href={href} active={active} label={item.label} onNavigate={onNavigate} />;
         })}
 

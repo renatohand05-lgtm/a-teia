@@ -73,6 +73,9 @@ export default async function StrategyDetailPage({
               <Link href={`/playbooks/${relatedPlaybook.id}`} className="mt-2 inline-flex font-bold" style={{ color: "var(--gold-soft)" }}>
                 {relatedPlaybook.title}
               </Link>
+              <p className="mt-2">
+                Aplicações: {relatedPlaybook.applications} · Empresas: {relatedPlaybook.companies} · Resultados medidos: {relatedPlaybook.measured}
+              </p>
               {relatedPlaybook.multiContextNote ? (
                 <p className="mt-2">{relatedPlaybook.multiContextNote}</p>
               ) : null}

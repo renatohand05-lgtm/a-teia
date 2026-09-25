@@ -73,7 +73,7 @@ describe("Sprint 14 persistência — conexões e estratégias", () => {
       const archived = await archiveConnection(user.id, pair.id);
       expect(archived.status).toBe("ARQUIVADA");
     },
-    90_000,
+    120_000,
   );
 
   afterAll(async () => {

@@ -589,7 +589,7 @@ function defaultHref(template: AutomationTemplate, companyId: string) {
   if (template.condition.entity === "decision") return "/cockpit#cockpit-decisoes";
   if (template.condition.entity === "allocation") return "/alocacao";
   if (template.condition.entity === "opportunity") return `/empresas/${companyId}/oportunidades`;
-  if (template.condition.entity === "playbook") return "/playbooks";
+  if (template.condition.entity === "playbook") return "/aplicacoes";
   return `/empresas/${companyId}`;
 }
 

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function PlaybooksPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ empresa?: string; segmento?: string; familia?: string; status?: string; pagina?: string }>;
+  searchParams?: Promise<{ empresa?: string; segmento?: string; familia?: string; status?: string; kpi?: string; maturidade?: string; aplicacoes?: string; empresas?: string; segmentos?: string; ordem?: string; pagina?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -23,6 +23,12 @@ export default async function PlaybooksPage({
         segment: params.segmento,
         family: params.familia,
         status: params.status,
+        kpi: params.kpi,
+        maturity: params.maturidade,
+        applications: params.aplicacoes,
+        companies: params.empresas,
+        segments: params.segmentos,
+        order: params.ordem,
         page: params.pagina ? Number(params.pagina) : 1,
       }),
       listCompanies(session.user.id),

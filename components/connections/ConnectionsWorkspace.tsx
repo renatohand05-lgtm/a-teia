@@ -187,6 +187,9 @@ export function ConnectionsWorkspace({
           <div className="space-y-3 text-[13px]" style={{ color: "var(--text-2)" }}>
             <p>{edge.fromName} → {edge.toName}</p>
             <p>Tipo: {connectionTypeLabel(edge.type)}</p>
+            {edge.type === "APRENDIZADO_TRANSFERIVEL" ? (
+              <p>Conhecimento transferido. Não é parceria comercial.</p>
+            ) : null}
             <p>Score: {displayConnectionScore(edge.score, edge.scorePartial).value} · {displayConnectionScore(edge.score, edge.scorePartial).caption}</p>
             <p>Classificação: {connectionClassLabel(edge.classification)}</p>
             <p>Por que existe: {edge.hypothesis || "Hipótese operacional persistida."}</p>

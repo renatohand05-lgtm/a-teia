@@ -178,7 +178,7 @@ const AUDIT_ENTITY_HREF: Record<string, (companyId: string | null, entityId: str
   Connection: (_companyId, entityId) => (entityId ? `/conexoes/${entityId}` : "/conexoes"),
   Strategy: (_companyId, entityId) => (entityId ? `/estrategias/${entityId}` : "/estrategias"),
   Playbook: (_companyId, entityId) => (entityId ? `/playbooks/${entityId}` : "/playbooks"),
-  PlaybookApplication: (_companyId, entityId) => (entityId ? `/playbooks/${entityId}` : "/playbooks"),
+  PlaybookApplication: (_companyId, entityId) => (entityId ? `/aplicacoes/${entityId}` : "/aplicacoes"),
 };
 
 export function auditResourceHref(input: {
