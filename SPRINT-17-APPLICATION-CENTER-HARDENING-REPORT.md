@@ -167,15 +167,15 @@ Nenhuma. Integridade já coberta pelo Sprint 16.
 
 ## 36. Commit
 
-Pendente no fechamento desta entrega (SHA no commit feat + docs).
+`8f0956f` — feat: add application center to operate the transfer cycle
 
 ## 37. Vercel
 
-Pendente deploy Production após push.
+Production Ready — https://a-teia.vercel.app (`dpl_6JGwpXENEgMCgjUHUPSSfcyj1sbH`)
 
 ## 38. Health
 
-Esperado: status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 39. Pendências reais
 
