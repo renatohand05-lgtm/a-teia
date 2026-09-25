@@ -166,15 +166,15 @@ Nenhuma.
 
 ## 38. Commit
 
-Pendente no fechamento (SHA feat).
+`dd09392` — feat: unify transfer-cycle navigation and operational language
 
 ## 39. Vercel
 
-Pendente deploy Production.
+Production Ready — https://a-teia.vercel.app (`dpl_Gs2sS1LcbN69ZzLe3jXjKRn6Nk9W`)
 
 ## 40. Health
 
-Esperado: status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 41. Pendências reais
 
