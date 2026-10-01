@@ -95,16 +95,26 @@ export default async function FinanceiroPage({
                 label="Ponto de equilíbrio"
                 value={dash.breakEven.value != null ? formatBRL(dash.breakEven.value) : "Não calculável com os dados atuais."}
               />
-              <Metric label="Meta" value={moneyOrMissing(dash.goals.revenueTarget)} />
+              <Metric label="Meta de faturamento" value={moneyOrMissing(dash.goals.revenueTarget)} />
               <Metric
-                label="Gap para meta"
-                value={gap == null ? "Sem meta ou receita" : `${gap >= 0 ? "+" : ""}${formatBRL(gap)}`}
+                label="Gap de faturamento"
+                value={gap == null ? "Sem meta de faturamento ou receita" : `${gap >= 0 ? "+" : ""}${formatBRL(gap)}`}
+              />
+              <Metric label="Meta de EBITDA" value={moneyOrMissing(dash.goals.ebitdaTarget)} />
+              <Metric
+                label="Gap de EBITDA"
+                value={
+                  dash.comparisons.ebitda.difference == null
+                    ? "Sem meta de EBITDA ou resultado"
+                    : `${dash.comparisons.ebitda.difference >= 0 ? "+" : ""}${formatBRL(dash.comparisons.ebitda.difference)}`
+                }
               />
             </section>
             <div className="grid gap-2 md:grid-cols-2">
               <CalculationHelp label="EBITDA" text={CALCULATION_HELP.ebitda} />
               <CalculationHelp label="Ponto de equilíbrio" text={CALCULATION_HELP.breakEven} />
-              <CalculationHelp label="Gap" text={CALCULATION_HELP.gap} />
+              <CalculationHelp label="Gap de faturamento" text={CALCULATION_HELP.gap} />
+              <CalculationHelp label="Gap de EBITDA" text={CALCULATION_HELP.ebitdaGap} />
               <CalculationHelp label="Caixa" text={CALCULATION_HELP.cash} />
             </div>
 

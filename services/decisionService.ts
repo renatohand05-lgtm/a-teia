@@ -1,6 +1,6 @@
 import "server-only";
 
-import { AuditSource, DecisionStatus, EvidenceLevel } from "@prisma/client";
+import { AuditSource, DecisionStatus, EvidenceLevel, Prisma } from "@prisma/client";
 import { normalizeHumanReason } from "@/lib/decision-reason";
 import { toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -53,41 +53,55 @@ export async function proposeDecision(input: {
 
   const requiresHumanApproval = true;
 
-  const existingPending = await prisma.decision.findFirst({
-    where: {
-      createdById: input.createdById,
-      companyId: input.companyId ?? null,
-      opportunityId: input.opportunityId ?? null,
-      title: input.title,
-      status: { in: [DecisionStatus.PENDING_HUMAN_APPROVAL, DecisionStatus.DEFERRED] },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-  if (existingPending) return existingPending;
-
-  const decision = await prisma.decision.create({
-    data: {
-      createdById: input.createdById,
-      companyId: input.companyId,
-      opportunityId: input.opportunityId,
-      title: input.title,
-      rationale: input.rationale,
-      origin: input.origin,
-      requiresHumanApproval,
-      status: DecisionStatus.PENDING_HUMAN_APPROVAL,
-    },
-  });
-
-  await writeAudit({
-    actorId: input.createdById,
-    action: "decision.propose",
-    entity: "Decision",
-    entityId: decision.id,
-    newValue: { title: decision.title, status: decision.status, origin: decision.origin },
-    origin: input.origin,
-  });
-
-  return decision;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const decision = await prisma.$transaction(
+        async (tx) => {
+          const existingPending = await tx.decision.findFirst({
+            where: {
+              createdById: input.createdById,
+              companyId: input.companyId ?? null,
+              opportunityId: input.opportunityId ?? null,
+              title: input.title,
+              status: { in: [DecisionStatus.PENDING_HUMAN_APPROVAL, DecisionStatus.DEFERRED] },
+            },
+            orderBy: { createdAt: "asc" },
+          });
+          if (existingPending) return { decision: existingPending, created: false as const };
+          const created = await tx.decision.create({
+            data: {
+              createdById: input.createdById,
+              companyId: input.companyId,
+              opportunityId: input.opportunityId,
+              title: input.title,
+              rationale: input.rationale,
+              origin: input.origin,
+              requiresHumanApproval,
+              status: DecisionStatus.PENDING_HUMAN_APPROVAL,
+            },
+          });
+          return { decision: created, created: true as const };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+      if (decision.created) {
+        await writeAudit({
+          actorId: input.createdById,
+          action: "decision.propose",
+          entity: "Decision",
+          entityId: decision.decision.id,
+          newValue: { title: decision.decision.title, status: decision.decision.status, origin: decision.decision.origin },
+          origin: input.origin,
+        });
+      }
+      return decision.decision;
+    } catch (error) {
+      const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+      if (code === "P2034" && attempt < 2) continue;
+      throw error;
+    }
+  }
+  throw new Error("Não foi possível registrar a decisão agora.");
 }
 
 async function ownedDecision(actorId: string, decisionId: string) {
@@ -260,7 +274,12 @@ export async function listOpportunityDecisions(
 export async function listOwnerDecisions(ownerId: string): Promise<DecisionDTO[]> {
   const rows = await prisma.decision.findMany({
     where: {
-      OR: [{ createdById: ownerId }, { company: { ownerId } }],
+      AND: [
+        { OR: [{ createdById: ownerId }, { company: { ownerId } }] },
+        {
+          OR: [{ companyId: { not: null } }, { allocationProposals: { some: {} } }],
+        },
+      ],
     },
     include: decisionInclude,
     orderBy: { updatedAt: "desc" },

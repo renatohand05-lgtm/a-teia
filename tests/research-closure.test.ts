@@ -82,6 +82,8 @@ const finance = {
   breakEven: null,
   revenueTarget: null,
   revenueGap: null,
+  ebitdaTarget: null,
+  ebitdaGap: null,
   cogsTarget: 28,
   cashBalance: 12000,
   scenarios: [{ label: "base", revenue: 100000, ebitda: null }],

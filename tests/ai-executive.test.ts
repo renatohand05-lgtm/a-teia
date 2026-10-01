@@ -75,6 +75,8 @@ function context(overrides: Partial<ExecutiveContext> = {}): ExecutiveContext {
       breakEven: 80000,
       revenueTarget: 120000,
       revenueGap: -20000,
+      ebitdaTarget: 15000,
+      ebitdaGap: -3000,
       cogsTarget: 32,
       cashBalance: 15000,
       scenarios: [{ label: "Base", revenue: 100000, ebitda: 12000 }],

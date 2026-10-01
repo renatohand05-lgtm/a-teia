@@ -41,6 +41,8 @@ export default async function EmpresaPage({ params }: { params: Promise<{ id: st
         cogsPercent: finance.ratios.cogsPercent,
         breakEven: finance.breakEven.value,
         revenueGap: finance.comparisons.revenue.difference,
+        ebitdaTarget: finance.goals.ebitdaTarget,
+        ebitdaGap: finance.comparisons.ebitda.difference,
       }
     : null;
 

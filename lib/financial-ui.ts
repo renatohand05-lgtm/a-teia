@@ -8,7 +8,8 @@ export const CALCULATION_HELP: Record<string, string> = {
   grossMargin: "Margem bruta = receita líquida − CMV. Só é definitiva com receita e CMV informados.",
   ebitda: "EBITDA operacional desta DRE. Não é caixa disponível.",
   breakEven: "Ponto de equilíbrio = custos fixos ÷ margem de contribuição. Sem CMV, impostos ou receita, não calculamos.",
-  gap: "Gap = realizado − meta. Negativo significa que ainda falta alcançar a meta.",
+  gap: "Gap de faturamento = faturamento realizado − meta de faturamento. Não use este número como meta de EBITDA.",
+  ebitdaGap: "Gap de EBITDA = EBITDA realizado − meta de EBITDA. A meta de faturamento não substitui a meta de EBITDA.",
   cash: "EBITDA mede resultado operacional. Caixa mede entrada e saída financeiras do período.",
 };
 
@@ -72,6 +73,19 @@ export function variation(current: Money, previous: Money): { amount: number; pe
 
 export function samePeriod(a: YearMonth, b: YearMonth): boolean {
   return a.periodMonth === b.periodMonth && a.periodYear === b.periodYear;
+}
+
+export const FINANCIAL_GOAL_COPY = {
+  revenueTarget: "Meta de faturamento",
+  ebitdaTarget: "Meta de EBITDA",
+  revenueGap: "Gap de faturamento",
+  ebitdaGap: "Gap de EBITDA",
+} as const;
+
+/** Meta de faturamento e meta de EBITDA são campos distintos. Nunca reutilizar um no lugar do outro. */
+export function isDistinctFinancialGoal(revenueTarget: Money, ebitdaTarget: Money): boolean {
+  if (revenueTarget == null || ebitdaTarget == null) return true;
+  return revenueTarget !== ebitdaTarget;
 }
 
 export function sortPeriods(periods: YearMonth[]): YearMonth[] {

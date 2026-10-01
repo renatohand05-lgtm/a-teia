@@ -104,6 +104,8 @@ export async function getExecutiveContext(ownerId: string, companyId: string): P
           breakEven: finance.breakEven.value,
           revenueTarget: finance.goals.revenueTarget,
           revenueGap: finance.comparisons.revenue.difference,
+          ebitdaTarget: finance.goals.ebitdaTarget,
+          ebitdaGap: finance.comparisons.ebitda.difference,
           cogsTarget: finance.goals.cogsPercentTarget,
           cashBalance: finance.cashMonth.hasMovements ? finance.cashMonth.operatingBalance : null,
           scenarios: finance.scenarios.map((item) => ({

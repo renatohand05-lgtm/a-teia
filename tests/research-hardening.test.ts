@@ -74,6 +74,8 @@ const finance = {
   breakEven: null,
   revenueTarget: null,
   revenueGap: null,
+  ebitdaTarget: null,
+  ebitdaGap: null,
   cogsTarget: null,
   cashBalance: null,
   scenarios: [],

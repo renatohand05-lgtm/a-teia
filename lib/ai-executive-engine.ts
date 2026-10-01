@@ -197,6 +197,8 @@ export type ExecutiveFinance = {
   breakEven: number | null;
   revenueTarget: number | null;
   revenueGap: number | null;
+  ebitdaTarget: number | null;
+  ebitdaGap: number | null;
   cogsTarget: number | null;
   cashBalance: number | null;
   scenarios: Array<{ label: string; revenue: number | null; ebitda: number | null }>;
@@ -545,7 +547,14 @@ export function buildFinancialSummary(finance: ExecutiveFinance | null): Classif
     stmt("DADO", `Folha: ${pct(finance.payrollPercent)}.`, "Financeiro"),
     stmt("DADO", `EBITDA: ${money(finance.ebitda)} (${pct(finance.ebitdaPercent)}).`, "Financeiro"),
     stmt("DADO", `Ponto de equilíbrio: ${money(finance.breakEven)}.`, "Financeiro"),
-    stmt("DADO", `Meta de faturamento: ${money(finance.revenueTarget)}. Gap: ${money(finance.revenueGap)}.`, "Financeiro"),
+    stmt("DADO", `Meta de faturamento: ${money(finance.revenueTarget)}. Gap de faturamento: ${money(finance.revenueGap)}.`, "Financeiro"),
+    stmt(
+      "DADO",
+      finance.ebitdaTarget == null
+        ? "Meta de EBITDA não informada nesta competência. A meta de faturamento não substitui a meta de EBITDA."
+        : `Meta de EBITDA: ${money(finance.ebitdaTarget)}. Gap de EBITDA: ${money(finance.ebitdaGap)}.`,
+      "Financeiro",
+    ),
     stmt("DADO", `Caixa do mês: ${money(finance.cashBalance)}.`, "Financeiro"),
   ];
   if (finance.cogsPercent != null && finance.cogsTarget != null && finance.cogsPercent > finance.cogsTarget) {
@@ -558,6 +567,15 @@ export function buildFinancialSummary(finance: ExecutiveFinance | null): Classif
     );
     rows.push(
       stmt("HIPOTESE", "Revisar ficha técnica e compras pode reduzir o CMV. Isso ainda não é evidência.", "Financeiro"),
+    );
+  }
+  if (finance.ebitda != null && finance.ebitdaTarget != null && finance.ebitda < finance.ebitdaTarget) {
+    rows.push(
+      stmt(
+        "INFERENCIA",
+        `EBITDA está abaixo da meta de EBITDA ${money(finance.ebitdaTarget)}. A meta de faturamento ${money(finance.revenueTarget)} não entra nesta comparação.`,
+        "Financeiro",
+      ),
     );
   }
   for (const scenario of finance.scenarios) {

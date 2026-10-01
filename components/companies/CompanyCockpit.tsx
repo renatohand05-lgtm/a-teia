@@ -35,6 +35,8 @@ export function CompanyCockpit({
     cogsPercent: number | null;
     breakEven: number | null;
     revenueGap: number | null;
+    ebitdaTarget: number | null;
+    ebitdaGap: number | null;
   } | null;
   opportunities?: {
     total: number;
@@ -266,13 +268,15 @@ export function CompanyCockpit({
             </div>
             <GoldLink href={`/empresas/${company.id}/financeiro`}>Abrir financeiro</GoldLink>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-6">
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
             <Mini label="Receita" value={money(finance.revenue)} />
             <Mini label="EBITDA" value={money(finance.ebitda)} />
             <Mini label="EBITDA %" value={finance.ebitdaPercent != null ? formatPercent(finance.ebitdaPercent) : "Sem dados"} />
             <Mini label="CMV %" value={finance.cogsPercent != null ? formatPercent(finance.cogsPercent) : "Sem dados"} />
             <Mini label="Ponto de equilíbrio" value={money(finance.breakEven)} />
-            <Mini label="Gap para meta" value={money(finance.revenueGap)} />
+            <Mini label="Gap de faturamento" value={money(finance.revenueGap)} />
+            <Mini label="Meta de EBITDA" value={money(finance.ebitdaTarget)} />
+            <Mini label="Gap de EBITDA" value={money(finance.ebitdaGap)} />
           </div>
         </section>
       ) : null}

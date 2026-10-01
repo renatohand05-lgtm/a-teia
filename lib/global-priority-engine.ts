@@ -273,10 +273,10 @@ export function collectSignals(company: PortfolioCompanyInput): PriorityItem[] {
     items.push(
       signal(company, {
         category: "FINANCIAL",
-        situation: "EBITDA abaixo da meta",
+        situation: "EBITDA abaixo da meta de EBITDA",
         score: 74,
-        reason: `EBITDA ${formatBRL(finance.ebitda)} abaixo da meta ${formatBRL(finance.ebitdaTarget)}.`,
-        impact: "Desvio de resultado operacional.",
+        reason: `EBITDA ${formatBRL(finance.ebitda)} abaixo da meta de EBITDA ${formatBRL(finance.ebitdaTarget)}.`,
+        impact: "Desvio de resultado operacional. Esta meta não é a meta de faturamento.",
         urgency: "Alta se o período estiver atual.",
         evidenceAvailable: finance.periodLabel ?? "DRE",
         nextAction: "Analisar o desvio da meta de EBITDA.",

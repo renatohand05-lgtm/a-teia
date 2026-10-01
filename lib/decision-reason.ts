@@ -13,3 +13,8 @@ export function humanReasonRequired(): boolean {
 export function humanReasonHint(): string {
   return "Recomendada. Fica no histórico da decisão. A IA não preenche sozinha.";
 }
+
+/** Pendência operacional precisa de empresa ou de alocação. Órfã de teste não entra no Cockpit. */
+export function isOperationalDecision(input: { companyId: string | null | undefined; hasAllocationProposal?: boolean }): boolean {
+  return Boolean(input.companyId) || Boolean(input.hasAllocationProposal);
+}
