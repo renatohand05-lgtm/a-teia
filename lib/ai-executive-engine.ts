@@ -305,6 +305,7 @@ export const EXECUTIVE_SYSTEM_PROMPT = [
   "- Informação externa não altera score, evidência, memória validada nem resultado de experimento.",
   "- Conexão sugerida é HIPÓTESE. Similaridade não é evidência. Aprendizado de A não vira evidência de B.",
   "- Playbook registra o que foi feito em um contexto. Aplicar em outra empresa volta a ser HIPÓTESE.",
+  "- Ranking de expansão mede aderência ao teste, não probabilidade de sucesso. Evidência da origem não transfere.",
   "- A IA não valida conexão nem playbook, não executa estratégia e não altera score definitivo.",
   "- Não exponha IDs técnicos, chaves, tokens ou secrets.",
   "Responda em português, tom executivo, curto e justificado.",
@@ -355,7 +356,7 @@ export function detectQuestionIntent(question: string): QuestionIntent {
   if (/alocar|aloca[cç][aã]o|distribu|decis[aã]o de investimento|capital demais|menos capital|adiar na aloca/.test(q)) return "ALLOCATION";
   if (/alerta|automa[cç]|briefing di[aá]rio|resumo semanal|me avise se/.test(q)) return "AUTOMATION";
   if (
-    /playbook|aplica[cç]|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa|playbooks est[aã]o (sendo )?testad|funcionou em mais de uma empresa|aprendizado foi transfer|aplica[cç][aã]o precisa de (decis[aã]o|aten[cç][aã]o)|aguardam decis[aã]o|testes ainda n[aã]o t[eê]m resultado|resultados est[aã]o pendentes|evid[eê]ncia em quantas empresas|evid[eê]ncia existe no destino|diferen[cç]as existem entre origem|dados insuficientes|mudou entre origem|j[aá] foi replicad|ainda [eé] hip[oó]tese/.test(
+    /playbook|aplica[cç]|o que já funcionou em outra|estrat[eé]gia posso testar|playbooks possuem evid|aprendizados podem ser reutil|por que este playbook|estrat[eé]gia funcionou em outra empresa|playbooks est[aã]o (sendo )?testad|funcionou em mais de uma empresa|aprendizado foi transfer|aplica[cç][aã]o precisa de (decis[aã]o|aten[cç][aã]o)|aguardam decis[aã]o|testes ainda n[aã]o t[eê]m resultado|resultados est[aã]o pendentes|evid[eê]ncia em quantas empresas|evid[eê]ncia existe no destino|diferen[cç]as existem entre origem|dados insuficientes|mudou entre origem|j[aá] foi replicad|ainda [eé] hip[oó]tese|expans[aã]o|onde testar .{0,40}aprend|destino para expans/.test(
       q,
     )
   ) {

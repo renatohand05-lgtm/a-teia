@@ -34,6 +34,8 @@ export const COMPANY_SEGMENT_OPTIONS = [
 const SEGMENT_ALIASES: Record<string, string> = {
   alimentacao: "Alimentação",
   alimentação: "Alimentação",
+  alimentacap: "Alimentação",
+  alimentaçãp: "Alimentação",
   restaurante: "Alimentação",
   food: "Alimentação",
   oficina: "Oficina",
@@ -50,18 +52,38 @@ export function companyStatusLabel(status: string | null | undefined, isDemo = f
   return COMPANY_STATUS_LABELS[status] ?? status;
 }
 
-export function displaySegment(value: string | null | undefined): string {
-  if (!value?.trim()) return "Não informado";
-  const key = value
+function segmentKey(value: string): string {
+  return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-  if (SEGMENT_ALIASES[key] || SEGMENT_ALIASES[value.trim().toLowerCase()]) {
-    return SEGMENT_ALIASES[value.trim().toLowerCase()] ?? SEGMENT_ALIASES[key];
-  }
+}
+
+export function isAlimentacaoTypo(value: string | null | undefined): boolean {
+  if (!value?.trim()) return false;
+  return segmentKey(value) === "alimentacap";
+}
+
+export function displaySegment(value: string | null | undefined): string {
+  if (!value?.trim()) return "Não informado";
   const trimmed = value.trim();
+  const key = segmentKey(trimmed);
+  if (SEGMENT_ALIASES[key] || SEGMENT_ALIASES[trimmed.toLowerCase()]) {
+    return SEGMENT_ALIASES[trimmed.toLowerCase()] ?? SEGMENT_ALIASES[key];
+  }
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
+export function persistableSegment(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  const displayed = displaySegment(trimmed);
+  if (displayed === "Não informado") return null;
+  if (COMPANY_SEGMENT_OPTIONS.includes(displayed as (typeof COMPANY_SEGMENT_OPTIONS)[number]) && displayed !== "Outro") {
+    return displayed;
+  }
+  return trimmed;
 }
 
 export function segmentSelectValue(value: string | null | undefined): string {

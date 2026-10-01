@@ -181,6 +181,90 @@ export function GlobalCockpitPanels({
         )}
       </section>
 
+      <section id="cockpit-completude">
+        <Header title="Completude da carteira" subtitle={bundle.expansion.scale} />
+        {bundle.completeness.length ? (
+          <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)" }}>
+            <table className="min-w-full text-left text-[12px]">
+              <thead style={{ color: "var(--text-3)" }}>
+                <tr>
+                  {["Empresa", "360°", "Fin.", "Oport.", "Plano", "Exp.", "Evid.", "Mem.", "Apl."].map((col) => (
+                    <th key={col} className="px-3 py-2 font-semibold">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {bundle.completeness.map((row) => (
+                  <tr key={row.companyId} className="border-t" style={{ borderColor: "var(--border)" }}>
+                    <td className="px-3 py-2.5 font-bold">
+                      <Link href={`/empresas/${row.companyId}`}>{row.companyName}</Link>
+                    </td>
+                    <td className="px-3 py-2.5">{row.diagnosis}</td>
+                    <td className="px-3 py-2.5">{row.finance}</td>
+                    <td className="px-3 py-2.5">{row.opportunity}</td>
+                    <td className="px-3 py-2.5">{row.plan}</td>
+                    <td className="px-3 py-2.5">{row.experiment}</td>
+                    <td className="px-3 py-2.5">{row.evidence}</td>
+                    <td className="px-3 py-2.5">{row.memory}</td>
+                    <td className="px-3 py-2.5">{row.application}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState title="Carteira vazia" body="Cadastre a primeira empresa para montar o portfólio." />
+        )}
+      </section>
+
+      <section id="cockpit-expansao">
+        <Header
+          title="Motor de expansão"
+          subtitle="Candidato a teste. HIPÓTESE no destino. Evidência da origem não transfere. Score não é chance de sucesso."
+        />
+        {bundle.expansion.candidates.length ? (
+          <ul className="space-y-3">
+            {bundle.expansion.candidates.map((item) => (
+              <li key={`${item.sourceId}:${item.destinationCompanyId}`} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--border)" }}>
+                <p className="text-[13px] font-bold">
+                  {item.sourceTitle} → {item.destinationCompanyName}
+                </p>
+                <p className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+                  HIPÓTESE · {item.score}/100 · {item.sameSegment ? "mesmo segmento" : "segmento distinto"} · destino {item.readiness === "ready" ? "com dados mínimos" : item.readiness === "partial" ? "parcial" : "insuficiente"}
+                </p>
+                {item.missing.length ? (
+                  <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
+                    Falta no destino: {item.missing.join(", ")}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>
+                  {item.reasons[0]}
+                </p>
+                <Link href={item.href} className="mt-2 inline-block text-[12px] font-bold" style={{ color: "var(--gold-soft)" }}>
+                  Revisar aplicação
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState
+            title={bundle.expansion.emptyTitle}
+            body={bundle.expansion.emptyBody}
+            action={
+              <Link
+                href={bundle.expansion.emptyTitle.includes("aprendizado") ? "/playbooks" : "/empresas/nova"}
+                className="text-[12px] font-bold"
+                style={{ color: "var(--gold-soft)" }}
+              >
+                {bundle.expansion.emptyTitle.includes("aprendizado") ? "Ver playbooks" : "Cadastrar outra empresa"}
+              </Link>
+            }
+          />
+        )}
+      </section>
+
       <section className="grid gap-4 md:grid-cols-3">
         <SummaryCard title="Execução" rows={[
           ["Planos ativos", String(bundle.execution.activePlans)],

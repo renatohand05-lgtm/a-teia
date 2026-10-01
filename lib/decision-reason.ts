@@ -18,3 +18,19 @@ export function humanReasonHint(): string {
 export function isOperationalDecision(input: { companyId: string | null | undefined; hasAllocationProposal?: boolean }): boolean {
   return Boolean(input.companyId) || Boolean(input.hasAllocationProposal);
 }
+
+export const TEST_ORPHAN_DECISION_TITLES = ["Aprovar plano-piloto", "Alocação de recursos — BALANCEADO — v1"] as const;
+
+export function isUnequivocalTestOrphanDecision(input: {
+  title: string;
+  companyId: string | null | undefined;
+  opportunityId?: string | null;
+  hasAllocationProposal?: boolean;
+  status: string;
+}): boolean {
+  if (input.companyId) return false;
+  if (input.opportunityId) return false;
+  if (input.hasAllocationProposal) return false;
+  if (input.status !== "PENDING_HUMAN_APPROVAL" && input.status !== "DEFERRED") return false;
+  return (TEST_ORPHAN_DECISION_TITLES as readonly string[]).includes(input.title);
+}

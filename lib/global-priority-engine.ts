@@ -668,9 +668,28 @@ export function buildPortfolioAIContext(input: {
   companies: PortfolioCompanyInput[];
   priorities: PriorityItem[];
   consolidation: Consolidation;
+  completeness?: Array<{
+    companyName: string;
+    diagnosis: string;
+    finance: string;
+    opportunity: string;
+    plan: string;
+    experiment: string;
+    evidence: string;
+    memory: string;
+    application: string;
+  }>;
+  expansion?: { scale: string; emptyTitle: string; candidates: Array<{ sourceTitle: string; destinationCompanyName: string; score: number; classification: string }> };
 }) {
+  const activeCount = input.companies.length;
   const compact = {
     ownerId: input.ownerId,
+    scale:
+      activeCount <= 0
+        ? "Carteira vazia. Nada a consolidar."
+        : activeCount === 1
+          ? "Leitura de uma empresa. Não generalize este resultado para um portfólio."
+          : `${activeCount} empresas ativas. O consolidado soma só o que foi informado.`,
     companies: input.companies.slice(0, 6).map((item) => ({
       id: item.id,
       name: item.name,
@@ -680,6 +699,25 @@ export function buildPortfolioAIContext(input: {
       cmv: item.finance.cogsPercent,
       ebitda: item.finance.ebitda,
     })),
+    completeness: (input.completeness ?? []).slice(0, 6).map((row) => ({
+      company: row.companyName,
+      diagnosis: row.diagnosis,
+      finance: row.finance,
+      memory: row.memory,
+      application: row.application,
+    })),
+    expansion: input.expansion
+      ? {
+          scale: input.expansion.scale,
+          empty: input.expansion.candidates.length ? null : input.expansion.emptyTitle,
+          candidates: input.expansion.candidates.slice(0, 3).map((item) => ({
+            source: item.sourceTitle,
+            destination: item.destinationCompanyName,
+            score: item.score,
+            classification: item.classification,
+          })),
+        }
+      : null,
     priorities: input.priorities.slice(0, 5).map((item) => ({
       company: item.companyName,
       situation: item.situation,
@@ -735,11 +773,13 @@ export function diagnosisIsStale(createdAt: string, now = Date.now()) {
 export const PORTFOLIO_SHORTCUTS = [
   { label: "Onde agir primeiro?", prompt: "Onde devo agir primeiro?" },
   { label: "Qual empresa precisa de atenção?", prompt: "Qual empresa precisa mais atenção?" },
+  { label: "Onde faltam dados?", prompt: "Onde faltam dados?" },
+  { label: "Há destino para expansão?", prompt: "Há destino para expansão?" },
+  { label: "Onde testar este aprendizado?", prompt: "Onde testar este aprendizado?" },
   { label: "Oportunidades paradas", prompt: "Quais oportunidades estão paradas?" },
   { label: "Planos atrasados", prompt: "Quais planos estão atrasados?" },
   { label: "Indicadores fora da meta", prompt: "Quais indicadores estão fora da meta?" },
   { label: "Experimentos pendentes", prompt: "Quais experimentos precisam de decisão?" },
-  { label: "Onde faltam dados?", prompt: "Onde faltam dados?" },
   { label: "O que mudou?", prompt: "O que mudou recentemente?" },
 ] as const;
 

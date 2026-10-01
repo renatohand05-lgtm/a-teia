@@ -5,6 +5,7 @@ import {
   MemoryStatus,
   OpportunityStatus,
   TaskStatus,
+  PlaybookStatus,
 } from "@prisma/client";
 import { calculateDRE, calculateFinancialRatios, summarizeCashFlow } from "@/lib/financial-engine";
 import { toNumber } from "@/lib/format";
@@ -29,9 +30,15 @@ import {
   type PortfolioCompanyInput,
   type PriorityItem,
 } from "@/lib/global-priority-engine";
-import { prisma } from "@/lib/prisma";
+import {
+  buildPortfolioCompleteness,
+  rankExpansionOpportunities,
+  type ExpansionBoard,
+  type PortfolioCompletenessRow,
+} from "@/lib/expansion-engine";
 import { listOwnerDecisions, type DecisionDTO } from "@/services/decisionService";
 import { listCompanies, type CompanyDTO } from "@/services/companyService";
+import { prisma } from "@/lib/prisma";
 
 export type PortfolioFilters = {
   companyId?: string;
@@ -69,6 +76,8 @@ export type PortfolioBundle = {
   trends: Array<{ companyId: string; companyName: string; metric: string; direction: string; period: string }>;
   aiSummary: string;
   aiContext: ReturnType<typeof buildPortfolioAIContext>;
+  completeness: PortfolioCompletenessRow[];
+  expansion: ExpansionBoard;
 };
 
 const openOpportunity = [
@@ -107,6 +116,7 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
     audits,
     decisions,
     applications,
+    playbooks,
   ] = await Promise.all([
     prisma.diagnosis.findMany({
       where: { companyId: { in: ids }, company: { ownerId } },
@@ -178,12 +188,23 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
       where: { ownerId, destinationCompanyId: { in: ids } },
       select: {
         id: true,
+        playbookId: true,
         destinationCompanyId: true,
         status: true,
         scorePartial: true,
         kpi: true,
         playbook: { select: { title: true } },
         experiment: { select: { plannedEndAt: true, finalValue: true } },
+      },
+    }),
+    prisma.playbook.findMany({
+      where: { ownerId, status: PlaybookStatus.VALIDADO, originCompanyId: { in: ids } },
+      select: {
+        id: true,
+        title: true,
+        originCompanyId: true,
+        originSegment: true,
+        originCompany: { select: { name: true } },
       },
     }),
   ]);
@@ -341,6 +362,36 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
   const ranked = filterPriorities(rankGlobalPriorities(scoped, 8), { level: filters.level, kind: filters.kind });
   const consolidation = consolidateFinance(scoped);
   const companyById = new Map(companies.map((item) => [item.id, item]));
+  const completeness = buildPortfolioCompleteness(scoped);
+  const expansion = rankExpansionOpportunities({
+    sources: [
+      ...playbooks.map((item) => ({
+        id: item.id,
+        kind: "PLAYBOOK" as const,
+        title: item.title,
+        originCompanyId: item.originCompanyId,
+        originCompanyName: item.originCompany.name,
+        originSegment: item.originSegment ?? companyById.get(item.originCompanyId)?.segment ?? null,
+        validated: true,
+      })),
+      ...memories
+        .filter((item) => item.validated && item.companyId)
+        .map((item) => ({
+          id: item.id,
+          kind: "MEMORY" as const,
+          title: item.title,
+          originCompanyId: item.companyId as string,
+          originCompanyName: companyById.get(item.companyId as string)?.name ?? "Empresa",
+          originSegment: companyById.get(item.companyId as string)?.segment ?? null,
+          validated: true,
+        })),
+    ],
+    companies: scoped,
+    existingApplications: applications.map((item) => ({
+      sourceId: item.playbookId,
+      destinationCompanyId: item.destinationCompanyId,
+    })),
+  });
 
   return {
     inputs: scoped,
@@ -384,7 +435,16 @@ export async function loadPortfolioBundle(ownerId: string, filters: PortfolioFil
       })
       .filter((item) => item.direction !== "insufficient"),
     aiSummary: composePortfolioSummary(ranked),
-    aiContext: buildPortfolioAIContext({ ownerId, companies: scoped, priorities: ranked, consolidation }),
+    aiContext: buildPortfolioAIContext({
+      ownerId,
+      companies: scoped,
+      priorities: ranked,
+      consolidation,
+      completeness,
+      expansion,
+    }),
+    completeness,
+    expansion,
   };
 }
 
@@ -394,6 +454,7 @@ function collectTop(item: PortfolioCompanyInput): PriorityItem | null {
 
 function emptyBundle(ownerId: string): PortfolioBundle {
   const consolidation = consolidateFinance([]);
+  const expansion = rankExpansionOpportunities({ sources: [], companies: [] });
   return {
     inputs: [],
     portfolio: [],
@@ -408,6 +469,8 @@ function emptyBundle(ownerId: string): PortfolioBundle {
     decisions: [],
     trends: [],
     aiSummary: composePortfolioSummary([]),
-    aiContext: buildPortfolioAIContext({ ownerId, companies: [], priorities: [], consolidation }),
+    aiContext: buildPortfolioAIContext({ ownerId, companies: [], priorities: [], consolidation, completeness: [], expansion }),
+    completeness: [],
+    expansion,
   };
 }

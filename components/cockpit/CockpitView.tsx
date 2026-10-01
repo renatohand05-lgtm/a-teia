@@ -43,6 +43,9 @@ export function CockpitView({
             Centro de Decisão Empresarial
           </p>
           <h2 className="mt-1 text-[22px] font-bold tracking-[-0.02em]">Meu Cockpit</h2>
+          <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+            {snapshot.portfolio.expansion.scale}
+          </p>
           {focusName ? (
             <div className="mt-4 space-y-2">
               <p className="text-[11px]" style={{ color: "var(--text-3)" }}>

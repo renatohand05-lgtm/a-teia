@@ -1,10 +1,10 @@
 import "server-only";
 
 import { CompanyStatus, Prisma } from "@prisma/client";
-import { coverageFromFlags, listingPriorityLabel, nextActionForCompany, type EssentialFlags } from "@/lib/company-ux";
+import { coverageFromFlags, listingPriorityLabel, nextActionForCompany, persistableSegment, type EssentialFlags } from "@/lib/company-ux";
 import { priorityLevelLabel } from "@/lib/cockpit-ui";
-import { toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { toNumber } from "@/lib/format";
 import type { CompanyInput } from "@/lib/validations";
 import { writeAudit } from "@/services/auditService";
 
@@ -98,7 +98,7 @@ export async function createCompany(
     data: {
       ownerId,
       name: input.name.trim(),
-      segment: emptyToNull(input.segment),
+      segment: persistableSegment(input.segment),
       units: input.units ?? null,
       revenueMonthly: input.revenueMonthly ?? null,
       marginPercent: input.marginPercent ?? null,
@@ -139,7 +139,7 @@ export async function updateCompany(
     where: { id },
     data: {
       name: input.name.trim(),
-      segment: emptyToNull(input.segment),
+      segment: persistableSegment(input.segment),
       units: input.units ?? null,
       revenueMonthly: input.revenueMonthly ?? null,
       marginPercent: input.marginPercent ?? null,

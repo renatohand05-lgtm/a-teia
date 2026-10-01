@@ -1,7 +1,7 @@
 import "server-only";
 
 import { AuditSource, DecisionStatus, EvidenceLevel, Prisma } from "@prisma/client";
-import { normalizeHumanReason } from "@/lib/decision-reason";
+import { isUnequivocalTestOrphanDecision, normalizeHumanReason, TEST_ORPHAN_DECISION_TITLES } from "@/lib/decision-reason";
 import { toNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/services/auditService";
@@ -286,4 +286,52 @@ export async function listOwnerDecisions(ownerId: string): Promise<DecisionDTO[]
     take: 20,
   });
   return rows.filter((item) => !item.company || item.company.ownerId === ownerId).map(toDecisionDTO);
+}
+
+export async function cancelUnequivocalTestOrphanDecisions(actorId?: string | null) {
+  const reason = normalizeHumanReason(
+    "Resíduo de teste: empresa apagada (companyId SetNull). Cancelada no Sprint 21. Histórico APPROVED/EXECUTED preservado.",
+  );
+  const rows = await prisma.decision.findMany({
+    where: {
+      companyId: null,
+      opportunityId: null,
+      strategyId: null,
+      title: { in: [...TEST_ORPHAN_DECISION_TITLES] },
+      status: { in: [DecisionStatus.PENDING_HUMAN_APPROVAL, DecisionStatus.DEFERRED] },
+      allocationProposals: { none: {} },
+      playbookApplications: { none: {} },
+    },
+    select: { id: true, title: true, status: true, companyId: true, opportunityId: true },
+  });
+  const eligible = rows.filter((item) =>
+    isUnequivocalTestOrphanDecision({
+      title: item.title,
+      companyId: item.companyId,
+      opportunityId: item.opportunityId,
+      hasAllocationProposal: false,
+      status: item.status,
+    }),
+  );
+  if (!eligible.length) {
+    return { cancelled: 0, ids: [] as string[] };
+  }
+  const ids = eligible.map((item) => item.id);
+  await prisma.decision.updateMany({
+    where: { id: { in: ids } },
+    data: { status: DecisionStatus.CANCELLED, humanReason: reason },
+  });
+  await writeAudit({
+    actorId: actorId ?? undefined,
+    action: "decision.test_orphan.cancelled",
+    entity: "Decision",
+    newValue: {
+      count: ids.length,
+      titles: [...TEST_ORPHAN_DECISION_TITLES],
+      ids: ids.slice(0, 80),
+      preserved: "APPROVED/EXECUTED/REJECTED not cancelled",
+    },
+    origin: AuditSource.SYSTEM,
+  });
+  return { cancelled: ids.length, ids };
 }

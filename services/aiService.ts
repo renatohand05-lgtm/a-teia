@@ -31,6 +31,7 @@ import { aiMayCreateAutomationSilently, aiMayEnableAutomation } from "@/lib/auto
 import { isAutomationQuestion } from "@/lib/automation-rules-engine";
 import { isAllocationQuestion } from "@/lib/resource-allocation-engine";
 import { loadPortfolioBundle } from "@/services/portfolioService";
+import { portfolioIntelligenceAnswer } from "@/lib/expansion-engine";
 
 export type AIChatMessage = {
   id: string;
@@ -233,20 +234,43 @@ export async function askExecutiveAssistant(input: {
       nextActions: ["Revisar a proposta em /alocacao e enviar para decisão humana se fizer sentido."],
     };
   } else if (portfolio) {
+    const summary = portfolioIntelligenceAnswer({
+      question: input.message,
+      completeness: portfolio.completeness,
+      expansion: portfolio.expansion,
+      fallback: portfolio.aiSummary,
+    });
     answer = {
       ...answer,
-      summary: portfolio.aiSummary,
-      data: portfolio.priorities.slice(0, 4).map((item) => ({
-        kind: "DADO" as const,
-        text: `${item.companyName}: ${item.reason}`,
-        source: "Cadastro" as const,
+      summary,
+      data: [
+        { kind: "DADO" as const, text: portfolio.expansion.scale, source: "Cadastro" as const },
+        ...portfolio.completeness.slice(0, 3).map((row) => ({
+          kind: "DADO" as const,
+          text: `${row.companyName}: 360° ${row.diagnosis} · financeiro ${row.finance} · memória ${row.memory}.`,
+          source: "Cadastro" as const,
+        })),
+        ...portfolio.priorities.slice(0, 3).map((item) => ({
+          kind: "DADO" as const,
+          text: `${item.companyName}: ${item.reason}`,
+          source: "Cadastro" as const,
+        })),
+      ],
+      inferences: [
+        {
+          kind: "INFERENCIA" as const,
+          text: "Uma empresa não vira portfólio de muitas. Consolidado só soma o informado.",
+          source: "Cadastro" as const,
+        },
+      ],
+      hypotheses: portfolio.expansion.candidates.slice(0, 3).map((item) => ({
+        kind: "HIPOTESE" as const,
+        text: `Testar ${item.sourceTitle} em ${item.destinationCompanyName} (${item.score}/100). Score não é chance de sucesso.`,
+        source: "Playbook" as const,
       })),
-      inferences: portfolio.priorities.slice(0, 2).map((item) => ({
-        kind: "INFERENCIA" as const,
-        text: item.limitations[0] ?? "Leitura a partir dos dados persistidos.",
-        source: "Cadastro" as const,
-      })),
-      nextActions: portfolio.priorities.slice(0, 3).map((item) => item.nextAction),
+      nextActions: portfolio.expansion.candidates.length
+        ? portfolio.expansion.candidates.slice(0, 2).map((item) => item.nextAction)
+        : portfolio.priorities.slice(0, 3).map((item) => item.nextAction),
     };
   }
 

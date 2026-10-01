@@ -3,6 +3,7 @@ import "server-only";
 import { OnboardingStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/services/auditService";
+import { persistableSegment } from "@/lib/company-ux";
 import { toNumber } from "@/lib/format";
 import { deriveOnboardingStatus } from "@/lib/onboarding";
 import type { OnboardingInput } from "@/lib/validations";
@@ -86,7 +87,7 @@ export async function upsertOnboarding(
     where: { id: companyId },
     data: {
       name: input.name.trim(),
-      segment: emptyToNull(input.segment),
+      segment: persistableSegment(input.segment),
       revenueMonthly: input.revenueMonthly ?? null,
       teamSize: input.teamSize ?? null,
       channels: emptyToNull(input.channels),
