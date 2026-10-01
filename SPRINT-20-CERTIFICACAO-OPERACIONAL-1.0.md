@@ -208,15 +208,15 @@ Nenhuma.
 
 ## 37. Commit SHA
 
-Preenchido após o commit.
+`4defdf9` — fix: separate revenue and EBITDA goals in operational surfaces
 
 ## 38. Vercel
 
-Preenchido após o deploy.
+Production Ready — https://a-teia.vercel.app (`dpl_8RWPD4TGyeiMiHWXhtWZzwfJaaBt`)
 
 ## 39. Health
 
-Pré-deploy: status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok.
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 40. Conclusão da certificação
 
