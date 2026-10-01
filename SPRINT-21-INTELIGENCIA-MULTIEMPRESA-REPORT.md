@@ -108,15 +108,15 @@ Nenhuma.
 
 ## 12. Commit SHA
 
-(preenchido após o commit funcional)
+`0fb24f8` — feat: add multi-company completeness and expansion ranking to the cockpit
 
 ## 13. Vercel
 
-(preenchido após Production Ready)
+Production Ready — https://a-teia.vercel.app (`dpl_Ce445Dkbj6xwXJx9xzhCciTSdJ5o`)
 
 ## 14. Health
 
-(preenchido após o deploy)
+status ok · release 1.0 · version 1.0.0 · openaiExposed false · webSearchConfigured true · automationEngine ok · scheduler configured · database ok
 
 ## 15. Pendências (não bloqueiam o Sprint 21)
 
